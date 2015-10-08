@@ -13,19 +13,21 @@ import numpy as np
 from datetime import datetime
 import os, time, getopt, sys
 from scipy import spatial
-from matplotlib import tri
 from scipy import sparse
-import othertime
-from suntans_ugrid import ugrid
-from timeseries import timeseries
-from ufilter import ufilter
 import operator
-from hybridgrid import HybridGrid, circumcenter
-from gridsearch import GridSearch
 
+from matplotlib import tri
 import matplotlib.pyplot as plt
 from matplotlib.collections import PolyCollection, LineCollection
 import matplotlib.animation as animation
+
+from soda.utils import othertime
+from soda.dataio.suntans.suntans_ugrid import ugrid
+from soda.utils.timeseries import timeseries
+from soda.utils.ufilter import ufilter
+from soda.dataio.ugrid.hybridgrid import HybridGrid, circumcenter
+from soda.dataio.ugrid.gridsearch import GridSearch
+
 
 
 import pdb

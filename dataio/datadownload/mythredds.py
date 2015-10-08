@@ -10,7 +10,7 @@ import os
 import numpy as np
 from netCDF4 import Dataset, num2date,date2num,date2index
 from datetime import datetime
-import othertime
+from soda.utils import othertime
 
 import pdb
 

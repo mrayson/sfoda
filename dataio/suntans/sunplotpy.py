@@ -32,10 +32,10 @@ from matplotlib.backends.backend_wxagg import \
     NavigationToolbar2WxAgg as NavigationToolbar
 import matplotlib.animation as animation
 
-from sunpy import Spatial, Grid
-from untrim_tools import untrim_gridvars, untrim_griddims, UNTRIMSpatial
-from ptm_tools import PtmBin
-from suntrack import PtmNC
+from soda.dataio.suntans.sunpy import Spatial, Grid
+from soda.dataio.ugrid.untrim_tools import untrim_gridvars, untrim_griddims, UNTRIMSpatial
+from soda.dataio.ugrid.ptm_tools import PtmBin
+from soda.dataio.suntans.suntrack import PtmNC
 from datetime import datetime
 import numpy as np
 
@@ -503,6 +503,9 @@ class SunPlotPy(wx.Frame, Spatial, Grid ):
             Grid.__init__(self,path)
 
             # Plot the Grid
+            if self.__dict__.has_key('collection'):
+                self.axes.collections.remove(self.collection)
+
             self.axes,self.collection = self.plotmesh(ax=self.axes,edgecolors='y')
 
             # redraw the figure

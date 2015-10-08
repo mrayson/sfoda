@@ -8,15 +8,16 @@ Created on Thu May 09 15:17:58 2013
 """
 
 from matplotlib.tri import Triangulation
-from hybridgrid import HybridGrid
 from scipy.spatial import cKDTree
 #from matplotlib.nxutils import points_inside_poly
-from inpolygon import inpolygon
 from matplotlib.path import Path
 import numpy as np
 import operator as op
-
 import matplotlib.pyplot as plt
+
+from soda.utils.inpolygon import inpolygon
+from soda.dataio.ugrid.hybridgrid import HybridGrid
+
 import pdb
 
 class GridSearch(HybridGrid):

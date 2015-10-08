@@ -33,13 +33,15 @@ October 2013
 """
 
 import numpy as np
-from maptools import readShpPoly, readShpPointLine
+from soda.utils.maptools import readShpPoly, readShpPointLine
 from hybridgrid import HybridGrid
 
 import pdb
 
-def create_gmsh_geo(shpfile,scalefile,geofile,startpoly=0,ndmin=8,scalefac=1.0,\
-    r=1.08,lcmax=2000.0,sigmoid=0):
+def create_gmsh_geo(shpfile, scalefile, geofile, 
+    startpoly=0, ndmin=8, scalefac=1.0,\
+    r=1.08, lcmax=2000.0, sigmoid=0,\
+    linetype='BSpline'):
     """
     Generate a gmsh *.geo file using a boundary from a shpfile
     
@@ -55,6 +57,8 @@ def create_gmsh_geo(shpfile,scalefile,geofile,startpoly=0,ndmin=8,scalefac=1.0,\
         - ndmin [default=8] - the minimum range of the scale = ndmin*scale
         - r : expansion factor
         - lcmax [default=2000] - the maximum grid cell size.
+        - sigmoid [default=0]
+        - linetype - 'BSpline' or 'Line'
     """
     # Load the polygon shape file 
     xy,field = readShpPoly(shpfile,FIELDNAME='FID')
@@ -94,11 +98,20 @@ def create_gmsh_geo(shpfile,scalefile,geofile,startpoly=0,ndmin=8,scalefac=1.0,\
             rp = rp + 1
             fgeo.write("Point(IP + %i) = {%.16e, %.16e, %.16e}; // %i\n" % (ip, loop[p,0], loop[p,1], 0., rp -1))
             ip = ip + 1
+
+            if linetype == 'Line' and ip > 1:
+                fgeo.write("Line(IL + %i) = {IP + %i , IP + %i};\n" % \
+                        (il, ip-2, ip-1))
+                il = il + 1
+                lines.append(il-1)
+
+                
         
-        fgeo.write("BSpline(IL + %i) = {IP + %i : IP + %i, IP + %i};\n" % (il, firstp, ip - 1, firstp))
-    
-        il = il + 1
-        lines.append(il-1)
+        if linetype =='BSpline':
+            fgeo.write("BSpline(IL + %i) = {IP + %i : IP + %i, IP + %i};\n" % \
+                    (il, firstp, ip - 1, firstp))
+            il = il + 1
+            lines.append(il-1)
     
     
     # Create the surface polygon
@@ -133,12 +146,12 @@ def create_gmsh_geo(shpfile,scalefile,geofile,startpoly=0,ndmin=8,scalefac=1.0,\
         
         if ee:
             #fgeo.write("BSpline(IL + %i) = {IP + %i : IP + %i};\n" % (il, firstp, ip - 1))
-            fgeo.write("Spline(IL + %i) = {IP + %i : IP + %i};\n" % (il, firstp, ip - 1))
+            fgeo.write("%s(IL + %i) = {IP + %i : IP + %i};\n" % (linetpye,il, firstp, ip - 1))
             # Embed this line in the main surface so that cells are aligned
             fgeo.write("Line{IL + %i} In Surface{IL + %i};\n"%(il,surface_id))
         else:
             # Don't embed (can set as BSpline)
-            fgeo.write("BSpline(IL + %i) = {IP + %i : IP + %i};\n" % (il, firstp, ip - 1))
+            fgeo.write("%s(IL + %i) = {IP + %i : IP + %i};\n" % (linetype,il, firstp, ip - 1))
             
         slines.append(il)
         il = il + 1
@@ -360,6 +373,7 @@ def create_pos_file(posfile,scalefile, xlims,ylims,dx,\
     If a geofile is specified the mesh is embedded
     """
     from shapely import geometry, speedups
+    import pandas as pd
 
     if speedups.available:
         speedups.enable()
@@ -381,7 +395,21 @@ def create_pos_file(posfile,scalefile, xlims,ylims,dx,\
     L=[]
     for ll in xyscale:
         L.append(geometry.asLineString(ll))
-     
+
+    # Vectorize operations using pandas
+    geo_points = pd.DataFrame({'single_column':xy.tolist()}).single_column.\
+        apply(lambda x: geometry.Point(x[0],x[1])).values
+
+    geo_lines = pd.DataFrame({'single_column':xyscale}).single_column.\
+        apply(lambda x: geometry.LineString(x)).values
+
+    def distance(a_point, a_line):
+        return a_point.distance(a_line)
+
+    distance_vec = np.vectorize(distance)
+
+    dist_all = distance_vec(geo_points[...,np.newaxis], geo_lines)
+
     nlines = len(L)
     scale_all = np.zeros((nj,ni,nlines))
     for n in range(nlines):
@@ -393,9 +421,11 @@ def create_pos_file(posfile,scalefile, xlims,ylims,dx,\
         Nk =  np.log(lcmax/ss)/np.log(r)
         print ss,Nk
         lmax = lmin + Nk * ss
+
         
-        dist = [L[n].distance(P[i]) for i in range(Np)]
-        dist = np.array(dist).reshape((nj,ni))
+        #dist = [L[n].distance(P[i]) for i in range(Np)]
+        #dist = np.array(dist).reshape((nj,ni))
+        dist = dist_all[:,n].reshape((nj,ni))
         
         # Calculate the scale
         N = (dist-lmin)/ss
@@ -415,7 +445,7 @@ def create_pos_file(posfile,scalefile, xlims,ylims,dx,\
     
     write_pos_file(posfile,X,Y,scale_min)  
     
-    if not geofile == None:
+    if not geofile is None:
         fgeo = open(geofile,'a')
         fgeo.write("// Merge a post-processing view containing the target mesh sizes\n")
         fgeo.write('Merge "%s";'%posfile)

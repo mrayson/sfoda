@@ -29,13 +29,16 @@ import numpy as np
 from scipy.interpolate import interp1d
 import matplotlib.pyplot as plt
 #import matplotlib.nxutils as nxutils #inpolygon equivalent lives here
-from inpolygon import inpolygon
 from datetime import datetime, timedelta
-import othertime
 import os
-from maptools import readShpPoly,ll2utm
-from get_metocean_dap import get_metocean_local
-from interpXYZ import Interp4D
+
+from soda.dataio.datadownload.get_metocean_dap import get_metocean_local
+from soda.utils.maptools import readShpPoly,ll2utm,utm2ll
+from soda.utils.interpXYZ import Interp4D
+from soda.utils.inpolygon import inpolygon
+from soda.dataio.conversion import readotps 
+
+from soda.utils import othertime
 
 import pdb
 
@@ -651,8 +654,6 @@ class Boundary(object):
         
         Note that the values are added to the existing arrays (h, uc, vc)
         """
-        from maptools import utm2ll
-        import read_otps
         
         if self.N3>0:
             print 'Interolating otis onto type 3 bc''s...'
@@ -666,7 +667,7 @@ class Boundary(object):
                 to set this.'
                 z=None
                 
-            h,U,V = read_otps.tide_pred(otisfile,ll[:,0],ll[:,1],np.array(self.time),z=z,conlist=conlist)
+            h,U,V = readotps.tide_pred(otisfile,ll[:,0],ll[:,1],np.array(self.time),z=z,conlist=conlist)
             
             # Update the arrays - note that the values are added to the existing arrays
             self.h += h
@@ -687,7 +688,7 @@ class Boundary(object):
                 to set this .'
                 z=None
                 
-            h,U,V = read_otps.tide_pred(otisfile,ll[:,0],ll[:,1],np.array(self.time),z=z,conlist=conlist)
+            h,U,V = readotps.tide_pred(otisfile,ll[:,0],ll[:,1],np.array(self.time),z=z,conlist=conlist)
             
             # Update the arrays - note that the values are added to the existing arrays
             for k in range(self.Nk):
@@ -706,8 +707,6 @@ class Boundary(object):
 	Applies an amplitude and phase correction based on a time series. 
 	Also adds the residual (low-frequency) water level variability.
         """
-        from maptools import utm2ll
-        import read_otps
         
         xy = np.vstack((self.xv.ravel(),self.yv.ravel())).T
         ll = utm2ll(xy,self.utmzone,north=self.isnorth)
@@ -718,7 +717,7 @@ class Boundary(object):
             print 'Using OTIS depths to calculate velocity. Set self.dv to change this.'
             z=None
             
-        h,U,V,residual = read_otps.tide_pred_correc(otisfile,ll[:,0],ll[:,1],np.array(self.time),dbfile,stationID,z=z,conlist=conlist)
+        h,U,V,residual = readotps.tide_pred_correc(otisfile,ll[:,0],ll[:,1],np.array(self.time),dbfile,stationID,z=z,conlist=conlist)
 
         # Update the arrays - note that the values are added to the existing arrays
         self.h += h
@@ -931,7 +930,7 @@ class InitialCond(Grid):
         
         # Fill in the depths with zero
         #if not self.__dict__.has_key('dv'):
-        if dv==None:
+        if dv is None:
             self.dv = np.zeros((self.Nc,))
         else:
             self.dv = dv

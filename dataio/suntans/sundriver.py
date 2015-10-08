@@ -11,7 +11,7 @@ from sunpy import Grid, Spatial
 from sundepths import DepthDriver, adjust_channel_depth
 from sunboundary import modifyBCmarker, Boundary, InitialCond
 from metfile import SunMet, metfile
-import timeseries
+from soda.utils import timeseries
 
 import numpy as np 
 import scipy.io as io

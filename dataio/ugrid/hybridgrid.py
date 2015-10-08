@@ -12,8 +12,10 @@ Created on Tue Oct 22 18:29:07 2013
 import numpy as np
 from scipy import sparse
 import operator as op
-
 import matplotlib.pyplot as plt
+from matplotlib.collections import PolyCollection, LineCollection
+
+from soda.dataio.ugrid import ugridutils
 import pdb
 
 ###
@@ -56,11 +58,12 @@ class HybridGrid(object):
         
         self.xp = np.array(xp)
         self.yp = np.array(yp)
+        self.Np = self.xp.shape[0]
         
-        self.cells = cells
-        self.Nc = len(cells)
+        self.cells = cells.astype(np.int32)
+        self.Nc = self.cells.shape[0]
     
-        if nfaces==None:
+        if nfaces is None:
             self.nfaces = 3*np.ones((self.Nc,),np.int)
             self.MAXFACES = 3
         else:
@@ -68,28 +71,31 @@ class HybridGrid(object):
             self.MAXFACES = max(self.nfaces)
             
         # Make sure the nodes are rotated counter-clockwise
-        self.cells = self.ensure_ccw()
+        self.Ac = self.calc_area()
+        self.ensure_ccw()
         
-        if edges == None or grad == None:
+        if edges is None or grad is None:
             self.make_edges_from_cells()
             #self.make_edges_from_cells_sparse()
         else:
-            self.edges=edges
-            self.grad=grad
+            self.edges = edges.astype(np.int64)
+            self.grad = grad.astype(np.int64)
+
+        self.Ne = self.edges.shape[0]
 
         # make_edges_from_cells sets everything to zero
-        if not mark==None:
-            self.mark=mark
+        if not mark is None:
+            self.mark=mark.astype(np.int64)
         
         # Face->edge connectivity
         self.face = self.cell_edge_map()
 
-        if neigh == None:
+        if neigh is None:
             self.make_neigh_from_cells()
         else:
             self.neigh=neigh
         
-        if xv==None:
+        if xv is None:
             self.calc_centroids()
         else:
             self.xv = xv
@@ -108,7 +114,6 @@ class HybridGrid(object):
         self.calc_df()
         #self.calc_tangent()
         self.calc_Aj()
-        self.Ac = self.calc_area()
 
         
         # Make sure the BCs are ok
@@ -244,17 +249,25 @@ class HybridGrid(object):
         """
         Ensure that the nodes are rotated counter-clockwise
         """
-        Ac = self.calc_area()
-        cells_ccw = np.zeros_like(self.cells)
-        for i in range(self.Nc):
-            ctmp=self.cells[i,0:self.nfaces[i]].copy()
-            if Ac[i] < 0:
-                #print 'Cell %d is clock-wise - reversing.'%i
-                cells_ccw[i,0:self.nfaces[i]] = ctmp[::-1] # reverse order
-            else:
-                cells_ccw[i,0:self.nfaces[i]] =  ctmp
-        
-        return cells_ccw
+	###
+	# Cython wrapper
+	###
+        ugridutils.ensure_ccw(self.cells, self.nfaces, self.Ac)
+	
+	#####
+	## Pure python version
+	#####
+        ##Ac = self.calc_area()
+        ##cells_ccw = np.zeros_like(self.cells)
+        #for i in range(self.Nc):
+        #    ctmp=self.cells[i,0:self.nfaces[i]]#.copy()
+        #    if self.Ac[i] < 0:
+        #        #print 'Cell %d is clock-wise - reversing.'%i
+        #        self.cells[i,0:self.nfaces[i]] = ctmp[::-1] # reverse order
+        #    else:
+        #        self.cells[i,0:self.nfaces[i]] =  ctmp
+        #
+        ##return cells_ccw
     
     def edge_centers(self):
         
@@ -602,13 +615,6 @@ class HybridGrid(object):
                 L1 = Line(P0,P1)
                 L2 = Line(P0,P2)
 
-#                plt.figure()
-#                plt.plot(P0.x,P0.y,'ro')
-#                plt.plot(P1a.x,P1a.y,'bo')
-#                plt.plot(P1.x,P1.y,'bo')
-#                plt.plot(P2.x,P2.y,'ko')
-#                plt.show()
-                
                 ang = np.abs(pi_on_2 - L1.angle(L2))
                 if ang > maxangle:
                     maxangle=ang
@@ -715,67 +721,102 @@ class HybridGrid(object):
 
         dualgrd = HybridGrid(xp,yp,cells,nfaces=nfaces,xv=xv,yv=yv)
         
-        if not outpath == None:
+        if not outpath is None:
             dualgrd.write2suntans(outpath)
             
         return dualgrd
+
+    def to_metismesh(self):
+        """
+        Creates the mesh vectors 'eptr' and 'eind' required by
+        metis functions
+        """
+        eptr = np.zeros((self.Nc+1))
+        eptr[1:] = np.cumsum(self.nfaces)
+        #eptr = eptr - eptr[0]
+
+        ne = self.nfaces.sum()
+
+        eind = np.zeros((ne,))
+
+        pt1 = 0
+        for i in range(self.Nc):
+            nf = self.nfaces[i] 
+            pt2 = pt1+nf
+            eind[pt1:pt2] = self.cells[i,0:nf]
+            pt1 = pt2+0.
+
+        return eptr.astype(np.int32), eind.astype(np.int32)
+
+
+
              
     ######################
     # TriGrid functions  #
     # (with adjustments) #
     ######################
     def make_edges_from_cells(self):
-        # iterate over cells, and for each cell, if it's index
-        # is smaller than a neighbor or if no neighbor exists,
-        # write an edge record
-        edges = []
-        default_marker = 0
+	###
+	# Cython version
+	###
+	self.pnt2cells(0)
+	self.edges, self.mark, self.grad = \
+		ugridutils.make_edges_from_cells(self.cells,
+			self.nfaces, self._pnt2cells)
+	###
+	# Pure python
+	###
+        ## iterate over cells, and for each cell, if it's index
+        ## is smaller than a neighbor or if no neighbor exists,
+        ## write an edge record
+        #edges = []
+        #default_marker = 0
 
-        # this will get built on demand later.
-        self._pnt2edges = None
-        
-        for i in range(self.Ncells()):
-            # find the neighbors:
-            # the first neighbor: need another cell that has
-            # both self.cells[i,0] and self.cells[i,1] in its
-            # list.
-            my_set = set([i])
-            #n = [-1,-1,-1]
-            n = self.nfaces[i] * [-1]
-            #for j in 0,1,2:
-            #for j in range(self.MAXFACES):
-            for j in range(self.nfaces[i]):
-                pnt_a = self.cells[i,j]
-                #pnt_b = self.cells[i,(j+1)%3]
-                #pnt_b = self.cells[i,(j+1)%self.MAXFACES]
-                pnt_b = self.cells[i,(j+1)%self.nfaces[i]]
-                
-                    
-                adj1 = self.pnt2cells(pnt_a) # cells that use pnt_a
-                adj2 = self.pnt2cells(pnt_b) # cells that use pnt_b
+        ## this will get built on demand later.
+        #self._pnt2edges = None
+        #
+        #for i in range(self.Ncells()):
+        #    # find the neighbors:
+        #    # the first neighbor: need another cell that has
+        #    # both self.cells[i,0] and self.cells[i,1] in its
+        #    # list.
+        #    my_set = set([i])
+        #    #n = [-1,-1,-1]
+        #    n = self.nfaces[i] * [-1]
+        #    #for j in 0,1,2:
+        #    #for j in range(self.MAXFACES):
+        #    for j in range(self.nfaces[i]):
+        #        pnt_a = self.cells[i,j]
+        #        #pnt_b = self.cells[i,(j+1)%3]
+        #        #pnt_b = self.cells[i,(j+1)%self.MAXFACES]
+        #        pnt_b = self.cells[i,(j+1)%self.nfaces[i]]
+        #        
+        #            
+        #        adj1 = self.pnt2cells(pnt_a) # cells that use pnt_a
+        #        adj2 = self.pnt2cells(pnt_b) # cells that use pnt_b
 
-                # the intersection is us and our neighbor
-                #  so difference out ourselves...
-                neighbor = adj1.intersection(adj2).difference(my_set)
-                # and maybe we ge a neighbor, maybe not (we're a boundary)
-                if len(neighbor) == 1:
-                    n = neighbor.pop()
-                else:
-                    n = -1
-                    
-                if n==-1 or i<n:
-                    # we get to add the edge:
-                    edges.append((pnt_a,
-                                  pnt_b,
-                                  default_marker,
-                                  i,n))
+        #        # the intersection is us and our neighbor
+        #        #  so difference out ourselves...
+        #        neighbor = adj1.intersection(adj2).difference(my_set)
+        #        # and maybe we ge a neighbor, maybe not (we're a boundary)
+        #        if len(neighbor) == 1:
+        #            n = neighbor.pop()
+        #        else:
+        #            n = -1
+        #            
+        #        if n==-1 or i<n:
+        #            # we get to add the edge:
+        #            edges.append((pnt_a,
+        #                          pnt_b,
+        #                          default_marker,
+        #                          i,n))
 
-        #self.edge = np.array(edges,np.int32)
-        Ne = len(edges)
-        edges = np.array(edges)
-        self.edges = np.array([edges[ii,0:2] for ii in range(Ne)])
-        self.mark = np.array([edges[ii,2] for ii in range(Ne)])
-        self.grad = np.array([edges[ii,3:5] for ii in range(Ne)])
+        ##self.edge = np.array(edges,np.int32)
+        #Ne = len(edges)
+        #edges = np.array(edges)
+        #self.edges = np.array([edges[ii,0:2] for ii in range(Ne)])
+        #self.mark = np.array([edges[ii,2] for ii in range(Ne)])
+        #self.grad = np.array([edges[ii,3:5] for ii in range(Ne)])
             
             
     def check_missing_bcs(self):
@@ -803,36 +844,55 @@ class HybridGrid(object):
         """
         Find the neighbouring cells
         """
-        self.neigh = np.zeros((self.Ncells(),self.MAXFACES),np.int)
-        for i in range(self.Ncells()):
-            # find the neighbors:
-            # the first neighbor: need another cell that has
-            # both self.cells[i,0] and self.cells[i,1] in its
-            # list.
-            my_set = set([i])
-            #n = self.MAXFACES * [-1]
-            n = self.nfaces[i] * [-1]
-            #for j in range(self.MAXFACES):
-            for j in range(self.nfaces[i]):
-                adj1 = self.pnt2cells(self.cells[i,j])
-                adj2 = self.pnt2cells(self.cells[i,(j+1)%self.nfaces[i]])
-                #adj2 = self.pnt2cells(self.cells[i,(j+1)%self.MAXFACES])
-                neighbor = adj1.intersection(adj2).difference(my_set)
-                if len(neighbor) == 1:
-                    n[j] = neighbor.pop()
-            
-            self.neigh[i,0:self.nfaces[i]] = n
+        ###
+	# Cython wrapper
+	###
+	# Make sure the hash table is built
+	self.pnt2cells(0)
+	self.neigh = ugridutils.make_neigh_from_cells(
+		self.cells, self.nfaces, self._pnt2cells)
+	
+	###
+        # Pure python
+        ###	
+        #self.neigh = np.zeros((self.Ncells(),self.MAXFACES),np.int)
+        #for i in range(self.Ncells()):
+        #    # find the neighbors:
+        #    # the first neighbor: need another cell that has
+        #    # both self.cells[i,0] and self.cells[i,1] in its
+        #    # list.
+        #    my_set = set([i])
+        #    #n = self.MAXFACES * [-1]
+        #    n = self.nfaces[i] * [-1]
+        #    #for j in range(self.MAXFACES):
+        #    for j in range(self.nfaces[i]):
+        #        adj1 = self.pnt2cells(self.cells[i,j])
+        #        adj2 = self.pnt2cells(self.cells[i,(j+1)%self.nfaces[i]])
+        #        #adj2 = self.pnt2cells(self.cells[i,(j+1)%self.MAXFACES])
+        #        neighbor = adj1.intersection(adj2).difference(my_set)
+        #        if len(neighbor) == 1:
+        #            n[j] = neighbor.pop()
+        #    
+        #    self.neigh[i,0:self.nfaces[i]] = n
         
     def pnt2cells(self,pnt_i):
         if self._pnt2cells is None:
-            # build hash table for point->cell lookup
-            self._pnt2cells = {}
-            for i in range(self.Ncells()):
-                #for j in range(self.MAXFACES):
-                for j in range(self.nfaces[i]):
-                    if not self._pnt2cells.has_key(self.cells[i,j]):
-                        self._pnt2cells[self.cells[i,j]] = set()
-                    self._pnt2cells[self.cells[i,j]].add(i)
+	    
+	    # Cython wrapper
+	    self._pnt2cells = ugridutils.create_pnt2cells(
+		self.cells, self.nfaces)
+	    ###
+	    # Pure python
+	    ###	
+            ## build hash table for point->cell lookup
+            #self._pnt2cells = {}
+            #for i in range(self.Ncells()):
+            #    #for j in range(self.MAXFACES):
+            #    for j in range(self.nfaces[i]):
+	    #        cc = self.cells[i,j]
+            #        if not self._pnt2cells.has_key(cc):
+            #            self._pnt2cells[cc] = set()
+            #        self._pnt2cells[cc].add(i)
 
         # This accounts for unconnected points
         if self._pnt2cells.has_key(pnt_i):
@@ -864,13 +924,24 @@ class HybridGrid(object):
 
         N.B. this is not kept up to date when modifying the grid.
         """
-        if self._cell_edge_map is None:
-            cem = 999999*np.ones( (self.Ncells(),self.MAXFACES), np.int32)
+	# Cython
+	if self._pnt2edges is None:
+	   self._pnt2edges = ugridutils.create_pnt2edges(self.edges, 
+	   	self.mark, DELETED_EDGE)
 
-            for i in xrange(self.Ncells()):
-                cem[i,0:self.nfaces[i]] = self.cell2edges(i)
-            self._cell_edge_map = cem
-        return self._cell_edge_map
+	self._cell_edge_map = ugridutils.cell_edge_map(self.cells,
+		self.nfaces, self._pnt2edges)
+	return self._cell_edge_map
+	####
+	# Pure python
+	####
+        #if self._cell_edge_map is None:
+        #    cem = 999999*np.ones( (self.Ncells(),self.MAXFACES), np.int32)
+
+        #    for i in xrange(self.Ncells()):
+        #        cem[i,0:self.nfaces[i]] = self.cell2edges(i)
+        #    self._cell_edge_map = cem
+        #return self._cell_edge_map
 
     def pnt2edges(self,pnt_i):
         if self._pnt2edges is None:
@@ -935,6 +1006,130 @@ class HybridGrid(object):
 #    #return 0.5*(points[i,0]*points[ip1,1] - points[ip1,0]*points[i,1]).sum()
 #    return 0.5*(x[...,i]*y[...,ip1] - x[...,ip1]*y[...,i])
     
+###########################
+# Plotting class
+###########################
+class Plot(HybridGrid):
+    _xlims = None
+    _ylims = None
+    _xy = None
+    clim = None
+    def __init__(self, xp, yp, cells, **kwargs):
+
+        HybridGrid.__init__(self, xp, yp, cells, **kwargs)
+
+    def plotmesh(self,ax=None,facecolors='none',linewidths=0.2,**kwargs):
+        """
+        Plots the outline of the grid mesh
+        """
+        fig = plt.gcf()
+        if ax==None:
+            ax = fig.gca()
+    
+        xlim=self.xlims()
+        ylim=self.ylims()
+        collection = PolyCollection(self.xy(), facecolors=facecolors,\
+            linewidths=linewidths, **kwargs)
+        
+        ax.add_collection(collection)
+    
+        ax.set_aspect('equal')
+        ax.set_xlim(xlim)
+        ax.set_ylim(ylim)
+
+        return ax, collection
+
+    def plotedgedata(self,z,xlims=None,ylims=None,**kwargs):
+        """
+          Plot the unstructured grid edge data
+        """
+        ax=plt.gca()
+        fig = plt.gcf()
+
+        assert(z.shape[0] == self.Ne),\
+            ' length of z scalar vector not equal to number of edges, Ne.'
+        
+        # Find the colorbar limits if unspecified
+        if self.clim is None:
+            self.clim = [z.min(),z.max()]
+        # Set the xy limits
+        if xlims is None or ylims is None:
+            xlims=self.xlims()
+            ylims=self.ylims()
+        
+        xylines = [self.xp[self.edges],self.yp[self.edges]]
+        #self.fig,self.ax,self.collection,self.cb=edgeplot(xylines,z,xlim=xlims,ylim=ylims,\
+        #    clim=self.clim,**kwargs)
+
+        # Create the inputs needed by line collection
+        Ne = xylines[0].shape[0]
+
+        # Put this into the format needed by LineCollection
+        linesc = [zip(xylines[0][ii,:],xylines[1][ii,:]) for ii in range(Ne)]
+
+        collection = LineCollection(linesc,array=z,**kwargs)
+
+        collection.set_clim(vmin=self.clim[0],vmax=self.clim[1])
+        
+        ax.add_collection(collection)
+
+        ax.set_aspect('equal')
+        ax.set_xlim(xlims)
+        ax.set_ylim(ylims)
+
+        axcb = fig.colorbar(collection)
+        
+        return fig, ax, collection, axcb
+
+
+ 
+ 
+    def xlims(self):
+        if self._xlims is None:
+            self._xlims = [self.xp.min(),self.xp.max()]
+        return self._xlims
+
+    def ylims(self):
+        if self._ylims is None:
+            self._ylims = [self.yp.min(),self.yp.max()]
+        return self._ylims
+
+    def xy(self):
+        """ 
+        Returns a list of Nx2 vectors containing the grid cell node coordinates
+            
+        Used by spatial ploting routines 
+        """
+        if self._xy is None:
+            xp = np.zeros((self.Nc,self.MAXFACES+1))
+            yp = np.zeros((self.Nc,self.MAXFACES+1))
+            
+            cells=self.cells.copy()
+            cells[self.cells.mask]=0
+
+            xp[:,:self.MAXFACES]=self.xp[cells]
+            xp[range(self.Nc),self.nfaces]=self.xp[cells[:,0]]
+            yp[:,:self.MAXFACES]=self.yp[cells]
+            yp[range(self.Nc),self.nfaces]=self.yp[cells[:,0]]
+
+            xp[self.cells.mask]==0
+            yp[self.cells.mask]==0
+
+            xy = np.zeros((self.MAXFACES+1,2))
+            def _closepoly(ii):
+                nf=self.nfaces[ii]+1
+                xy[:nf,0]=xp[ii,:nf]
+                xy[:nf,1]=yp[ii,:nf]
+                return xy[:nf,:].copy()
+
+            self._xy = [_closepoly(ii) for ii in range(self.Nc)]
+
+        return self._xy
+
+
+###########################
+# Utility functions
+###########################
         
 def polyarea(x,y,N):
     """

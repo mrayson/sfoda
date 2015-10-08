@@ -14,8 +14,8 @@ March 2013
 import os
 import numpy as np
 
-from interpXYZ import interpXYZ
-import othertime
+from soda.utils.interpXYZ import interpXYZ
+from soda.utils import othertime
 from datetime import datetime
 
 import pdb

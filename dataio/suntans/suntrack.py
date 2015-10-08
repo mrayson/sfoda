@@ -8,18 +8,17 @@ Created on Wed Apr 17 09:54:48 2013
 """
 
 from sunpy import Spatial, Grid
-import othertime
-#from trisearch import TriSearch
-from gridsearch import GridSearch
-from cartgrid import RegGrid
+import soda.utils.othertime
+from soda.dataio.ugrid.gridsearch import GridSearch
+from soda.utils.cartgrid import RegGrid
+#import matplotlib.nxutils as nxutils #inpolygon equivalent lives here
+from soda.utils.inpolygon import inpolygon
 
 from datetime import datetime,timedelta
 from scipy import spatial 
 import numpy as np
 import matplotlib.pyplot as plt
 from netCDF4 import Dataset, num2date
-#import matplotlib.nxutils as nxutils #inpolygon equivalent lives here
-from inpolygon import inpolygon
 import operator
 
 import numexpr as ne

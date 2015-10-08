@@ -6,13 +6,13 @@ Created on Fri Oct 05 11:24:10 2012
 
 @author: mrayson
 """
-from interpXYZ import Inputs, interpXYZ
 import numpy as np
 import sunpy
 import matplotlib.pyplot as plt
 
 from sunpy import Grid
-from trisearch import TriSearch
+from soda.dataio.ugrid.gridsearch import GridSearch
+from soda.utils.interpXYZ import Inputs, interpXYZ
 
 import time
 # Example inputs
@@ -203,7 +203,7 @@ class AverageDepth(Grid):
         Grid.__init__(self,suntanspath)
         
         # Initialise the trisearch object
-        self.tsearch =  TriSearch(self.xp,self.yp,self.cells)
+        self.tsearch =  GridSearch(self.xp,self.yp,self.cells)
         
     def __call__(self,depthfile,**kwargs):
         
