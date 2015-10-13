@@ -68,7 +68,7 @@ class HybridGrid(object):
             self.MAXFACES = 3
         else:
             self.nfaces = np.array(nfaces,dtype=np.int)
-            self.MAXFACES = max(self.nfaces)
+            self.MAXFACES = np.max(self.nfaces)
             
         # Make sure the nodes are rotated counter-clockwise
         self.Ac = self.calc_area()
@@ -1039,6 +1039,34 @@ class Plot(HybridGrid):
 
         return ax, collection
 
+    def plotcelldata(self,z, xlims=None, ylims=None, **kwargs):
+        """
+        Plot cell centered data
+        """
+        ax=plt.gca()
+        fig = plt.gcf()
+        # Find the colorbar limits if unspecified
+        if self.clim is None:
+            self.clim = [z.min(),z.max()]
+        # Set the xy limits
+        if xlims is None or ylims is None:
+            xlims=self.xlims()
+            ylims=self.ylims()
+        
+        collection = PolyCollection(self.xy(),**kwargs)
+        collection.set_array(z)
+        collection.set_clim(vmin=self.clim[0],vmax=self.clim[1])
+        collection.set_edgecolors(collection.to_rgba(z))    
+        
+        ax.add_collection(collection)
+
+        ax.set_aspect('equal')
+        ax.set_xlim(xlims)
+        ax.set_ylim(ylims)
+
+        axcb = fig.colorbar(collection)
+    
+        return fig, ax, collection, axcb
     def plotedgedata(self,z,xlims=None,ylims=None,**kwargs):
         """
           Plot the unstructured grid edge data

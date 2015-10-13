@@ -86,6 +86,8 @@ class Grid(object):
     # Some grid properties
     DEF = None
 
+    VERBOSE=True
+
     def __init__(self,infile ,**kwargs):
                
         self.__dict__.update(kwargs)
@@ -195,7 +197,8 @@ class Grid(object):
         try:
             vertspace=readTXT(self.infile+'/vertspace.dat')
         except:
-            print 'Warning could not find vertspace.dat in folder, setting Nkmax=1'
+            if self.VERBOSE:
+                print 'Warning could not find vertspace.dat in folder, setting Nkmax=1'
             vertspace=0.0
             
         self.setDepth(vertspace)
@@ -222,7 +225,8 @@ class Grid(object):
            try:
                setattr(self,vv,nc.dimensions[self.griddims[vv]].__len__())
            except:
-               print 'Cannot find dimension: %s'%self.griddims[vv]
+               if self.VERBOSE:
+                   print 'Cannot find dimension: %s'%self.griddims[vv]
        
        
         for vv in self.gridvars.keys():
@@ -232,7 +236,8 @@ class Grid(object):
                 else:
                     setattr(self,vv,nc.variables[self.gridvars[vv]][:])
             except:
-                print 'Cannot find variable: %s'%self.gridvars[vv]
+                if self.VERBOSE:
+                    print 'Cannot find variable: %s'%self.gridvars[vv]
          
         if self.__dict__.has_key('Nk'):
             self.Nk-=1 #These need to be zero based
@@ -299,7 +304,8 @@ class Grid(object):
 
         Method for finding the following arrays: grad,edges,neigh,mark...
         """
-        print 'Re-calculating the grid variables...'
+        if self.VERBOSE:
+            print 'Re-calculating the grid variables...'
 
         grd = self.convert2hybrid()
 
@@ -620,8 +626,9 @@ class Grid(object):
         """
         Manually calculate the distance between voronoi points, 'dg'
         """
-        print 'Calculating dg...'
-        print np.shape(self.grad)
+        if self.VERBOSE:
+            print 'Calculating dg...'
+            print np.shape(self.grad)
         
         grad = self.grad
         Ne = len(grad)
@@ -1052,12 +1059,14 @@ class Grid(object):
         self.suntans_mesh=[0]  
         for vv in gridvars:
             if self.__dict__.has_key(vv):
-                print 'Writing variables: %s'%vv
+                if self.VERBOSE:
+                    print 'Writing variables: %s'%vv
                 write_nc_var(self[vv],vv,ugrid[vv]['dimensions'],ugrid[vv]['attributes'],dtype=ugrid[vv]['dtype'])
             
             # Special treatment for "def"
             if vv == 'def' and self.__dict__.has_key('DEF'):
-                print 'Writing variables: %s'%vv
+                if self.VERBOSE:
+                    print 'Writing variables: %s'%vv
                 write_nc_var(self['DEF'],vv,ugrid[vv]['dimensions'],ugrid[vv]['attributes'],dtype=ugrid[vv]['dtype'])
 
         nc.close()
@@ -1078,7 +1087,8 @@ class Grid(object):
         
     def __openNc(self):
         #nc = Dataset(self.ncfile, 'r', format='NETCDF4') 
-        print 'Loading: %s'%self.ncfile
+        if self.VERBOSE:
+            print 'Loading: %s'%self.ncfile
         try: 
             self.nc = MFDataset(self.ncfile,aggdim='time')
         except:
@@ -1396,7 +1406,8 @@ class Spatial(Grid):
             else:
 
                 # Need to compute a delaunay triangulation for mixed meshes
-                print 'Computing delaunay triangulation and computing mask...'
+                if self.VERBOSE:
+                    print 'Computing delaunay triangulation and computing mask...'
                 pts = np.vstack([self.xp,self.yp]).T
                 D = spatial.Delaunay(pts)
                 self._tri =tri.Triangulation(self.xp,self.yp,D.simplices)
@@ -1417,7 +1428,8 @@ class Spatial(Grid):
         """
         if not self.__dict__.has_key('_triv'):
             # Need to compute a delaunay triangulation for mixed meshes
-            print 'Computing delaunay triangulation and computing mask...'
+            if self.VERBOSE:
+                print 'Computing delaunay triangulation and computing mask...'
             pts = np.vstack([self.xv,self.yv]).T
             D = spatial.Delaunay(pts)
             self._triv =tri.Triangulation(self.xv,self.yv,D.simplices)
@@ -1653,7 +1665,8 @@ class Spatial(Grid):
         else:
             self.fig.scene.save(outfile,size=dpi)
             
-        print 'SUNTANS image saved to file:%s'%outfile
+        if self.VERBOSE:
+            print 'SUNTANS image saved to file:%s'%outfile
     
     def     animate(self,xlims=None,ylims=None,vector_overlay=False,scale=1e-4, subsample=10,cbar=None,**kwargs):
         """
