@@ -52,7 +52,9 @@ class HybridGrid(object):
     
     _pnt2cells = None
     _pnt2edges = None
-    
+
+    VERBOSE=False
+
     def __init__(self,xp,yp,cells,nfaces=None,edges=None,\
         mark=None,grad=None,neigh=None,xv=None,yv=None,**kwargs):
         
@@ -232,15 +234,18 @@ class HybridGrid(object):
         """
         Calculates the area of each cell
         """
-        xp = np.array(self.xp)
-        yp = np.array(self.yp)
         
         Ac = np.zeros((self.Nc,))
         
+        #for ii in range(self.Nc):
+        #     nf = self.nfaces[ii]
+        #     Ac[ii] = polyarea(self.xp[self.cells[ii,0:nf]],
+        #        self.yp[self.cells[ii,0:nf]],nf)            
+
         for N in range(3,self.MAXFACES+1):
             ind = self.nfaces==N
             cells = self.cells[ind,0:N]
-            Ac[ind] = polyarea(xp[cells[:,0:N]],yp[cells[:,0:N]],N)            
+            Ac[ind] = polyarea(self.xp[cells[:,0:N]],self.yp[cells[:,0:N]],N)            
             #Ac[ind] = signed_area(xp[cells[:,0:N]],yp[cells[:,0:N]],N)       
         
         return Ac
@@ -591,7 +596,8 @@ class HybridGrid(object):
         Returns the maximum deviation from 90 degrees of each line connecting the 
         edge point to the cell mid-point
         """
-        print 'calculating orthogonality...'
+        if self.VERBOSE:
+            print 'calculating orthogonality...'
         nc = xv.shape[0]
         orthoang = np.zeros((nc,))
         pi_on_2 = 0.5*np.pi
@@ -626,6 +632,66 @@ class HybridGrid(object):
     ###########################
     # Input output functions
     ###########################
+    def writeNC(self,outfile):
+        """
+        Export the grid variables to a netcdf file
+        """
+        from netCDF4 import Dataset
+        from soda.dataio.suntans.suntans_ugrid import ugrid
+        
+        nc = Dataset(outfile, 'w', format='NETCDF4_CLASSIC')
+        nc.Description = 'Unstructured grid file'
+        nc.Author = ''
+        #nc.Created = datetime.now().isoformat()
+
+        nc.createDimension('Nc', self.Nc)
+        nc.createDimension('Np', self.Np)
+        try:
+            nc.createDimension('Ne', self.Ne)
+        except:
+            print 'No dimension: Ne'
+        nc.createDimension('Nk', self.Nkmax)
+        nc.createDimension('Nkw', self.Nkmax+1)
+        nc.createDimension('numsides', self.MAXFACES)
+        nc.createDimension('two', 2)
+        nc.createDimension('time', 0) # Unlimited
+        
+        # Write the grid variables
+        def write_nc_var(var, name, dimensions, attdict, dtype='f8'):
+            tmp=nc.createVariable(name, dtype, dimensions)
+            for aa in attdict.keys():
+                tmp.setncattr(aa,attdict[aa])
+            nc.variables[name][:] = var
+    
+        gridvars = ['suntans_mesh','cells','face','nfaces',\
+             'edges','neigh','grad','xp','yp','xv','yv','xe','ye',\
+            'normal','n1','n2','df','dg','def',\
+            'Ac','dv','dz','z_r','z_w','Nk','Nke','mark']
+        
+        self.Nk += 1 # Set to one-base in the file (reset to zero-base after)
+        self.suntans_mesh=[0]  
+        for vv in gridvars:
+            if self.__dict__.has_key(vv):
+                if self.VERBOSE:
+                    print 'Writing variables: %s'%vv
+
+                write_nc_var(self[vv],vv,\
+                        ugrid[vv]['dimensions'],\
+                        ugrid[vv]['attributes'],\
+                        dtype=ugrid[vv]['dtype'])
+            
+            # Special treatment for "def"
+            if vv == 'def' and self.__dict__.has_key('DEF'):
+                if self.VERBOSE:
+                    print 'Writing variables: %s'%vv
+                write_nc_var(self['DEF'],vv,ugrid[vv]['dimensions'],\
+                        ugrid[vv]['attributes'],\
+                        dtype=ugrid[vv]['dtype'])
+
+        nc.close()
+        self.Nk -= 1 # set back to zero base
+
+
     def write2suntans(self,suntanspath):
         """
         Write to suntans grid format ascii files
@@ -748,6 +814,22 @@ class HybridGrid(object):
 
         return eptr.astype(np.int32), eind.astype(np.int32)
 
+    def create_graph(self):
+        """
+        Create a cell graph in the format used by Metis
+        """
+        # Count the total number of neighbours (graph edges)
+        idx = self.neigh != -1
+        Nge = np.sum(idx)
+        adjncy = self.neigh[idx]
+
+        # adjacency matrix
+        nneigh = np.sum(idx,axis=1)
+        xadj = np.zeros((self.Nc+1))
+        xadj[1:] = np.cumsum(nneigh)
+
+        return xadj.astype(np.int32), adjncy.astype(np.int32)
+ 
 
 
              
@@ -826,8 +908,10 @@ class HybridGrid(object):
         missing_bcs = (self.mark==0) & (self.grad[:,1]<0)
         n_missing = missing_bcs.sum()
         if any(missing_bcs):
-            print "WARNING: %d edges are on the boundary but have marker==0"%n_missing
-            print "Assuming they are closed boundaries!"
+
+            if self.VERBOSE:
+                print "WARNING: %d edges are on the boundary but have marker==0"%n_missing
+                print "Assuming they are closed boundaries!"
 
             self.mark[missing_bcs] = 1
 
@@ -1000,6 +1084,10 @@ class HybridGrid(object):
     def Npoints(self):
         return len(self.xp)
 
+    def __getitem__(self,y):
+        x = self.__dict__.__getitem__(y)
+        return x
+ 
 #def signed_area(x,y,N):
 #    i = np.arange(N)
 #    ip1 = (i+1)%(N)

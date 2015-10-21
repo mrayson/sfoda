@@ -26,8 +26,19 @@ def cartesian_ugrid_gen(xlims, ylims, dx, suntanspath=None, maskpoly=None):
 
     # Create a mask polygon
     X,Y = np.meshgrid(xgrd,ygrd)
-    XY = np.vstack((X.ravel(),Y.ravel())).T
 
+    curv_ugrid_gen(X,Y,suntanspath=suntanspath,maskpoly=maskpoly)
+
+
+def curv_ugrid_gen(X,Y,suntanspath=None,maskpoly=None):
+    """
+    Creates a curvilinear mesh from grid corners points stored
+    in arrays X and Y.
+    """
+
+    ny,nx = X.shape
+
+    XY = np.vstack((X.ravel(),Y.ravel())).T
     if not maskpoly is None:
         mask = inpolygon(XY,maskpoly)
         mask = mask.reshape((ny,nx))
@@ -44,8 +55,10 @@ def cartesian_ugrid_gen(xlims, ylims, dx, suntanspath=None, maskpoly=None):
     for jj in range(ny):
         for ii in range(nx):
             #if mask[jj,ii]:
-            xp.append(xgrd[ii])
-            yp.append(ygrd[jj])
+            #xp.append(xgrd[ii])
+            #yp.append(ygrd[jj])
+            xp.append(X[jj,ii])
+            yp.append(Y[jj,ii])
 
     for jj in range(ny-1):
         for ii in range(nx-1):
