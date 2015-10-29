@@ -8,8 +8,10 @@ Matt Rayson
 Stanford University
 March 2013
 """
+from collections import OrderedDict
 
-ugrid={}
+#ugrid={}
+ugrid = OrderedDict()
 
 fillval=999999.0
 

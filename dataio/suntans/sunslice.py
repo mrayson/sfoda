@@ -7,19 +7,19 @@ Created on Wed Jul 03 12:29:14 2013
 @author: mrayson
 """
 
-from sunpy import Spatial
-from trisearch import TriSearch
 import numpy as np
 from datetime import datetime
 import matplotlib.pyplot as plt
 from scipy.interpolate import interp1d
 import matplotlib.animation as animation
-from sunpy import unsurf
-from hybridgrid import Line
-from hybridgrid import Point as GPoint
-
-from gridsearch import GridSearch
 from shapely.geometry import LineString, Point
+
+from soda.dataio.ugrid.hybridgrid import Line
+from soda.dataio.ugrid.hybridgrid import Point as GPoint
+from soda.dataio.ugrid.gridsearch import GridSearch
+from sunpy import Spatial
+from sunpy import unsurf
+
 
 import pdb
 
@@ -291,7 +291,7 @@ class Slice(Spatial):
         """
         
         # Find the cell index of each point along the slice
-        self.Tri = TriSearch(self.xp,self.yp,self.cells)
+        self.Tri = GridSearch(self.xp,self.yp,self.cells)
         
         self.cellind = self.Tri(self.xslice,self.yslice)
 
@@ -494,10 +494,20 @@ class SliceEdge(Slice):
         # Check if cell-centered variable
         is3D=True
         isCell=False
-        if self.hasDim(variable,self.griddims['Ne']):
-            isCell=False
-        elif self.hasDim(variable,self.griddims['Nc']): 
+        if self.hasVar(variable):
+            if self.hasDim(variable,self.griddims['Ne']):
+                isCell=False
+            elif self.hasDim(variable,self.griddims['Nc']): 
+                isCell=True
+                # Check if 3D
+            if self.hasDim(variable,self.griddims['Nk']): # 3D
+                is3D=True
+            else:
+                is3D=False
+        else:
             isCell=True
+
+        if isCell:
             nc1 = self.grad[j,0].copy()
             nc2 = self.grad[j,1].copy()
             # check for edges (use logical indexing)
@@ -505,12 +515,6 @@ class SliceEdge(Slice):
             nc1[ind1]=nc2[ind1]
             ind2 = nc2==-1
             nc2[ind2]=nc1[ind2]
-
-            # Check if 3D
-        if self.hasDim(variable,self.griddims['Nk']): # 3D
-            is3D=True
-        else:
-            is3D=False
 
         klayer,Nkmax = self.get_klayer()
 

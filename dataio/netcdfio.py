@@ -13,7 +13,7 @@ August 2012
 """
 
 from netCDF4 import Dataset, num2date
-import shapefile
+#import shapefile
 import numpy as np
 import sqlite3
 
@@ -21,6 +21,52 @@ from datetime import datetime
 import matplotlib.dates as dates
 import matplotlib.pyplot as plt
 
+import xray
+import yaml
+import os
+import soda
+
+import pdb
+
+_path = os.path.abspath(soda.__file__)
+_dirpath = os.path.dirname(_path)
+
+# Load the netcdf metadata for all of the routines
+with open('%s/dataio/ncmetadata.yaml'%_dirpath, 'r') as f:
+    ncmeta = yaml.load(f)
+
+###################
+# xray routines
+###################
+def dict_toxray(data, **kwargs):
+    """
+    Converts a dictionary with keys as variable names to an
+    xray.Dataset object
+
+    The dictionary keys should correspond with variable names in 
+    ncmetadata.yaml
+
+    **kwargs are passed directly to xray.DataArray()
+    """
+    
+    ds = {}
+    for vv in data.keys():
+        if not ncmeta.has_key(vv):
+            print 'Warning variable: %s not in ncmetadata.yaml. Skipping...'
+            continue
+        
+        attrs = ncmeta[vv]['attributes']
+        da = xray.DataArray(data[vv], attrs = attrs, **kwargs)
+
+        #ds.update({vv:(['time'],da)})
+        ds.update({vv:da})
+
+    return xray.Dataset(ds)
+
+
+###################
+# Old routines
+###################
 def writePointData2Netcdf(ncfile,data,globalatts):
     """ 
     Function for writing point/observation data to a grouped netcdf file.

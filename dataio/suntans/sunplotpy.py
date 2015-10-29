@@ -52,7 +52,7 @@ class SunPlotPy(wx.Frame, Spatial, Grid ):
     showedges=False
     bgcolor='k'
     textcolor='w'
-    cmap='jet'
+    cmap='RdBu'
     particlesize = 1.8
     particlecolor = 'm'
 

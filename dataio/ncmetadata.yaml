@@ -1,0 +1,493 @@
+#####
+# File containing netcdf variable metadata that I use
+#
+#
+
+#######
+# Ad-hoc post-processing variables
+#######
+Q:
+    attributes:
+        long_name : 'Volume flux rate'
+        units : 'm3 s-1'
+Qin:
+    dimensions: 'time'
+    attributes:
+        long_name : 'Inward volume flux rate'
+        units : 'm3 s-1'
+Qout:
+    dimensions: 'time'
+    attributes:
+        long_name : 'Outward volume flux rate'
+        units : 'm3 s-1'
+F:
+    dimensions: 'time'
+    attributes:
+        long_name : 'Salinity Volume flux rate'
+        units : 'psu m3 s-1'
+Fin:
+    dimensions: 'time'
+    attributes:
+        long_name : 'Inward salinity volume flux rate'
+        units : 'psu m3 s-1'
+Fout:
+    dimensions: 'time'
+    attributes:
+        long_name : 'Outward salinity volume flux rate'
+        units : 'psu m3 s-1'
+S:
+    dimensions: 'time'
+    attributes:
+        long_name : 'Sectionally-averaged salinity'
+        units : 'psu'
+area:
+    dimensions: 'time'
+    attributes:
+        long_name : 'Cross-section area'
+        units : 'm2'
+
+##############
+# SUNTANS variables - TBC
+##############
+suntans_mesh:
+    attributes:
+        long_name: Topology data of 2D unstructured mesh
+        edge_coordinates: xe ye
+        face_edge_connectivity: face
+        topology_dimension: 2
+        edge_face_connectivity: grad
+        edge_node_connectivity: edges
+        node_coordinates: xp yp
+        cf_role: mesh_topology
+        face_node_connectivity: cells
+        face_coordinates: xv yv
+    zlib: False
+    dimensions:
+    dtype: i4
+cells:
+    attributes:
+        long_name: Maps every face to its corner nodes
+        cf_role: face_node_connectivity
+    zlib: False
+    dimensions:
+        Nc
+        numsides
+    dtype: i4
+face:
+    attributes:
+        long_name: Maps every face to its neighbouring faces
+        cf_role: face_edge_connectivity
+    zlib: False
+    dimensions:
+        Nc
+        numsides
+    dtype: i4
+nfaces:
+    attributes:
+        long_name: Number of cell faces
+    zlib: False
+    dimensions:
+        Nc
+    dtype: i4
+edges:
+    attributes:
+        long_name: Maps every edge to the two nodes it connects
+        cf_role: edge_node_connectivity
+    zlib: False
+    dimensions:
+        Ne
+        two
+    dtype: i4
+neigh:
+    attributes:
+        long_name: Maps every face to its neighbouring faces
+        cf_role: face_face_connectivity
+    zlib: False
+    dimensions:
+        Nc
+        numsides
+    dtype: i4
+grad:
+    attributes:
+        long_name: Maps every edge to the two faces it connects
+        cf_role: edge_face_connectivity
+    zlib: False
+    dimensions:
+        Ne
+        two
+    dtype: i4
+mark:
+    attributes:
+        units: 0 - comp, 1 - boundary, 2, 3
+        long_name: Edge marker type
+        coordinates: xe ye
+    zlib: False
+    dimensions:
+        Ne
+    dtype: i4
+xv:
+    attributes:
+        long_name: Easting of 2D mesh face
+        standard_name: Easting
+    zlib: False
+    dimensions:
+        Nc
+    dtype: f8
+yv:
+    attributes:
+        long_name: Easting of 2D mesh face
+        standard_name: Easting
+    zlib: False
+    dimensions:
+        Nc
+    dtype: f8
+xp:
+    attributes:
+        long_name: Easting of 2D mesh node
+        standard_name: Easting
+    zlib: False
+    dimensions:
+        Np
+    dtype: f8
+yp:
+    attributes:
+        long_name: Northing of 2D mesh nodes
+        standard_name: Northing
+    zlib: False
+    dimensions:
+        Np
+    dtype: f8
+xe:
+    attributes:
+        long_name: Easting of 2D mesh edge
+        standard_name: Easting
+    zlib: False
+    dimensions:
+        Ne
+    dtype: f8
+ye:
+    attributes:
+        long_name: Northing of 2D mesh edge
+        standard_name: Northing
+    zlib: False
+    dimensions:
+        Ne
+    dtype: f8
+normal:
+    attributes:
+        long_name: Dot product of unique normal with outward normal of each edge
+    zlib: False
+    dimensions:
+        Nc
+        numsides
+    dtype: i4
+n1:
+    attributes:
+        long_name: x-component of the edge normal
+        coordinates: xe ye
+    zlib: False
+    dimensions:
+        Ne
+    dtype: f8
+n2:
+    attributes:
+        long_name: y-component of the edge normal
+        coordinates: xe ye
+    zlib: False
+    dimensions:
+        Ne
+    dtype: f8
+df:
+    attributes:
+        units: m
+        long_name: edge length
+        coordinates: xe ye
+    zlib: False
+    dimensions:
+        Ne
+    dtype: f8
+dg:
+    attributes:
+        units: m
+        long_name: Distance between faces on either side of edge
+        coordinates: xe ye
+    zlib: False
+    dimensions:
+        Ne
+    dtype: f8
+def:
+    attributes:
+        units: m
+        long_name: Distance between faces and edges
+        coordinates: xe ye
+    zlib: False
+    dimensions:
+        Nc
+        numsides
+    dtype: f8
+Ac:
+    attributes:
+        units: m2
+        long_name: Horizontal area of 2D mesh
+        mesh: suntans_mesh
+        location: face
+        coordinates: xv yv
+    zlib: False
+    dimensions:
+        Nc
+    dtype: f8
+dz:
+    attributes:
+        units: m
+        long_name: z layer spacing
+    zlib: False
+    dimensions:
+        Nk
+    dtype: f8
+z_r:
+    attributes:
+        units: m
+        long_name: depth at layer mid points
+        standard_name: ocean_z_coordinate
+        positive: up
+    zlib: False
+    dimensions:
+        Nk
+    dtype: f8
+z_w:
+    attributes:
+        units: m
+        long_name: depth at layer edges
+        standard_name: ocean_z_coordinate
+        positive: up
+    zlib: False
+    dimensions:
+        Nkw
+    dtype: f8
+Nk:
+    attributes:
+        long_name: Number of layers at face
+    zlib: False
+    dimensions:
+        Nc
+    dtype: i4
+Nke:
+    attributes:
+        long_name: Number of layers at edge
+    zlib: False
+    dimensions:
+        Ne
+    dtype: i4
+dv:
+    attributes:
+        positive: down
+        coordinates: xv yv
+        long_name: seafloor depth
+        standard_name: sea_floor_depth_below_geoid
+        mesh: suntans_mesh
+        location: face
+        units: m
+    zlib: False
+    dimensions:
+        Nc
+    dtype: f8
+time:
+    attributes:
+        units: seconds since 1990-01-01 00:00:00
+        long_name: time
+    zlib: False
+    dimensions:
+        time
+    dtype: f8
+eta:
+    fill_value: 999999.0
+    complevel: 1
+    dimensions:
+        time
+        Nc
+    dtype: f8
+    zlib: False
+    attributes:
+        units: m
+        long_name: Sea surface elevation
+        mesh: suntans_mesh
+        location: face
+        coordinates: time yv xv
+uc:
+    fill_value: 999999.0
+    complevel: 1
+    dimensions:
+        time
+        Nk
+        Nc
+    dtype: f8
+    zlib: True
+    attributes:
+        units: m s-1
+        long_name: Eastward water velocity component
+        mesh: suntans_mesh
+        location: face
+        coordinates: time z_r yv xv
+vc:
+    fill_value: 999999.0
+    complevel: 1
+    dimensions:
+        time
+        Nk
+        Nc
+    dtype: f8
+    zlib: True
+    attributes:
+        units: m s-1
+        long_name: Northward water velocity component
+        mesh: suntans_mesh
+        location: face
+        coordinates: time z_r yv xv
+nu_v:
+    fill_value: 999999.0
+    complevel: 1
+    dimensions:
+        time
+        Nk
+        Nc
+    dtype: f8
+    zlib: True
+    attributes:
+        units: m2 s-1
+        long_name: Vertical eddy viscosity
+        mesh: suntans_mesh
+        location: face
+        coordinates: time z_r yv xv
+salt:
+    fill_value: 999999.0
+    complevel: 1
+    dimensions:
+        time
+        Nk
+        Nc
+    dtype: f8
+    zlib: True
+    attributes:
+        units: ppt
+        long_name: Salinity
+        mesh: suntans_mesh
+        location: face
+        coordinates: time z_r yv xv
+temp:
+    fill_value: 999999.0
+    complevel: 1
+    dimensions:
+        time
+        Nk
+        Nc
+    dtype: f8
+    zlib: True
+    attributes:
+        units: degrees C
+        long_name: Water temperature
+        mesh: suntans_mesh
+        location: face
+        coordinates: time z_r yv xv
+rho:
+    fill_value: 999999.0
+    complevel: 1
+    dimensions:
+        time
+        Nk
+        Nc
+    dtype: f8
+    zlib: True
+    attributes:
+        units: kg m-3
+        long_name: Water density
+        mesh: suntans_mesh
+        location: face
+        coordinates: time z_r yv xv
+w:
+    fill_value: 999999.0
+    complevel: 1
+    dimensions:
+        time
+        Nkw
+        Nc
+    dtype: f8
+    zlib: True
+    attributes:
+        units: m s-1
+        long_name: Vertical water velocity component
+        mesh: suntans_mesh
+        location: face
+        coordinates: time z_w yv xv
+U:
+    fill_value: 999999.0
+    complevel: 1
+    dimensions:
+        time
+        Nk
+        Ne
+    dtype: f8
+    zlib: True
+    attributes:
+        units: m s-1
+        long_name: Edge normal velocity
+        mesh: suntans_mesh
+        location: face
+        coordinates: time z_r ye xe
+agec:
+    fill_value: 999999.0
+    complevel: 1
+    dimensions:
+        time
+        Nk
+        Nc
+    dtype: f8
+    zlib: True
+    attributes:
+        units: 
+        long_name: Age concentration
+        mesh: suntans_mesh
+        location: face
+        coordinates: time z_r yv xv
+agealpha:
+    fill_value: 999999.0
+    complevel: 1
+    dimensions:
+        time
+        Nk
+        Nc
+    dtype: f8
+    zlib: True
+    attributes:
+        units: seconds
+        long_name: Age alpha parameter
+        mesh: suntans_mesh
+        location: face
+        coordinates: time z_r yv xv
+Uwind:
+    fill_value: 999999.0
+    complevel: 1
+    dimensions:
+        time
+        Nc
+    dtype: f8
+    zlib: False
+    attributes:
+        units: m s-1
+        long_name: Eastward wind velocity component
+        mesh: suntans_mesh
+        location: face
+        coordinates: time yv xv
+Vwind:
+    fill_value: 999999.0
+    complevel: 1
+    dimensions:
+        time
+        Nc
+    dtype: f8
+    zlib: False
+    attributes:
+        units: m s-1
+        long_name: Northward wind velocity component
+        mesh: suntans_mesh
+        location: face
+        coordinates: time yv xv

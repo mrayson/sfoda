@@ -17,6 +17,8 @@ from datetime import datetime, timedelta
 from uspectra import uspectra, getTideFreq
 import operator
 
+from soda.dataio.netcdfio import queryNC
+
 import pdb
 
 class timeseries(object):
@@ -657,7 +659,8 @@ class ModVsObs(object):
         fig,ax,ll = stackplot(self.TSmod.t,self.TSmod.y,ax=ax,fig=fig,\
             scale=scale,units=self.units,labels=labels,color=colormod,*kwargs)
 
-    def scatter(self,ylims=None,printstats=True,**kwargs):
+    def scatter(self,ylims=None,printstats=True,\
+           textw=0.05, texth=0.55, **kwargs):
         """
         Scatter plot of the model vs observation
         """
@@ -677,7 +680,7 @@ class ModVsObs(object):
         if printstats:
             textstr = '$r^2$ = %6.2f\nRMSE = %6.2f\nBias = %6.2f\n'%(\
                 self.cc.mean(),self.rmse.mean(),self.bias.mean())
-            plt.text(0.05,0.55,textstr,transform=ax.transAxes)
+            plt.text(textw,texth,textstr,transform=ax.transAxes)
 
         return h1, ax
 
@@ -934,7 +937,6 @@ def loadDBstation(dbfile,stationID,varname,timeinfo=None,filttype=None,cutoff=36
         -1 on error
             
     """
-    from netcdfio import queryNC
     
     outvar = ['NetCDF_Filename','NetCDF_GroupID','StationName']
     tablename = 'observations'

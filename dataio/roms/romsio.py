@@ -13,14 +13,15 @@ from netCDF4 import Dataset, MFDataset, num2date
 from datetime import datetime, timedelta
 import matplotlib.pyplot as plt
 from scipy import interpolate
-# Private modules
-from interpXYZ import interpXYZ
-import othertime
-from timeseries import timeseries
 import operator
-from maptools import ll2lcc
-from mygeometry import MyLine
-from mythredds import MFncdap
+
+# Private modules
+from soda.utils.interpXYZ import interpXYZ
+from soda.utils import othertime
+from soda.utils.timeseries import timeseries
+from soda.utils.maptools import ll2lcc
+from soda.utils.mygeometry import MyLine
+from soda.dataio.datadownload.mythredds import MFncdap
 
 try:
     from octant.slice import isoslice

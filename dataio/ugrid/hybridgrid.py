@@ -13,7 +13,6 @@ import numpy as np
 from scipy import sparse
 import operator as op
 import matplotlib.pyplot as plt
-from matplotlib.collections import PolyCollection, LineCollection
 
 from soda.dataio.ugrid import ugridutils
 import pdb
@@ -55,71 +54,90 @@ class HybridGrid(object):
 
     VERBOSE=False
 
-    def __init__(self,xp,yp,cells,nfaces=None,edges=None,\
-        mark=None,grad=None,neigh=None,xv=None,yv=None,**kwargs):
+    lightmode=False
+
+    nfaces=None
+    edges=None
+    mark=None
+    grad=None
+    neigh=None
+    xv=None
+    yv=None
+
+    def __init__(self,xp,yp,cells,**kwargs):
+
+        self.__dict__.update(**kwargs)
         
-        self.xp = np.array(xp)
-        self.yp = np.array(yp)
-        self.Np = self.xp.shape[0]
-        
-        self.cells = cells.astype(np.int32)
-        self.Nc = self.cells.shape[0]
-    
-        if nfaces is None:
-            self.nfaces = 3*np.ones((self.Nc,),np.int)
+        self.xp = xp
+        self.yp = yp
+        self.cells=cells
+
+        # Make sure the inputs are ndarrays
+        self.check_inputs()
+
+        if self.nfaces is None:
+            self.nfaces = 3*np.ones((self.Nc,),np.int64)
             self.MAXFACES = 3
         else:
-            self.nfaces = np.array(nfaces,dtype=np.int)
             self.MAXFACES = np.max(self.nfaces)
             
-        # Make sure the nodes are rotated counter-clockwise
-        self.Ac = self.calc_area()
-        self.ensure_ccw()
-        
-        if edges is None or grad is None:
+        if self.edges is None or self.grad is None:
             self.make_edges_from_cells()
             #self.make_edges_from_cells_sparse()
         else:
-            self.edges = edges.astype(np.int64)
-            self.grad = grad.astype(np.int64)
-
-        self.Ne = self.edges.shape[0]
+            self.edges = self.edges.astype(np.int64)
+            self.grad = self.grad.astype(np.int64)
 
         # make_edges_from_cells sets everything to zero
-        if not mark is None:
-            self.mark=mark.astype(np.int64)
-        
-        # Face->edge connectivity
-        self.face = self.cell_edge_map()
+        if not self.mark is None:
+            self.mark=self.mark.astype(np.int64)
 
-        if neigh is None:
-            self.make_neigh_from_cells()
-        else:
-            self.neigh=neigh
-        
-        if xv is None:
-            self.calc_centroids()
-        else:
-            self.xv = xv
-            self.yv = yv
+        # Set the size parameters
+        self.Np = self.xp.shape[0]
+        self.Nc = self.cells.shape[0]
+        self.Ne = self.edges.shape[0]
 
-        # Calculate the coordintes
-        self.edge_centers()
 
-        # Calculate distance and other metrics
-        self.calc_unitnormal()
-        self.calc_normal()
-
-        self.calc_dg()
-        self.calc_def()
-        self.calc_dfe()
-        self.calc_df()
-        #self.calc_tangent()
-        self.calc_Aj()
-
-        
         # Make sure the BCs are ok
         self.check_missing_bcs()
+
+        #######
+        # Compute the rest of the grid quantities
+        #######
+        if not self.lightmode:
+            # Make sure the nodes are rotated counter-clockwise
+            self.Ac = self.calc_area()
+            self.ensure_ccw()
+
+            # Face->edge connectivity
+            self.face = self.cell_edge_map()
+
+            if self.neigh is None:
+                self.make_neigh_from_cells()
+            else:
+                self.neigh=self.neigh
+            
+            if self.xv is None:
+                self.calc_centroids()
+            else:
+                self.xv = self.xv
+                self.yv = self.yv
+
+            # Calculate the coordintes
+            self.edge_centers()
+
+            # Calculate distance and other metrics
+            self.calc_unitnormal()
+            self.calc_normal()
+
+            self.calc_dg()
+            self.calc_def()
+            self.calc_dfe()
+            self.calc_df()
+            #self.calc_tangent()
+            self.calc_Aj()
+
+        
      
     ###################################
     # Geometry functions
@@ -1076,6 +1094,22 @@ class HybridGrid(object):
         for n in unused:
             self.delete_node(n)
  
+    def check_inputs(self):
+        """
+        Check that the inputs are the right type
+        """
+        vars = ['xp','yp','cells','nfaces']
+
+        for vv in vars:
+            val = getattr(self,vv)
+            if not val is None:
+                if not isinstance(val, np.ndarray):
+                     print 'converting variable: %s'%vv
+                     valout = np.asarray(val)
+                     setattr(self,vv,valout)
+
+        self.cells = self.cells.astype(np.int32)
+        self.nfaces = self.nfaces.astype(np.int64)
         
     def Nedges(self):
         return len(self.edges)
@@ -1094,154 +1128,6 @@ class HybridGrid(object):
 #    #return 0.5*(points[i,0]*points[ip1,1] - points[ip1,0]*points[i,1]).sum()
 #    return 0.5*(x[...,i]*y[...,ip1] - x[...,ip1]*y[...,i])
     
-###########################
-# Plotting class
-###########################
-class Plot(HybridGrid):
-    _xlims = None
-    _ylims = None
-    _xy = None
-    clim = None
-    def __init__(self, xp, yp, cells, **kwargs):
-
-        HybridGrid.__init__(self, xp, yp, cells, **kwargs)
-
-    def plotmesh(self,ax=None,facecolors='none',linewidths=0.2,**kwargs):
-        """
-        Plots the outline of the grid mesh
-        """
-        fig = plt.gcf()
-        if ax==None:
-            ax = fig.gca()
-    
-        xlim=self.xlims()
-        ylim=self.ylims()
-        collection = PolyCollection(self.xy(), facecolors=facecolors,\
-            linewidths=linewidths, **kwargs)
-        
-        ax.add_collection(collection)
-    
-        ax.set_aspect('equal')
-        ax.set_xlim(xlim)
-        ax.set_ylim(ylim)
-
-        return ax, collection
-
-    def plotcelldata(self,z, xlims=None, ylims=None, **kwargs):
-        """
-        Plot cell centered data
-        """
-        ax=plt.gca()
-        fig = plt.gcf()
-        # Find the colorbar limits if unspecified
-        if self.clim is None:
-            self.clim = [z.min(),z.max()]
-        # Set the xy limits
-        if xlims is None or ylims is None:
-            xlims=self.xlims()
-            ylims=self.ylims()
-        
-        collection = PolyCollection(self.xy(),**kwargs)
-        collection.set_array(z)
-        collection.set_clim(vmin=self.clim[0],vmax=self.clim[1])
-        collection.set_edgecolors(collection.to_rgba(z))    
-        
-        ax.add_collection(collection)
-
-        ax.set_aspect('equal')
-        ax.set_xlim(xlims)
-        ax.set_ylim(ylims)
-
-        axcb = fig.colorbar(collection)
-    
-        return fig, ax, collection, axcb
-    def plotedgedata(self,z,xlims=None,ylims=None,**kwargs):
-        """
-          Plot the unstructured grid edge data
-        """
-        ax=plt.gca()
-        fig = plt.gcf()
-
-        assert(z.shape[0] == self.Ne),\
-            ' length of z scalar vector not equal to number of edges, Ne.'
-        
-        # Find the colorbar limits if unspecified
-        if self.clim is None:
-            self.clim = [z.min(),z.max()]
-        # Set the xy limits
-        if xlims is None or ylims is None:
-            xlims=self.xlims()
-            ylims=self.ylims()
-        
-        xylines = [self.xp[self.edges],self.yp[self.edges]]
-        #self.fig,self.ax,self.collection,self.cb=edgeplot(xylines,z,xlim=xlims,ylim=ylims,\
-        #    clim=self.clim,**kwargs)
-
-        # Create the inputs needed by line collection
-        Ne = xylines[0].shape[0]
-
-        # Put this into the format needed by LineCollection
-        linesc = [zip(xylines[0][ii,:],xylines[1][ii,:]) for ii in range(Ne)]
-
-        collection = LineCollection(linesc,array=z,**kwargs)
-
-        collection.set_clim(vmin=self.clim[0],vmax=self.clim[1])
-        
-        ax.add_collection(collection)
-
-        ax.set_aspect('equal')
-        ax.set_xlim(xlims)
-        ax.set_ylim(ylims)
-
-        axcb = fig.colorbar(collection)
-        
-        return fig, ax, collection, axcb
-
-
- 
- 
-    def xlims(self):
-        if self._xlims is None:
-            self._xlims = [self.xp.min(),self.xp.max()]
-        return self._xlims
-
-    def ylims(self):
-        if self._ylims is None:
-            self._ylims = [self.yp.min(),self.yp.max()]
-        return self._ylims
-
-    def xy(self):
-        """ 
-        Returns a list of Nx2 vectors containing the grid cell node coordinates
-            
-        Used by spatial ploting routines 
-        """
-        if self._xy is None:
-            xp = np.zeros((self.Nc,self.MAXFACES+1))
-            yp = np.zeros((self.Nc,self.MAXFACES+1))
-            
-            cells=self.cells.copy()
-            cells[self.cells.mask]=0
-
-            xp[:,:self.MAXFACES]=self.xp[cells]
-            xp[range(self.Nc),self.nfaces]=self.xp[cells[:,0]]
-            yp[:,:self.MAXFACES]=self.yp[cells]
-            yp[range(self.Nc),self.nfaces]=self.yp[cells[:,0]]
-
-            xp[self.cells.mask]==0
-            yp[self.cells.mask]==0
-
-            xy = np.zeros((self.MAXFACES+1,2))
-            def _closepoly(ii):
-                nf=self.nfaces[ii]+1
-                xy[:nf,0]=xp[ii,:nf]
-                xy[:nf,1]=yp[ii,:nf]
-                return xy[:nf,:].copy()
-
-            self._xy = [_closepoly(ii) for ii in range(self.Nc)]
-
-        return self._xy
-
 
 ###########################
 # Utility functions
