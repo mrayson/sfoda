@@ -878,8 +878,8 @@ def calc_salt_flux(ncfile,xpt,ypt,tstart,tend):
     else:
         SE.tstep = SE.getTstep(tstart,tend)
 
-    #print 'Loading the area data...'
-    #A_all= SE.loadData(variable='area')
+    print 'Loading the area data...'
+    A_all= SE.loadData(variable='area')
     #print 'Loading the salt data...'
     #S_all= SE.loadData(variable='salt') # psu 
     #print 'Loading the salt flux data...'
@@ -888,7 +888,7 @@ def calc_salt_flux(ncfile,xpt,ypt,tstart,tend):
     Q_all = SE.loadData(variable='U_F')
 
 
-    def calc_flux_light(Q_all,normal):
+    def calc_flux_light(Q_all,A_all,normal):
 
         Nt,Nk,Ne = Q_all.shape
 
@@ -896,6 +896,7 @@ def calc_salt_flux(ncfile,xpt,ypt,tstart,tend):
         Q_all = Q_all * normal
 
         Q = Q_all.sum(axis=-1).sum(axis=-1)
+        A = A_all.sum(axis=-1).sum(axis=-1)
 
         # Decompose into inflow and outflow
         ind_in = Q_all > 0
@@ -908,7 +909,7 @@ def calc_salt_flux(ncfile,xpt,ypt,tstart,tend):
             Qin[ii] = np.sum(Q_all[ii,ind_in[ii,...]])
             Qout[ii] = np.sum(Q_all[ii,ind_out[ii,...]])
 
-        return Q,Qin,Qout
+        return Q,Qin,Qout,A
 
 
     def calc_flux(Q_all,F_all, S_all,A_all,normal):
@@ -945,17 +946,16 @@ def calc_salt_flux(ncfile,xpt,ypt,tstart,tend):
     for ii in range(len(Q_all)):
         #Q,Qin,Qout,F,Fin,Fout,S,A =\
         #    calc_flux(Q_all[ii],F_all[ii],S_all[ii],A_all[ii],SE.slices[ii]['normal'])
-        Q, Qin, Qout =\
-            calc_flux_light(Q_all[ii], SE.slices[ii]['normal'])
+        Q, Qin, Qout, A =\
+            calc_flux_light(Q_all[ii], A_all[ii], SE.slices[ii]['normal'])
 
         data.append({'time':SE.time[SE.tstep],\
                 'Q':Q,'Qin':Qin,'Qout':Qout,\
                 #'F':F,'Fin':Fin,'Fout':Fout,\
                 #'S':S,\
-                #'area':A,\
-                 })
+                'area':A})
 
-    return data #, SE
+    return data, SE
 
 def volume_integrate(ncfile,varnames,shpfiles):
     """

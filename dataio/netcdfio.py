@@ -18,7 +18,6 @@ import numpy as np
 import sqlite3
 
 from datetime import datetime
-import matplotlib.dates as dates
 import matplotlib.pyplot as plt
 
 import xray
@@ -51,14 +50,15 @@ def dict_toxray(data, **kwargs):
     
     ds = {}
     for vv in data.keys():
-        if not ncmeta.has_key(vv):
-            print 'Warning variable: %s not in ncmetadata.yaml. Skipping...'
-            continue
         
-        attrs = ncmeta[vv]['attributes']
+        if ncmeta.has_key(vv):
+            attrs = ncmeta[vv]['attributes']
+        else:
+            print 'Warning variable: %s not in ncmetadata.yaml. Dataset will have no attrs'
+            attrs = {}
+
         da = xray.DataArray(data[vv], attrs = attrs, **kwargs)
 
-        #ds.update({vv:(['time'],da)})
         ds.update({vv:da})
 
     return xray.Dataset(ds)
@@ -449,6 +449,8 @@ def runExample1():
 # Example 2) Return data from all stations in a database with Variable_Name = varname
 ####
 def runExample2():
+
+    import matplotlib.dates as dates
 
     dbfile = 'C:/Projects/GOMGalveston/DATA/GalvestonObs.db'
     outvar = ['NetCDF_Filename','NetCDF_GroupID','StationName']

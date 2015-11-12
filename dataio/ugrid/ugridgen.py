@@ -27,7 +27,7 @@ def cartesian_ugrid_gen(xlims, ylims, dx, suntanspath=None, maskpoly=None):
     # Create a mask polygon
     X,Y = np.meshgrid(xgrd,ygrd)
 
-    curv_ugrid_gen(X,Y,suntanspath=suntanspath,maskpoly=maskpoly)
+    return curv_ugrid_gen(X,Y,suntanspath=suntanspath,maskpoly=maskpoly)
 
 
 def curv_ugrid_gen(X,Y,suntanspath=None,maskpoly=None):
