@@ -62,6 +62,29 @@ class SunTvtk(Spatial):
             print 'Using offscreen rendering.'
             mlab.options.offscreen=True
 
+    def to_metismesh(self):
+        """
+        Creates the mesh vectors 'eptr' and 'eind' required by
+        metis functions
+        """
+        eptr = np.zeros((self.Nc+1))
+        eptr[1:] = np.cumsum(self.nfaces)
+        #eptr = eptr - eptr[0]
+
+        ne = self.nfaces.sum()
+
+        eind = np.zeros((ne,))
+
+        pt1 = 0
+        for i in range(self.Nc):
+            nf = self.nfaces[i] 
+            pt2 = pt1+nf
+            eind[pt1:pt2] = self.cells[i,0:nf]
+            pt1 = pt2+0.
+
+        return eptr.astype(np.int32), eind.astype(np.int32)
+
+
     def initMixedTvtk2D(self):
         """
         Initialise the actual 2 dimensional tvtk object
@@ -69,21 +92,26 @@ class SunTvtk(Spatial):
         This is for a mixed data type
         """
 
-        poly_type = tvtk.Polygon().cell_type
+        #poly_type = tvtk.Polygon().cell_type
         #poly_type = tvtk.Polyhedron().cell_type
+        #poly_type = tvtk.Voxel().cell_type
+        poly_type = tvtk.Quad().cell_type
         
         self.ug = tvtk.UnstructuredGrid(points=self.points)
 
-        cells = np.array(self.cells[self.cells.mask==False])
+        offsets, cells = self.to_metismesh()
+        #cells = np.array(self.cells[self.cells.mask==False])
         cell_array = tvtk.CellArray()
         cell_array.set_cells(self.Nc,cells)
-        offsets = np.cumsum(self.nfaces)
-        offsets = offsets - offsets[0]
+        #offsets = np.cumsum(self.nfaces)
+        #offsets = offsets - offsets[0]
 
         poly_types = [poly_type for ii in range(self.Nc)]
 
-        pdb.set_trace()
-        self.ug.set_cells(np.array(poly_types),offsets, cell_array)
+        #
+        #self.ug.set_cells(np.array(poly_types),offsets, cell_array)
+        # For a single cell type
+        self.ug.set_cells(poly_type,self.cells)
     
         self.ug.cell_data.scalars = self.data
         self.ug.cell_data.scalars.name = 'suntans_scalar'
@@ -249,7 +277,7 @@ class SunTvtk(Spatial):
             
         # Add a title if there isn't one
         if not self.__dict__.has_key('title'):
-            self.title=mlab.title(self._SpatialgenTitle(),height=0.95,size=0.15)
+            self.title=mlab.title(Spatial.genTitle(self),height=0.95,size=0.15)
         
     def contour(self,vv=[10],clim=None,**kwargs):
         """
@@ -668,11 +696,11 @@ class SunTvtk(Spatial):
         h=mlab.pipeline.surface(src,vmin=clim[0],vmax=clim[1],**kwargs)
         return h
         
-    def loadData(self):
+    def loadData(self, variable=None):
         """
         Overloaded loadData function - updates the unstructured grid object
         """
-        Spatial.loadData(self)
+        Spatial.loadData(self, variable=variable)
         if self.is3D:
             self.data=np.ravel(self.data[self.mask3D])
         else:

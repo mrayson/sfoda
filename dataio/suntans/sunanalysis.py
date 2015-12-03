@@ -957,7 +957,7 @@ def calc_salt_flux(ncfile,xpt,ypt,tstart,tend):
 
     return data, SE
 
-def volume_integrate(ncfile,varnames,shpfiles):
+def volume_integrate(ncfile,varnames,shpfiles,constantdzz=False):
     """
     Volume integrate a suntans variable for all time in the domain 
     specified with a shpfile polygon
@@ -988,17 +988,21 @@ def volume_integrate(ncfile,varnames,shpfiles):
             data[poly].update({varname:np.zeros((sun.Nt,))})
 
     # Fix dzz for testing
+    sun.tstep = [0]
+    dzz = sun.loadData(variable='dzz')
+    h = ne.evaluate("sum(dzz,axis=0)")
+
     #dzz = np.repeat(sun.dz[:,np.newaxis],sun.Nc,axis=1)
     for ii in range(sun.Nt):
         sun.tstep = [ii]
         print 'Volume integrating for time step: %d of %d...'%(ii,sun.Nt)
 
         # Load the depth and mean age arrays
-        dzz = sun.loadData(variable='dzz')
-
-        # Calculate the total volume 
-        #h = np.sum(dzz,axis=0)
-        h = ne.evaluate("sum(dzz,axis=0)")
+        if not constantdzz:
+            dzz = sun.loadData(variable='dzz')
+            # Calculate the total volume 
+            #h = np.sum(dzz,axis=0)
+            h = ne.evaluate("sum(dzz,axis=0)")
         
         for varname in varnames:
             tmp = sun.loadData(variable=varname)

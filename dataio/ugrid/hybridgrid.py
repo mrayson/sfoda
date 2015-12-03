@@ -112,6 +112,8 @@ class HybridGrid(object):
             # Face->edge connectivity
             self.face = self.cell_edge_map()
 
+            self.markcell = self.calc_markcell(self.mark)
+
             if self.neigh is None:
                 self.make_neigh_from_cells()
             else:
@@ -919,6 +921,17 @@ class HybridGrid(object):
         #self.grad = np.array([edges[ii,3:5] for ii in range(Ne)])
             
             
+    def calc_markcell(self, mark):
+        """
+        Calculates the cell-type based on the edge marker
+
+        """
+        mask = self.cells.mask.copy()
+        ctypes = self.mark[self.face]
+        ctypes[mask] = 0
+
+        return ctypes.max(axis=1)
+
     def check_missing_bcs(self):
         """
         Check for missing BCs

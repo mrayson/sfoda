@@ -8,7 +8,7 @@ Created on Wed Apr 17 09:54:48 2013
 """
 
 from sunpy import Spatial, Grid
-import soda.utils.othertime
+from soda.utils import othertime
 from soda.dataio.ugrid.gridsearch import GridSearch
 from soda.utils.cartgrid import RegGrid
 #import matplotlib.nxutils as nxutils #inpolygon equivalent lives here
