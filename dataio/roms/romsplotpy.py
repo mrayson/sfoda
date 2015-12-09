@@ -86,8 +86,8 @@ class ROMSPlotPy(wx.Frame, ROMS ):
         #self.Bind(wx.EVT_MENU, self.on_load_ptm, m_part)
 
         # Save current scene as an animation
-        #m_anim = menu_file.Append(-1,"&Save animation of current scene\tCtrl-S","Save animation")
-        #self.Bind(wx.EVT_MENU, self.on_save_anim, m_anim)
+        m_anim = menu_file.Append(-1,"&Save animation of current scene\tCtrl-S","Save animation")
+        self.Bind(wx.EVT_MENU, self.on_save_anim, m_anim)
 
         # Save the current figure
         m_prin = menu_file.Append(-1,"&Print current scene\tCtrl-P","Save figure")
@@ -172,8 +172,15 @@ class ROMSPlotPy(wx.Frame, ROMS ):
             self.panel, 
             size=(200,-1),
             choices=['Select a vertical layer...'],
-            style=wx.CB_READONLY)
+            style=wx.CB_DROPDOWN)
         self.depthlayer_list.Bind(wx.EVT_COMBOBOX, self.on_select_depth)
+
+        self.depthlayer_constant = wx.TextCtrl(
+            self.panel, 
+            size=(100,-1),
+            style=wx.TE_PROCESS_ENTER)
+        self.depthlayer_constant.Bind(wx.EVT_TEXT_ENTER, self.on_depthlayer_constant)
+ 
 
         #self.show_edge_check = wx.CheckBox(self.panel, -1, 
         #    "Show Edges",
@@ -214,6 +221,7 @@ class ROMSPlotPy(wx.Frame, ROMS ):
         self.time_label = wx.StaticText(self.panel, -1,"Time step:",size=(200,-1))
         self.depth_label = wx.StaticText(self.panel, -1,"Vertical level:",size=(200,-1))
 
+        self.constant_depth_label = wx.StaticText(self.panel, -1,"Constant depth slice:",size=(200,-1))
 
         # Create the navigation toolbar, tied to the canvas
         #
@@ -251,12 +259,14 @@ class ROMSPlotPy(wx.Frame, ROMS ):
         self.hbox1.Add(self.variable_label, 0, border=10, flag=flags)
         self.hbox1.Add(self.time_label, 0, border=10, flag=flags)
         self.hbox1.Add(self.depth_label, 0, border=10, flag=flags)
+        self.hbox1.Add(self.constant_depth_label, 0, border=10, flag=flags)
 
         self.vbox.AddSpacer(5)
         self.hbox2 = wx.BoxSizer(wx.HORIZONTAL)
         self.hbox2.Add(self.variable_list, 0, border=10, flag=flags)
         self.hbox2.Add(self.time_list, 0, border=10, flag=flags)
         self.hbox2.Add(self.depthlayer_list, 0, border=10, flag=flags)
+        self.hbox2.Add(self.depthlayer_constant, 0, border=10, flag=flags)
        
         self.vbox.Add(self.hbox1, 0, flag = wx.ALIGN_LEFT | wx.TOP)
         self.vbox.Add(self.hbox2, 0, flag = wx.ALIGN_LEFT | wx.TOP)
@@ -389,6 +399,7 @@ class ROMSPlotPy(wx.Frame, ROMS ):
                 self.update_figure()
         
     def on_select_depth(self, event):
+        self.zlayer=False
         kindex = event.GetSelection()
         if not self.K[0]==kindex:
             # Check if its the seabed or surface value
@@ -400,6 +411,21 @@ class ROMSPlotPy(wx.Frame, ROMS ):
 
             # Update the plot
             self.update_figure()
+
+    def on_depthlayer_constant(self, event):
+        dstr = event.GetString()
+
+        self.K = range(0,self.Nz)
+        self.zlayer = True
+        self.Z = -np.abs(float(dstr))
+
+        self.loadData()       
+        self.flash_status_message("Selecting depth: %f m..."%self.Z)
+
+        # Update the plot
+        self.update_figure()
+
+
 
     def on_open_file(self, event):
         file_choices = "ROMS NetCDF (*.nc)|*.nc|All Files (*.*)|*.*"

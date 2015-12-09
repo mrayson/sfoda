@@ -801,7 +801,7 @@ class ROMS(ROMSGrid):
                 self.K = range(0,self.Nz)
                 
             if self.zlayer==True: # Load all layers when zlayer is true
-                self.Z = np.array(self.K)
+                #self.Z = np.array(self.K)
                 self.K = range(0,self.Nz)
                 
             if self.zcoord == 's_rho':
