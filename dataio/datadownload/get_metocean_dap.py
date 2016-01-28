@@ -3,8 +3,11 @@ Tools for downloading specfific ocean/atmosphere/climate
 datasets from an opendap server
 """
 
-from mythredds import GetDAP, Dataset
+from mythredds import GetDAP, Dataset, MFncdap
 from datetime import datetime,timedelta
+
+import pandas as pd
+import numpy as np
 
 ###
 # Dictionary containing opendap server specific
@@ -20,6 +23,15 @@ metoceandict = {\
         'salt':'salinity',\
         'ssh':'ssh',\
     },\
+    'HYCOM_REANALYSIS':{\
+        'ncurl':'http://tds.hycom.org/thredds/dodsC/GLBu0.08/expt_19.1/3hrly',\
+        'type':'ocean',\
+        'u':'water_u',\
+        'v':'water_v',\
+        'temp':'water_temp',\
+        'salt':'salinity',\
+        'ssh':'surf_el',\
+    },\
     'GFS':{\
         'ncurl':[],\
         'type':'atmosphere',\
@@ -32,6 +44,32 @@ metoceandict = {\
         'cloud':'tcdcclm',\
         'rain':'pratesfc',\
     },\
+    'CFSR_1HR':{\
+        'ncurl':[],\
+        'type':'atmosphere',\
+        'multifile':True,\
+        'uwind':'U-component_of_wind',\
+        'vwind':'V-component_of_wind',\
+        'tair':'Temperature',\
+        'pair':'Pressure_reduced_to_MSL',\
+        'rh':None,\
+        'cloud':None,\
+        'rain':'Precipitation_rate',\
+        'dlwr':'Downward_Long-Wave_Rad_Flux',\
+        'dswr':'Downward_Short-Wave_Rad_Flux',\
+        'sh':'Specific_humidity',\
+        'uwind_file':'wnd10m',\
+        'vwind_file':'wnd10m',\
+        'tair_file':'tmp2m',\
+        'pair_file':'prmsl',\
+        'rh':None,\
+        'cloud':None,\
+        'rain_file':'prate',\
+        'dlwr_file':'dlwsfc',\
+        'dswr_file':'dswsfc',\
+        'sh_file':'q2m',\
+    },\
+
 } # End of dictionary
 
 #############################
@@ -116,6 +154,88 @@ class GFSFiles:
                 url = _gen_url(yymmdd,yyyymm,hours)
                 return url
 
+class CFSR_1hr(object):
+    """
+    Class for returning the list of CFSR files for a given time 
+    range and variable list
+    """
+
+    baseurl = 'http://nomads.ncdc.noaa.gov/thredds/dodsC/cfsr1hr/'
+    dt = 1.
+    dt_units = 'H'
+
+    time_min = '1979-01-01'
+    time_max = '2009-12-31'
+
+    def __init__(self, trange, tdsdict, **kwargs):
+        self.__dict__.update(**kwargs)
+
+        self.tdsdict = tdsdict
+
+        # generate a list of time variables
+        self.t0 = pd.datetime.strptime(trange[0], '%Y%m%d.%H%M%S')
+        self.t1 = pd.datetime.strptime(trange[1], '%Y%m%d.%H%M%S')
+
+        time = pd.date_range(self.t0, self.t1,\
+               freq = '%d%s'%(self.dt,self.dt_units))
+
+        self.time = np.array([tout.to_datetime() for tout in time])
+
+        #self.timestr = [pd.datetime.strptime(tt, '%Y%m%d.%H%M%S') for tt in self.time]
+
+        # Create a dictionary with the file names for the first variables only
+        fstr = self.tdsdict['%s_file'%'uwind']
+        filelist = [self.generate_url(self.baseurl, tt, fstr) for tt in self.time]
+
+        self.ncfilelist = np.unique(filelist)
+        self.tdsdict['ncurl'] = self.ncfilelist
+
+        # Create an MFncdap object for time/variable lookup
+        self.MF = MFncdap(self.ncfilelist)
+
+    def __call__(self, time, var=None):
+        """
+        Return the same output as a call to MFncdap:
+            filename, tstep
+        """
+        tind, fnames,tslice = self.MF(time)
+
+        # Replace the file name with the correct one for my variable
+        fstr = self.tdsdict['%s_file'%'uwind']
+        fstrnew = self.tdsdict['%s_file'%var]
+        fnamenew = [fname.replace(fstr, fstrnew) for fname in fnames]
+
+        # Replace the keys in the dictionary
+        for ff in tslice.keys():
+            new_key = ff.replace(fstr, fstrnew)
+            tslice[new_key] = tslice.pop(ff)
+
+
+        return tind, fnamenew, tslice
+        #return filename, tslice, vname
+
+    def generate_url(self,baseurl, time, varname):
+        """
+        Create the url string
+        """
+        timestr = pd.datetime.strftime(time,'%Y%m')
+        return '%s%s/%s.gdas.%s.grb2'%(baseurl,timestr,varname,timestr)
+
+    def get_filename_only(self, var=None):
+        """
+        Returns the first file only
+        """
+        fname =  self.ncfilelist[0]
+        if not var == None:
+            fstr = self.tdsdict['%s_file'%'uwind']
+            fstrnew = self.tdsdict['%s_file'%var]
+            fnamenew = fname.replace(fstr, fstrnew)
+            
+        else:
+            fnamenew = fname
+
+        return fnamenew
+
 
 ##############################
 # Main functions for calling
@@ -143,6 +263,7 @@ def get_metocean_dap(xrange,yrange,zrange,trange,outfile,\
     TDS(xrange,yrange,trange,zrange=zrange,outfile=outfile)
 
     print 'Done.'
+    return TDS
 
 
 def get_metocean_local(ncfile,varname,name='HYCOM',TDS=None,\
@@ -194,4 +315,34 @@ def get_gfs_tds(xrange,yrange,zrange,trange,outfile):
     
     # Call the object
     TDS(xrange,yrange,trange,zrange=zrange,outfile=outfile)
+
+def get_cfsr_tds(xrange, yrange, trange, outfile, outfile_pair):
+    """
+    Extract Climate forecasting system (CFSR) data
+    """
+    vars = [
+        'uwind',\
+        'vwind',\
+        'tair',\
+        #'pair',\
+        'rain',\
+        'dlwr',\
+        'dswr',\
+        'sh',\
+        ]
+
+    mydict = metoceandict['CFSR_1HR']
+    cfsr = CFSR_1hr(trange, mydict)
+
+    # Create the thredds object
+    TDS = GetDAP(vars = vars, MF = cfsr, **mydict)
+    # Call the object
+    TDS(xrange,yrange,trange,outfile=outfile)
+
+    # Note that pressure is on a separate grid so we will store it separately
+    TDS = GetDAP(vars = ['pair'], MF = cfsr, **mydict)
+    # Call the object
+    TDS(xrange,yrange,trange,outfile=outfile_pair)
+
+
 

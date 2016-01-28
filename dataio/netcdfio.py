@@ -64,6 +64,68 @@ def dict_toxray(data, **kwargs):
     return xray.Dataset(ds)
 
 
+def load_sql_ncstation(dbfile, station_name, varname, otherquery=None):
+
+    """
+    Load netcdf station data referenced in an sql database file
+    
+    Inputs:
+        dbfile - location of database file
+        station_name - StationName in database
+        varname - variable name e.g. 'waterlevel', 'discharge', 'salinity'
+        otherquery - (optional) string with other query variables
+                e.g 'time_start > "2007-01-01 00:00:00" and time_end < "2008-01-01 00:00:00"'
+        
+           
+    Returns:
+        an xray.DataArray object
+        -1 on error
+            
+    """
+    
+    outvar = ['NetCDF_Filename',\
+        'NetCDF_GroupID',\
+        'StationName',\
+        'X',\
+        'Y',\
+        'height_start',\
+        ]
+
+    tablename = 'observations'
+    if not otherquery is None:
+        condition = 'Variable_Name = "%s" and StationName LIKE "%%%s%%" and %s'\
+            %(varname, station_name, otherquery)
+    else:
+        condition = 'Variable_Name = "%s" and StationName LIKE "%%%s%%"'\
+            %(varname, station_name)
+    
+    # Query the database
+    print 'Querying database...'
+    print condition
+    query = returnQuery(dbfile,outvar,tablename,condition)
+
+    # Loop through and extract the variable datasets from each of the files
+    data = []
+    ii = 0
+    for  ncfile, ncgroup in zip(query['NetCDF_Filename'], query['NetCDF_GroupID']):
+        print ncfile, ncgroup
+
+        nc = xray.open_dataset(ncfile, group=ncgroup)
+
+        ncdata = nc[varname]
+
+        # Make sure the metadata is in the attributes
+        ncdata.attrs.update({'X':query['X'][ii],\
+                'Y':query['Y'][ii],\
+                'Z':query['height_start'][ii],\
+        })
+
+        data.append(ncdata)
+
+        ii += 1
+
+    return data
+
 ###################
 # Old routines
 ###################
@@ -243,7 +305,69 @@ def createObsDB(dbfile):
     c.close()
     return  
     
-def netcdfObs2DB(ncfile,dbfile):
+def netcdfObs2DB(ncfile, dbfile, nctype=1):
+    """
+    Extract the relevant metadata from a netcdf-4 file with groups
+
+    nctype = 1 : My original format
+    nctype = 2 : RPS-WEL converted format
+    ...
+    """
+    def get_meta_type1(nc, grp ,vv):
+        # Find the variables that have coordinates
+        allatts = nc.groups[grp].variables[vv].ncattrs()
+
+        if 'coordinates' in allatts:
+            # Use this variable
+            lon = nc.groups[grp].variables['longitude'][:]
+            lat = nc.groups[grp].variables['latitude'][:]
+            if 'long_name' in allatts:
+                long_name = nc.groups[grp].variables[vv].long_name
+            else:
+                long_name='none'
+            if 'StationID' in allatts:
+                StationID = nc.groups[grp].variables[vv].StationID
+            else:
+                StationID='none'
+            if 'StationName' in allatts:
+                StationName = nc.groups[grp].variables[vv].StationName
+            else:
+                StationName='none'
+                
+            try:
+                ele = nc.groups[grp].variables['elevation'][:]
+            except:
+                ele=[0.0]
+                
+            times = nc.groups[grp].variables['time']
+            dates = num2date(times[:],units=times.units)
+
+        return lon, lat, long_name, StationID, StationName, ele, dates
+
+    def get_meta_type2(nc, grp ,vv):
+
+        if vv in ['time','Longitude','Latitude','DepthHeight']:
+            return None, None, None, None, None, None, None
+
+        # Use this variable
+        lon = nc.groups[grp].variables['Longitude'][:]
+        lat = nc.groups[grp].variables['Latitude'][:]
+        long_name = nc.groups[grp].variables[vv].long_name
+        StationID='none'
+        StationName = nc.groups[grp].stationname
+            
+        try:
+            ele = nc.groups[grp].variables[vv].height + \
+                nc.groups[grp].variables['DepthHeight']
+        except:
+            ele = 0.0
+            
+        times = nc.groups[grp].variables['time']
+        dates = num2date(times[:],units=times.units)
+
+        return lon, lat, long_name, StationID, StationName, ele, dates
+ 
+             
     # Write metadata to the sql database
     
     # Open the database
@@ -258,36 +382,32 @@ def netcdfObs2DB(ncfile,dbfile):
     for grp in nc.groups:
         # Loop through the variables
         for vv in nc.groups[grp].variables:
-            # Find the variables that have coordinates
-            allatts = nc.groups[grp].variables[vv].ncattrs()
-            if 'coordinates' in allatts:
-                # Use this variable
-                lon = nc.groups[grp].variables['longitude'][:]
-                lat = nc.groups[grp].variables['latitude'][:]
-                if 'long_name' in allatts:
-                    long_name = nc.groups[grp].variables[vv].long_name
+               
+            write = True
+
+            if nctype==1:
+                lon, lat, long_name, StationID, StationName, ele, dates = \
+                    get_meta_type1(nc, grp ,vv)
+
+   
+            elif nctype == 2:
+                print grp, vv
+                lon, lat, long_name, StationID, StationName, ele, dates = \
+                    get_meta_type2(nc, grp ,vv)
+
+                if lon is None:
+                    write = False
+
                 else:
-                    long_name='none'
-                if 'StationID' in allatts:
-                    StationID = nc.groups[grp].variables[vv].StationID
-                else:
-                    StationID='none'
-                if 'StationName' in allatts:
-                    StationName = nc.groups[grp].variables[vv].StationName
-                else:
-                    StationName='none'
-                    
-                try:
-                    ele = nc.groups[grp].variables['elevation'][:]
-                except:
-                    ele=[0.0]
-                    
-                times = nc.groups[grp].variables['time']
-                dates = num2date(times[:],units=times.units)
-                
+                    dbtuple = (ncfile, grp, vv, lon,\
+                        lat, lon, lon,\
+                        lat, lat, dates[0], dates[-1],\
+                        ele,ele,StationName,StationID,'Point')
+ 
+    
+               
+            if write:
                 # Create the tuple to insert into the database
-                dbtuple = (ncfile,grp,vv,np.mean(lon),np.mean(lat),np.min(lon),np.max(lon),\
-                np.min(lat),np.max(lat),dates[0],dates[-1],np.min(ele),np.max(ele),StationName,StationID,'Point')
                 dbstr = '("%s", "%s", "%s", %4.6f, %4.6f, %4.6f, %4.6f, %4.6f, %4.6f, "%s", "%s", %4.6f, %4.6f, "%s", "%s","%s")'%dbtuple
                 # Insert into the db
                 #execstr = 'INSERT INTO %s VALUES %s'%(tablename,dbstr)

@@ -242,6 +242,13 @@ def qspec(T,RH,Pa):
     """
     
     return 0.01*RH*qsat(T,Pa)
+
+def spec_to_relative_humidity(q, T, Pa):
+    """
+    Convert specific to relative humidity
+    """
+
+    return q / ( 0.01 * qsat(T, Pa) )
     
     
 def satVapPres(Ta,P=1010):
@@ -300,6 +307,24 @@ def longwaveDown(Ta,C,r_LW=0.03):
     epsilona = alpha0*(1.0 + 0.17 * C**2)*(Ta+273.16)**2
 
     return epsilona*sigma*(1.0-r_LW)*(Ta+273.16)**4
+
+def cloud_from_longwave(LW,Ta,r_LW=0.03):
+    """
+    Computes cloud cover fraction from downward longwave radiation
+
+    Downward longwave radiation using Martin and McCutcheon Formula
+    """    
+    alpha0 = 0.937e-5
+    sigma=5.67051e-8
+    
+    
+    #cff1 =  alpha0*sigma*(1.0-r_LW)*np.power(Ta+273.16, 4.0)*np.power(Ta+273.16, 2.0)
+    cff1 =  alpha0*sigma*np.power(Ta+273.16, 4.0)*np.power(Ta+273.16, 2.0)
+
+    cff = LW / cff1 
+
+    return np.sqrt((cff-1.0)/0.17)
+
 
 def vaporPres(P,RH,Ta):
     """

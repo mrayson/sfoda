@@ -7,6 +7,8 @@ October 2014
 """
 
 import os
+import time
+import collections
 import numpy as np
 from netCDF4 import Dataset, num2date,date2num,date2index
 from datetime import datetime
@@ -40,6 +42,9 @@ class GridDAP(object):
     gridfile = None
     multifile = False
 
+    # Set this to pass your own multi-file object
+    MF = None
+
     def __init__(self,url,**kwargs):
 
         self.__dict__.update(kwargs)
@@ -66,9 +71,11 @@ class GridDAP(object):
 
         self.get_coords()
 
+
     def get_coords(self):
         """ Download the coordinates"""
 
+        print self._gridnc.variables.keys()
         self.X = self._gridnc.variables[self.xcoord][:]
         self.Y = self._gridnc.variables[self.ycoord][:]
 
@@ -84,8 +91,10 @@ class GridDAP(object):
             self.time = gettime(self._nc,self.timecoord)
 
         else:
-            self._MF = MFncdap(self._ncfiles,timevar=self.timecoord)
-            self.time = self._MF.time
+            if self.MF==None:
+                self.MF = MFncdap(self._ncfiles,timevar=self.timecoord)
+
+            self.time = self.MF.time
 
         # Time
         if trange==None:
@@ -100,6 +109,7 @@ class GridDAP(object):
 
         self.nt = self.t2 - self.t1
 
+        print trange
 
     def get_indices(self,xrange,yrange,zrange):
         """ Find the domain indices"""
@@ -152,7 +162,7 @@ class GridDAP(object):
             self.nz = self.z2 - self.z1
 
 
-    def get_data(self,varname,xrange,yrange,zrange,trange):
+    def get_data(self,varname,xrange,yrange,zrange,trange, rawvar=None):
         """
         Download the actual data
 
@@ -169,9 +179,9 @@ class GridDAP(object):
         if not self.multifile:
             return self.get_data_singlefile(varname,self._nc,self.t1,self.t2)
         else:
-            return self.get_data_multifile(varname) 
+            return self.get_data_multifile(varname, rawvar=rawvar) 
 
-    def get_data_multifile(self,varname):
+    def get_data_multifile(self,varname, rawvar=None):
         """
         Download the data from multiple files and stick in one array
 
@@ -179,42 +189,110 @@ class GridDAP(object):
         if self.zcoord==None:
             sz = (self.nt,self.ny,self.nx)
         else:
-            sz = (self.nt,nz,self.ny,self.nx)
+            sz = (self.nt,self.nz,self.ny,self.nx)
 
         data = np.zeros(sz)
-        tindex,ncurl = self._MF(self.localtime.tolist())
 
-        ncold = ncurl[0]
-        nc = Dataset(ncold)
-        ii=-1
-        for t,name in zip(tindex,ncurl):
-            ii+=1
-            if not ncold == name:
-                nc.close()
-                nc = Dataset(name)
-            else:
-                ncold = name
+        tindex,ncurl,tslice_dict = self.MF(self.localtime.tolist(), var=rawvar)
 
-            data[ii,...] = self.get_data_singlefile(varname,nc,t,t+1)
+        ###
+        # Download time chunks of data
+        ###
+        p1 = 0
+        for ff in tslice_dict.keys():
+            nc = Dataset(ff)
+            t1,t2 = tslice_dict[ff]
+            p2 = p1+t2-t1
+            print '\t Downloading from file:\n%s'%ff
+            data[p1:p2,...] = self.get_data_singlefile(varname,nc,t1,t2)
 
-        nc.close()
+            p1=p2+1
+            nc.close()
+        
+        ####
+        ## Download data step-by-step (slow)
+        ####
+        #ncold = ncurl[0]
+        #nc = Dataset(ncold)
+        #ii=-1
+        #for t,name in zip(tindex,ncurl):
+        #    ii+=1
+        #    if not ncold == name:
+        #        nc.close()
+        #        nc = Dataset(name)
+        #    else:
+        #        ncold = name
+
+        #    print '\t Downloading time: ', t
+        #    data[ii,...] = self.get_data_singlefile(varname,nc,t,t+1)
+
+        #nc.close()
         return data
             
-
     def get_data_singlefile(self,varname,nc,t1,t2):  
         """
         Download the data from a single file
         """
-        ndim = nc.variables[varname].ndim
 
+        def get_3d_step(data,tstart):
+            try:
+                # Do step-by-step (slower)
+                print 'Downloading step-by-step...'
+                for ii,tt in enumerate(range(tstart,t2)):
+                    print tt, t2
+                    data[ii,...] = nc.variables[varname]\
+                        [tt,self.y1:self.y2,self.x1:self.x2]
+
+            except:
+                print 'Ouch! Server says no... I''ll retry...'
+                time.sleep(0.1)
+                data = get_3d_step(data,tt)
+
+            return data
+
+
+        def get_4d_step(data,tstart):
+            try:
+                # Do step-by-step (slower)
+                print 'Downloading step-by-step...'
+                for ii,tt in enumerate(range(tstart,t2)):
+                    print tt, t2
+                    data[ii,...] = nc.variables[varname]\
+                        [tt,self.z1:self.z2,self.y1:self.y2,self.x1:self.x2]
+
+            except:
+                print 'Ouch! Server says no... I''ll retry...'
+                time.sleep(0.1)
+                data = get_4d_step(data,tt)
+
+            return data
+
+        ndim = nc.variables[varname].ndim
         if ndim==3:
-            data = nc.variables[varname]\
-                [t1:t2,self.y1:self.y2,self.x1:self.x2]
+            try:
+                data = nc.variables[varname]\
+                    [t1:t2,self.y1:self.y2,self.x1:self.x2]
+            except:
+                data = np.zeros((self.nt, self.ny, self.nx))
+                data = get_3d_step(data,t1)
 
         elif ndim==4:
-            data = nc.variables[varname]\
-                [t1:t2,self.z1:self.z2,\
-                self.y1:self.y2,self.x1:self.x2]
+            try:
+                data = nc.variables[varname]\
+                    [t1:t2,self.z1:self.z2,\
+                    self.y1:self.y2,self.x1:self.x2]
+            except:
+                data = np.zeros((self.nt, self.nz, self.ny, self.nx))
+                data = get_4d_step(data,t1)
+
+            #except:
+            ## Do step-by-step (slower)
+            #data = np.zeros((self.nt, self.nz, self.ny, self.nx))
+            #print 'Downloading step-by-step...'
+            #for ii,tt in enumerate(range(t1,t2)):
+            #    print tt, t2
+            #    data[ii,...] = nc.variables[varname]\
+            #        [tt,self.z1:self.z2,self.y1:self.y2,self.x1:self.x2]
 
             self.localZ = self.Z[self.z1:self.z2]
 
@@ -270,6 +348,9 @@ class GetDAP(object):
     # Location of cached grid file
     gridfile = None
 
+    # Set this to pass your own multi-file object
+    MF = None
+
     def __init__(self,vars=None,**kwargs):
         """
         Initialise the variables to outfile
@@ -315,11 +396,11 @@ class GetDAP(object):
 
 
     def load_data(self,varname,xr,yr,zr,tr):
-        ncvar = getattr(self,varname)
+        ncvarname = getattr(self,varname)
         dap = getattr(self,'_%s'%varname)
-        print 'Loading variable: %s...'%ncvar
+        print 'Loading variable: (%s) %s...'%(varname,ncvarname)
 
-        return dap.get_data(ncvar,xr,yr,zr,tr)
+        return dap.get_data(ncvarname,xr,yr,zr,tr, rawvar=varname)
 
     def init_var_grids(self):
         """
@@ -328,17 +409,20 @@ class GetDAP(object):
         for vv in self.vars:
             print 'loading grid data for variable: %s...'%getattr(self,vv)
             attrname = '_%s'%vv
-            timecoord,xcoord,ycoord,zcoord = \
-                self.get_coord_names(getattr(self,vv))
-            
+
             if self.multifile:
-                nc = self._ncfiles
+                nc = self.MF.get_filename_only(var=vv)
+                self._nc = Dataset(nc)
             else:
                 nc = self._nc
-                
+ 
+            timecoord,xcoord,ycoord,zcoord = \
+                self.get_coord_names(getattr(self,vv))
+               
             dap = GridDAP(nc,xcoord=xcoord,ycoord=ycoord,\
                 timecoord=timecoord,zcoord=zcoord,\
-                gridfile=self.gridfile,multifile=self.multifile)
+                gridfile=self.gridfile,multifile=self.multifile,\
+                MF=self.MF)
 
             setattr(self,attrname,dap)
  
@@ -393,6 +477,12 @@ class GetDAP(object):
             if not self.__dict__.has_key('_outnc'):
                 print '\tOpening %s'%outfile
                 self._outnc = Dataset(outfile,'w')
+
+        ##
+        if self.multifile:
+            nc = self.MF.get_filename_only(var=var)
+            self._nc = Dataset(nc)
+
 
         localvar = var
         remotevar = getattr(self,var)
@@ -561,17 +651,22 @@ class MFncdap(object):
     
     timevar = 'time'
     tformat = '%Y%m%d.%H%M%S'
+
+    # Not used here
+    var = None
     
     def __init__(self,ncfilelist,**kwargs):
         
         self.__dict__.update(kwargs)
+        self.ncfilelist = ncfilelist
+        self.nfiles = len(self.ncfilelist)
         print 'Retrieving the time information from files...'
         
         self._timelookup = {}
         timeall = []
         #self.time = np.zeros((0,))
         
-        for f in ncfilelist:
+        for f in self.ncfilelist:
             print f
             nc = Dataset(f)
             t = nc.variables[self.timevar]
@@ -590,39 +685,55 @@ class MFncdap(object):
                 else:
                     self._timelookup.update({tstr:(f,ii)})
 
-            
         #self.time = np.asarray(self.time)
         timeall = np.array(timeall)
         self.time = np.unique(timeall)
             
-    def __call__(self,time):
+    def __call__(self,time, var=None):
         """
         Return the filenames and time index of the closest time
         """
-        
         fname = []
-        tind =[]
+        tind = []
         for t in time:
             tstr = datetime.strftime(t,self.tformat)
             f,ii = self._timelookup[tstr]
             fname.append(f)
             tind.append(ii)
 
-#        for t in time:
-#            flag=1
-#            for f in self.timelookup.keys():
-#
-#                if t >= self.timelookup[f][0] and t<=self.timelookup[f][-1]:
-#                    #print 'Found tstep %s'%datetime.strftime(t,'%Y-%m-%d %H:%M:%S')
-#                    tind.append(othertime.findNearest(t,self.timelookup[f][:]))
-#                    fname.append(f)
-#                    flag=0
-#                    continue
-#
-##            if flag:
-##                print 'Warning - could not find matching file for time:%s'%datetime.strptime(t,'%Y-%m-%d %H:%M:%S')
-##                tind.append(-1)
-##                fname.append(-1)
-        
-        return tind, fname
+        # Build a dictionary with each time slice in each bin
+        # Order is important
+        tslice_dict = collections.OrderedDict()
+        for tt, f in zip(tind, fname):
+            if not tslice_dict.has_key(f):
+                tslice_dict.update({f:[]})
+            
+            tslice_dict[f].append(tt)
+
+
+        for f in tslice_dict.keys():
+             vals = tslice_dict[f]
+             tslice_dict[f] = [min(vals), max(vals)]
+
+        return tind, fname, tslice_dict
+
+    def get_timeslice(self, var=None):
+        """
+        Return the start and end time for each file
+        """
+        t0=[]
+        t1=[]
+        for ii in range(self.nfiles):
+             tind, ncfiles = self.__call__(self.time[0], var=var)
+             t0.append(tind[0])
+             t1.append(tind[-1])
+
+        return t0, t1
+
+    def get_filename_only(self, var=None):
+        """
+        Returns the first file only
+        """
+        return self.ncfilelist[0]
+
  

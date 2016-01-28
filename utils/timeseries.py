@@ -702,7 +702,7 @@ class ModVsObs(object):
         self.rmse = rms(self.TSobs.y-self.TSmod.y,axis=-1)
         
         # bian
-        self.bias = np.mean(self.TSmod.y - self.TSobs.y, axis=1)
+        self.bias = np.mean(self.TSmod.y - self.TSobs.y, axis=-1)
 
         # skill
         self.skill = 1.0 - ((self.TSobs.y-self.TSmod.y)**2.).sum(axis=-1) / \
@@ -918,13 +918,14 @@ def phase_offset(frq,start,base):
         
         return np.mod(dx*np.array(frq),2*np.pi)
  
-def loadDBstation(dbfile,stationID,varname,timeinfo=None,filttype=None,cutoff=3600.0,output_meta=False,method='linear'):
+def loadDBstation(dbfile, stationName, varname, timeinfo=None, \
+     filttype=None,cutoff=3600.0,output_meta=False,method='linear'):
     """
     Load station data from a database file
     
     Inputs:
         dbfile - location of database file
-        stationID - Station ID in database
+        stationName - StationName in database
         varname - variable name e.g. 'waterlevel', 'discharge', 'salinity'
         
         timeinfo (optional) - tuple with (starttime,endtime,dt). Format 'yyyymmdd.HHMMSS'
@@ -941,7 +942,7 @@ def loadDBstation(dbfile,stationID,varname,timeinfo=None,filttype=None,cutoff=36
     outvar = ['NetCDF_Filename','NetCDF_GroupID','StationName']
     tablename = 'observations'
     #condition = 'Variable_Name = "%s" and StationID = "%s"' % (varname,stationID)
-    condition = 'Variable_Name = "%s" and StationID LIKE "%%%s"' % (varname,stationID)
+    condition = 'Variable_Name = "%s" and StationName LIKE "%%%s%%"' % (varname,stationName)
     
     print 'Querying database...'
     print condition

@@ -16,8 +16,7 @@ from maptools import ll2utm, readShpBathy, readraster
 from kriging import kriging
 from netCDF4 import Dataset
 import othertime
-
-from scipy.interpolate import LinearNDInterpolator,interp1d
+from scipy import interpolate
 import time
 import matplotlib.pyplot as plt
 
@@ -78,8 +77,12 @@ class interpXYZ(object):
             #print 'Building using scipy linear interpolator ..'
             self._linear()
             
+        elif self.method=='curvmin':
+            print 'Building using scipy CloughTocher interpolator ..'
+            self._curvmin()
+ 
         else:
-            print 'Error - Unknown interpolation type: %s.'%self.method
+            raise Exception, 'Error - Unknown interpolation type: %s.'%self.method
         
     def __call__(self,Zin):
         """
@@ -91,7 +94,7 @@ class interpXYZ(object):
         else:
             self.Zin = Zin  
         
-        if self.method in ['nn','idw','kriging']:
+        if self.method in ['nn','idw','kriging','curvmin']:
             #print 'Building DEM with Nearest Neighbour interpolation...'
             self.Z = self.Finterp(Zin)
 
@@ -101,7 +104,7 @@ class interpXYZ(object):
             
 
         else:
-            print 'Error - Unknown interpolation type: %s.'%self.method
+            raise Exception, 'Error - Unknown interpolation type: %s.'%self.method
         
         
         return self.Z
@@ -132,7 +135,11 @@ class interpXYZ(object):
 
     def _linear(self):
         self.Finterp =\
-            LinearNDInterpolator(self.XY,np.zeros((self.XY.shape[0]),),fill_value=self.fill_value)
+            interpolate.LinearNDInterpolator(\
+                self.XY,np.zeros((self.XY.shape[0]),),fill_value=self.fill_value)
+
+    def _curvmin(self):
+        self.Finterp = CurvMin(self.XY, self.XYout)
                 
     
     def clipPoints(self,LL):
@@ -301,7 +308,7 @@ class Interp4D(object):
 
         # Now create a z-interpolation class
         if self.is4D:
-            _Fz = interp1d(self.zin,data_xy,axis=1,kind=self.zinterp_method,\
+            _Fz = interpolate.interpolate.interp1d(self.zin,data_xy,axis=1,kind=self.zinterp_method,\
                 bounds_error=False,fill_value=0.)
 
             data_xyz = _Fz(self.zout)
@@ -309,7 +316,7 @@ class Interp4D(object):
             data_xyz = data_xy
 
         # Time interpolation
-        _Ft = interp1d(self.tin,data_xyz,axis=0,kind=self.tinterp_method,\
+        _Ft = interpolate.interp1d(self.tin,data_xyz,axis=0,kind=self.tinterp_method,\
             bounds_error=False,fill_value=0.)
          
         return _Ft(self.tout)
@@ -397,8 +404,8 @@ class Inputs(object):
                 self.xgrd = nc.variables[xvar][:]
 
         else:
-            xvar = 'x'
-            yvar = 'y'
+            xvar = 'X'
+            yvar = 'Y'
         
         try:
             self.xgrd = nc.variables[xvar][:]
@@ -419,6 +426,7 @@ class idw(object):
     p=1
     
     def __init__(self,XYin,XYout,**kwargs):
+        eps = 1e-10
         self.__dict__.update(kwargs)
 
         
@@ -429,7 +437,7 @@ class idw(object):
         dist,self.ind=kd.query(XYout,distance_upper_bound=self.maxdist,k=self.NNear)
         
         # Calculate the weights
-        self.W = 1/dist**self.p
+        self.W = 1/(dist+eps)**self.p
         Wsum = np.sum(self.W,axis=1)
         
         for ii in range(self.NNear):
@@ -493,6 +501,20 @@ def read_xyz_gz(fname):
     f.close()
       
     return XY,Z
+
+class CurvMin(object):
+    """
+    Wrapper class around scipy.interpolate.CloughTocher2DInterpolator
+    """
+    def __init__(self, XY, XYout):
+        self.XY = XY
+        self.XYout = XYout
+
+    def __call__(self, Zin):
+        
+        F = interpolate.CloughTocher2DInterpolator(self.XY, Zin)
+
+        return F(self.XYout)
     
 def read_xyz(fname):
     # Read the raw data into an array

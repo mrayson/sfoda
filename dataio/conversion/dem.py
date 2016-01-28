@@ -9,13 +9,14 @@ Created on Mon Sep 10 14:43:26 2012
 
 import numpy as np
 from netCDF4 import Dataset
-from scipy import spatial
+from scipy import spatial, interpolate
 import matplotlib.pyplot as plt
-from interpXYZ import tile_vector
 import time
 import shutil
 import gdal
 from gdalconst import * 
+
+from soda.utils.interpXYZ import tile_vector
 
 import pdb
 
@@ -49,6 +50,8 @@ class DEM(object):
         self.npts = self.nx*self.ny
 #        
         self.X,self.Y = np.meshgrid(xgrd,ygrd)
+
+        self.x, self.y = xgrd, ygrd
         
     def loadnc(self):
         """ Load the DEM data from a netcdf file"""        
@@ -72,6 +75,18 @@ class DEM(object):
         nc.close()
         return X,Y,Z
         
+    def interp(self, x, y):
+        """
+        Interpolate DEM data onto scattered data points using
+        scipy.interpolate.RectBivariateSpline
+        """
+        if not self.__dict__.has_key('_Finterp'):
+            self._Finterp = interpolate.RectBivariateSpline(self.y, self.x, self.Z)
+            #self._Finterp = interpolate.RegularGridInterpolator((self.y, self.x), self.Z)
+
+        #return self._Finterp((y, x))
+        return self._Finterp(y, x, grid=False)
+
     def readraster(self):
         """ Loads the data from a DEM raster file"""
         # register all of the drivers
@@ -194,6 +209,11 @@ class DEM(object):
         xy = self.nonnanxy()
         xynan = self.nanxy()
         
+        # If there are no nan's return W
+        if xynan.shape[0] == 0:
+            weight[:] = self.W
+            return weight
+
         # Compute the spatial tree
         kd = spatial.cKDTree(xynan)
         
@@ -205,6 +225,7 @@ class DEM(object):
             
             # Compute the actual weight
             w = dist/self.maxdist
+            #w = (dist-self.maxdist)/self.maxdist # Linear
             w[dist>self.maxdist]=1.0
             w=self.W*w
             
@@ -229,27 +250,25 @@ class DEM(object):
         
         return weight   
         
-    def contourf(self,Z,vv=range(-10,0),**kwargs):
-        fig= plt.figure(figsize=(9,8))
-        plt.contourf(self.X,self.Y,Z,vv,**kwargs)
+    def contourf(self,vv=range(-10,0),**kwargs):
+        #fig= plt.figure(figsize=(9,8))
+        plt.contourf(self.X,self.Y,self.Z,vv,**kwargs)
         plt.colorbar()
         plt.hold(True)
-        plt.contour(self.X,self.Y,Z,[0.0,0.0],colors='k',linewidths=0.02)
+        plt.contour(self.X,self.Y,self.Z,[0.0,0.0],colors='k',linewidths=0.02)
         plt.axis('equal')
-        return fig
         
-    def contour(self,Z,vv=range(-10,0),**kwargs):
-        fig= plt.figure(figsize=(9,8))
-        C = plt.contour(self.X,self.Y,Z,vv,colors='k',linestyles='-')
+    def contour(self,vv=range(-10,0),**kwargs):
+        #fig= plt.figure(figsize=(9,8))
+        C = plt.contour(self.X,self.Y,self.Z,vv,colors='k',linestyles='-')
         plt.axis('equal')
-        return fig,C
+        return C
         
-    def plot(self,Z,**kwargs):
-        h= plt.figure(figsize=(9,8))
+    def plot(self,**kwargs):
+        #h= plt.figure(figsize=(9,8))
         #h.imshow(np.flipud(self.Z),extent=[bbox[0],bbox[1],bbox[3],bbox[2]])
-        plt.imshow(Z,extent=[self.x0,self.x1,self.y0,self.y1],**kwargs)
+        plt.imshow(self.Z,extent=[self.x0,self.x1,self.y1,self.y0],**kwargs)
         plt.colorbar()
-        return h
         
     def savenc(self,outfile='DEM.nc'):
         """ Saves the DEM to a netcdf file"""

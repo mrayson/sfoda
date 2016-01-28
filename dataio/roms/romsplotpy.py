@@ -339,7 +339,7 @@ class ROMSPlotPy(wx.Frame, ROMS ):
 
 
         ## Update the title
-        #self.title=self.axes.set_title(self._genTitle(self.tstep[0]),color=self.textcolor)
+        self.title=self.axes.set_title(self._genTitle(self.tstep[0]),color=self.textcolor)
         self.create_figure()
 
         #Update the colorbar
@@ -615,22 +615,28 @@ class ROMSPlotPy(wx.Frame, ROMS ):
             #self.tstep = range(self.Nt) # Use all time steps for animation
             #self.animate(cbar=self.cbar,cmap=self.cmap,\
             #    xlims=self.axes.get_xlim(),ylims=self.axes.get_ylim())
+            def init_anim():
+                return (self.title,self.collection)
+
             def updateScalar(i):
+                print i, self.Nt
                 self.tstep=[i]
-                self.loadData()
+                self.loadData(tstep=self.tstep)
                 self.update_figure()
                 return (self.title,self.collection)
 
-            self.anim = animation.FuncAnimation(self.fig, updateScalar, frames=self.Nt, interval=50, blit=True)
+            self.anim = animation.FuncAnimation(self.fig, updateScalar,\
+                init_func=init_anim,\
+                frames=range(self.tstep[0],self.Nt), interval=50, blit=True)
 
             if ext=='.gif':
                 self.anim.save(outfile,writer='imagemagick',fps=6)
             else:
-                self.anim.save(outfile,fps=6,bitrate=3600)
+                self.anim.save(outfile, writer='mencoder', fps=6,bitrate=3600)
 
             # Return the figure back to its status
             del self.anim
-            self.tstep=self.tindex
+            self.tstep=[self.tindex]
             self.loadData()
             self.update_figure()
 

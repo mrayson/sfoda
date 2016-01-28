@@ -16,6 +16,8 @@ from scipy import spatial
 from scipy import sparse
 import operator
 
+import xray
+
 from matplotlib import tri
 import matplotlib.pyplot as plt
 from matplotlib.collections import PolyCollection, LineCollection
@@ -2545,6 +2547,37 @@ class TimeSeries(timeseries, Spatial):
         self.tstep = range(0,len(self.time)) # Load all time steps
         
         self.update()
+
+    def __call__(self, XY, Z=None, varname=None):
+        """
+        Returns an updated version of the object
+        """
+
+        if not varname is None:
+            self.variable = varname
+
+
+        if not Z is None:
+            self.Z = Z
+
+        self.XY = XY
+
+        self.update()
+
+        # Convert the suntans-TimeSeries object to an xray.DataArray
+        coords = {'time':self.t.copy()}
+        if self.y.ndim == 1:
+            dims = ('time',)
+        else:
+            dims = ('time','depth')
+            coords.update({'depth':self.Z})
+
+        return xray.DataArray( self.y.copy(), \
+                    dims=dims,\
+                    name=self.variable,\
+                    #attrs = nc[varname].attrs,\
+                    coords = coords,\
+               )
         
     def update(self):
         

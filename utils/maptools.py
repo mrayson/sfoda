@@ -405,6 +405,8 @@ def readraster(infile):
     # Remove missing points
     data[data==-32767]=np.nan
 
+    return x, y, data
+
 def plotmap(shpfile,color='0.5',fieldname='FID',convert=None,zone=15,\
     scale=1.,offset=0.,subset=1):
     """

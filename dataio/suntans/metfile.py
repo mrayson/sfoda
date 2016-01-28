@@ -21,20 +21,64 @@ class metfile(object):
     """
     
     mode = 'load'
+
+    # Options for variable names
+    calc_longwave = True # Use clouds
+    calc_shortwave = True # Use clouds
+
+    calc_specific_humidity = True # Use relative humidity
+
+
     
     def __init__(self,infile=None,**kwargs):
 
-        self.__dict__.update(kwargs)
+        self.__dict__.update(**kwargs)
         
         if self.mode == 'create':
             # Loads the variables into an object
-            self.Uwind = metdata('Uwind',mode='create',longname='Eastward wind velocity component',units='m s-1')
-            self.Vwind = metdata('Vwind',mode='create',longname='Northward wind velocity component',units='m s-1')
-            self.Tair = metdata('Tair',mode='create',longname='Air temperature',units='degrees C')
-            self.Pair = metdata('Pair',mode='create',longname='Air pressure',units='millibar')
-            self.RH = metdata('RH',mode='create',longname='Relative humidity',units='Percent')
-            self.rain = metdata('rain',mode='create',longname='Rain fall rate',units='kg m-2 s-1')
-            self.cloud = metdata('cloud',mode='create',longname='Cloud cover fraction',units='Fraction (0-1)')
+            self.Uwind = metdata('Uwind',\
+                mode='create',longname='Eastward wind velocity component',units='m s-1')
+            self.Vwind = metdata('Vwind',\
+                mode='create',longname='Northward wind velocity component',units='m s-1')
+            self.Tair = metdata('Tair',\
+                mode='create',longname='Air temperature',units='degrees C')
+            self.Pair = metdata('Pair',\
+                mode='create',longname='Air pressure',units='millibar')
+            self.rain = metdata('rain',\
+                mode='create',longname='Rain fall rate',units='kg m-2 s-1')
+
+            self.varnames = ['Uwind','Vwind','Tair','Pair','rain']
+            
+            if not self.calc_shortwave:
+                self.dswr = metdata('dswr', mode='create',\
+                     longname='Downward shortwave radiation flux', units='W m-2')
+
+                self.varnames.append('dswr')
+            
+            if not self.calc_longwave:
+                self.dlwr = metdata('dlwr', mode='create',\
+                     longname='Downward longwave radiation flux', units='W m-2')
+
+                self.varnames.append('dlwr')
+ 
+            if self.calc_longwave or self.calc_shortwave:
+                self.cloud = metdata('cloud',\
+                    mode='create',longname='Cloud cover fraction',units='Fraction (0-1)')
+
+                self.varnames.append('cloud')
+
+            if self.calc_specific_humidity:
+                self.RH = metdata('RH',\
+                    mode='create',longname='Relative humidity',units='Percent')
+
+                self.varnames.append('RH')
+
+            else:
+                self.SH = metdata('SH',\
+                    mode='create',longname='Specific humidity',units='kg kg-1')
+
+                self.varnames.append('SH')
+
             
         elif self.mode == 'load':
             self.Uwind = metdata('Uwind',infile=infile)
@@ -58,7 +102,7 @@ class SunMet(metfile):
     
     def __init__(self,x,y,z,timeinfo,tformat='%Y%m%d.%H%M%S',**kwargs):
         
-        metfile.__init__(self,mode='create')
+        metfile.__init__(self,mode='create', **kwargs)
         
         self.x = x
         self.y = y
@@ -67,7 +111,7 @@ class SunMet(metfile):
             otime.TimeVector(timeinfo[0],timeinfo[1],timeinfo[2],timeformat=tformat)
         self.nctime = otime.SecondsSince(self.time)
         
-        self.varnames = ['Uwind','Vwind','Tair','Pair','RH','rain','cloud']
+        #self.varnames = ['Uwind','Vwind','Tair','Pair','RH','rain','cloud']
         
         # Update all of the metdata objects
         for vv in self.varnames:
@@ -97,7 +141,7 @@ class SunMet(metfile):
         nc.createDimension('nt',0)
         for vv in self.varnames:
             dimname = 'N'+vv
-            dimlength = np.size(self.x)
+            dimlength = np.size(self[vv].x)
             nc.createDimension(dimname,dimlength)
             #print '%s, %d' % (dimname, dimlength)
             
@@ -107,12 +151,13 @@ class SunMet(metfile):
         tmpvar[:] = self.nctime
         tmpvar.long_name = 'time'
         tmpvar.units = 'seconds since 1990-01-01 00:00:00'
+
         for vv in self.varnames:
             dimname = 'N'+vv
             varx = 'x_'+vv
             vary = 'y_'+vv
             varz = 'z_'+vv
-            #print dimname, varx, coords[varx]
+            #print dimname, varx
             tmpvarx=nc.createVariable(varx,'f8',(dimname,))
             tmpvary=nc.createVariable(vary,'f8',(dimname,))
             tmpvarz=nc.createVariable(varz,'f8',(dimname,))
@@ -129,6 +174,7 @@ class SunMet(metfile):
             
         # Create the main variables
         for vv in self.varnames:
+            print vv
             dimname = 'N'+vv
             varx = 'x_'+vv
             vary = 'y_'+vv

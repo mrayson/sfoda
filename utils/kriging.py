@@ -47,7 +47,9 @@ class kriging(object):
         kd = spatial.cKDTree(self.XYin)
         
         # Perform query on all of the points in the grid
-        dist,self.ind=kd.query(self.XYout,distance_upper_bound=self.maxdist,k=self.NNear)
+        dist, self.ind=kd.query(self.XYout,
+                distance_upper_bound=self.maxdist,
+                k=self.NNear)
         
         self.Nc = np.size(self.ind,axis=0)
         print '%d interpolation points.'%self.Nc
@@ -65,22 +67,18 @@ class kriging(object):
                     print '%3.1f %% complete...'%pfinish
                     p0+=pstep
                                 
-            W = self.getWeights(dist[ii,:],self.XYin[self.ind[ii,:],0],self.XYin[self.ind[ii,:],1])
+            W = self.getWeights(dist[ii,:],\
+                self.XYin[self.ind[ii,:],0],\
+                self.XYin[self.ind[ii,:],1])
+            
             self.W[:,ii] = W.T 
                 
-   
-#            if all(dist[ii,:]!=np.inf):
-#                self.W[:,ii] = self.getWeights(dist[ii,:],self.XYin[ind[ii,:],0],self.XYin[ind[ii,:],1])
-#                
-#            else:
-#                Z[ii] = np.nan
-
-        
         
     def getWeights(self,dist,xin,yin):
         
         """ Calculates the kriging weights point by point"""
         
+        eps = 1e-10
         Ns = len(dist)
         
         # Construct the LHS matrix C
@@ -89,25 +87,33 @@ class kriging(object):
             C[i,i]=0
             for j in range(i+1,Ns):
                 D = np.sqrt((xin[i]-xin[j])**2+(yin[i]-yin[j])**2)
-                C[i,j] = self.semivariogram(D)
+                C[i,j] = self.semivariogram(D+eps)
                 C[j,i] = C[i,j]
 
         C[Ns,Ns]=0
 
+        ###
+        # Old method
+        ###
         # Calculate the inverse of C 
-        Cinv = np.linalg.inv(C)
+        #Cinv = np.linalg.inv(C)
         
         # Loop through each model point and calculate the vector D
         gamma = np.ones((Ns+1,1))
         
         for j in range(0,Ns):
-            gamma[j,0]= self.semivariogram( dist[j])
+            gamma[j,0]= self.semivariogram(dist[j]+eps)
+
         # Solve the matrix to get the weights
-        W = np.dot(Cinv,gamma)
-        W = W[:-1,:]
-        
+        #W = np.dot(Cinv,gamma)
+        #W = W[:-1,:]
+
+        W = np.linalg.solve(C,gamma)
+
         #print np.size(gamma,axis=0),np.size(gamma,axis=1)   
-        return 1.0/float(Ns)*np.ones((Ns,1))
+        return W[:-1]
+        #
+        #return 1.0/float(Ns)*np.ones((Ns,1))
         
     def semivariogram(self,D):
         """ Semivariogram functions"""

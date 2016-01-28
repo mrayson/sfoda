@@ -3,26 +3,29 @@
     Interpolate sounding data onto a regular grid
 """
 
+from netCDF4 import Dataset
 import gzip
 from scipy import spatial
 import numpy as np
-from maptools import ll2utm, readShpBathy, readDEM
-from kriging import kriging
-from netCDF4 import Dataset
-
 from scipy.sparse import coo_matrix
 from scipy.interpolate import griddata
 import time
 import matplotlib.pyplot as plt
+import pandas as pd
+
+from soda.utils.maptools import ll2utm, readShpBathy, readDEM
+from soda.utils.kriging import kriging
 
 # testing stuff
 import pdb
 
 class demBuilder(object):
-    "Class for building a DEM on a regular cartesian grid from different inputs"""
+    """
+    Class for building a DEM on a regular cartesian grid from different inputs
+    """
     
     ## Properties ##
-    infile = 'C:/Projects/GOMGalveston/DATA/Bathymetry/NOSHyrdrographicSurveys/xyz/NOS_Galveston_Survey_Depths.csv.gz'
+    infile = None
     
     # Projection information
     convert2utm=True
@@ -47,6 +50,10 @@ class demBuilder(object):
     sill = 0.8
     vrange = 250.0
     
+    scale = 1.0
+
+    h5groups = None
+    
     def __init__(self,**kwargs):
         
         self.__dict__.update(kwargs)
@@ -56,42 +63,74 @@ class demBuilder(object):
         
         if T!=list:
             self.multifile=False
-            # Read in the array
+
+            # Parse the data file into two vectors
             print 'Reading data from: %s...'%self.infile
             if self.infile[-3:]=='.gz':
                 LL,self.Zin = read_xyz_gz(self.infile)
-            if self.infile[-3:]=='txt':
+
+            elif self.infile[-3:]=='txt':
                 LL,self.Zin = read_xyz(self.infile)
+
             elif self.infile[-3:]=='shp':
                 LL,self.Zin = readShpBathy(self.infile)
+
             elif self.infile[-3:]=='dem':
                 LL,self.Zin = readDEM(self.infile,True)
-            if self.infile[-3:]=='.nc':
+
+            elif self.infile[-3:]=='.nc':
                 self.loadnc(fv=2)
                 LL = self._returnXY()
                 self.Zin = np.ravel(self.Zin)
+
+            elif self.infile[-3:] in ['.h5','hdf']:
+                LL, self.Zin = self.load_hdf(self.infile, self.h5groups)
             
+            # rescale the data
+            self.Zin = self.scale*self.Zin
+
+            # Convert the coordinates
             self.npt = len(self.Zin)
             if self.convert2utm:
+
                 if self.bbox==None:
                     # Work out the domain limits from the input file
-                    pdb.set_trace()
-                    
                     self.bbox = [LL[:,0].min(),LL[:,0].max(),LL[:,1].min(),LL[:,1].max()]
-                else:
-                    # Clip the points outside of the domain
-                    print 'Clipping points outside of the bounding box...'
-                    LL=self.clipPoints(LL)   
+                #else:
+                #    # Clip the points outside of the domain
+                #    print 'Clipping points outside of the bounding box...'
+                #    LL=self.clipPoints(LL)   
+
                 # Convert the coordinates
                 print 'Transforming the coordinates to UTM...'
                 self.XY=ll2utm(LL,self.utmzone,self.CS,self.isnorth)
+
             else:
                 self.XY=LL
+
         else: # Multiple files
             self.multifile=True
         
+        # Print out some details before processing
+        print 72*'#'
+        print 'Grid bounds: ' 
+        print '\tX: ', self.bbox[0:2]
+        print '\tY: ', self.bbox[2:4]
+        print 'Data bounds:'
+        print 'X min = %f, X max = %f'%(self.XY[:,0].min(), self.XY[:,0].max())
+        print 'Y min = %f, Y max = %f'%(self.XY[:,1].min(), self.XY[:,1].max())
+        print 72*'#'
+
+
+
         # Create the grid object
-        self.grd = Grid(self.bbox,self.dx,self.dx,utmzone=self.utmzone,CS=self.CS,isnorth=self.isnorth)
+        self.grd = Grid(self.bbox,self.dx,self.dx,\
+                utmzone=self.utmzone,\
+                CS=self.CS,\
+                isnorth=self.isnorth,
+                convert2utm= self.convert2utm)
+                #convert2utm= not self.convert2utm)
+
         
     def build(self):
         
@@ -166,6 +205,7 @@ class demBuilder(object):
 
         toc=time.clock()
         print 'Elapsed time %10.3f seconds.'%(toc-tic)
+        
     
     def _returnXY(self):
         """
@@ -312,15 +352,43 @@ class demBuilder(object):
             self.ygrd = nc.variables['Y'][:]
             self.Zin = nc.variables['topo'][:]
         except:
-            self.xgrd = nc.variables['x'][:]
-            self.ygrd = nc.variables['x'][:]
-            self.Zin = nc.variables['z'][:]
+            self.xgrd = nc.variables['lon'][:]
+            self.ygrd = nc.variables['lat'][:]
+            self.Zin = nc.variables['topo'][:]
                 
         nc.close()
         
         self.xgrd=self.xgrd[::fv]
         self.ygrd=self.ygrd[::fv]
         self.Zin=self.Zin[::fv,::fv]
+
+    def load_hdf(self, datafile, groups):
+        """
+        Load xyz data from a hdf5 file
+
+        assumes the data is stored in groups with columns: 'X', 'Y' and 'Z'
+
+        """
+
+        # Load the hdf file
+        h5 = pd.HDFStore( datafile , 'r')
+
+        #xyz = pd.DataFrame({'X':[], 'Y':[], 'Z':[]})
+        for ii,group in enumerate(groups):
+            if ii == 0:
+                xyz = h5[group]
+            else:
+                xyz = xyz.append(h5[group])
+
+            print group
+            print xyz.shape
+
+        h5.close()
+
+        # LL, Z
+        return np.column_stack([xyz['X'].values, xyz['Y'].values]),\
+            xyz['Z'].values
+
            
     def save(self,outfile='DEM.nc'):
         """ Saves the DEM to a netcdf file"""
@@ -410,13 +478,19 @@ class Grid(object):
     CS='NAD83'
     utmzone=15
     isnorth=True
+    convert2utm=True
     
     def __init__(self,bbox,dx,dy,**kwargs):
         self.__dict__.update(kwargs)
 
         # Generate the grid
-        xy0 = ll2utm([bbox[0],bbox[2]],self.utmzone,self.CS,self.isnorth)
-        xy1 = ll2utm([bbox[1],bbox[3]],self.utmzone,self.CS,self.isnorth)    
+        if self.convert2utm:
+            xy0 = ll2utm([bbox[0],bbox[2]],self.utmzone,self.CS,self.isnorth)
+            xy1 = ll2utm([bbox[1],bbox[3]],self.utmzone,self.CS,self.isnorth)
+        else:
+            xy0 = np.array([[bbox[0], bbox[2]]])
+            xy1 = np.array([[bbox[1], bbox[3]]])
+
         self.x0 = xy0[0,0]
         self.y0 = xy0[0,1]
         self.x1 = xy1[0,0]
@@ -508,17 +582,28 @@ def line_count(f):
     return i + 1
 
 def tile_vector(count,chunks):
-    rem = np.remainder(count,chunks)
-    
-    cnt2 = count-rem
-    dx = cnt2/chunks
-    
-    if count != cnt2:
-        pt1 = range(0,cnt2,dx)
-        pt2 = range(dx,cnt2,dx) + [count]
-    else:
-        pt1 = range(0,count-dx,dx)
-        pt2 = range(dx,count,dx)  
+    dx = count//chunks
+
+    pt1 = []
+    pt2 = []
+    p1=0
+    while p1 < count:
+        p2 = min(p1+dx, count)
+        pt1.append(p1)
+        pt2.append(p2)
+        p1 = p2 
+
+    #rem = np.remainder(count,chunks)
+    #cnt2 = count-rem
+    #dx = cnt2/chunks
+    #
+    #if count != cnt2:
+    #    pt1 = range(0,cnt2,dx)
+    #    pt2 = range(dx,cnt2,dx) + [count]
+    #else:
+    #    pt1 = range(0,count-dx,dx)
+    #    pt2 = range(dx,count,dx)  
+
     return pt1,pt2
     
 def idw(XYin,Zin,XYout,maxdist=300,NNear=3,p=1):

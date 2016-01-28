@@ -13,11 +13,12 @@ import matplotlib.pyplot as plt
 from sunpy import Grid
 from soda.dataio.ugrid.gridsearch import GridSearch
 from soda.utils.interpXYZ import Inputs, interpXYZ
+from soda.dataio.conversion.dem import DEM
 
 import time
-# Example inputs
-#infile = 'C:/Projects/GOMGalveston/DATA/Bathymetry/DEMs/NOAA_25m_UTM_DEM.nc'
-#suntanspath = 'C:/Projects/GOMGalveston/MODELLING/GRIDS/GalvestonFine'
+
+import pdb
+
 class DepthDriver(object):
     """
     Driver class for interpolating depth data onto a suntans grid
@@ -51,28 +52,37 @@ class DepthDriver(object):
     smooth=False
     smoothmethod='kriging' # USe kriging or idw for smoothing
     smoothnear=5 # No. of points to use for smoothing
+
+    # Set if the input data is a DEM
+    isDEM = False
     
     def __init__(self,depthfile,**kwargs):
         
         self.__dict__.update(kwargs)
         
         # Parse the depth data into an object
-        self.indata = Inputs(depthfile,convert2utm=self.convert2utm,\
-            CS=self.CS,utmzone=self.utmzone,\
-            isnorth=self.isnorth,vdatum=self.vdatum,\
-            shapefieldname=self.shapefieldname)
+        if self.isDEM:
+            self.indata = DEM(depthfile)
+
+        else:
+            self.indata = Inputs(depthfile,convert2utm=self.convert2utm,\
+                CS=self.CS,utmzone=self.utmzone,\
+                isnorth=self.isnorth,vdatum=self.vdatum,\
+                shapefieldname=self.shapefieldname)
 
 
     def __call__(self,suntanspath,depthmax=0.0,scalefac=-1.0, interpnodes=True):
         
         self.suntanspath=suntanspath
+        self.interpnodes = interpnodes
+        self.scalefac = scalefac
         
         # Initialise the interpolation points
         print 'Loading suntans grid points...'
         self.grd = sunpy.Grid(self.suntanspath)
 
 
-        if interpnodes:
+        if self.interpnodes:
             print 'Interpolating depths onto nodes and taking min...'
             self.xy = np.column_stack((self.grd.xp,self.grd.yp))
 
@@ -81,26 +91,10 @@ class DepthDriver(object):
             print 'Interpolating depths straight to cell centres...'
             self.xy = np.column_stack((self.grd.xv,self.grd.yv))
 
+        # Call the interpolation routine
+        self.interp_depths()
+           
 
-        # Initialise the Interpolation class
-        print 'Building interpolant class...'
-        self.F = interpXYZ(self.indata.XY,self.xy,method=self.interpmethod,NNear=self.NNear,\
-                p=self.p,varmodel=self.varmodel,nugget=self.nugget,sill=self.sill,vrange=self.vrange)
-
-
-        # Interpolate the data
-        print 'Interpolating data...'
-        dv = self.F(self.indata.Zin)*scalefac
-
-        if interpnodes:
-            self.grd.dv = np.zeros_like(self.grd.xv)
-            for nn in range(self.grd.Nc):
-                self.grd.dv[nn] = np.max(dv[self.grd.cells[nn,0:self.grd.nfaces[nn] ] ])
-                #self.grd.dv[nn] = np.mean(dv[self.grd.cells[nn,0:self.grd.nfaces[nn] ] ])
-                
-        else:
-            self.grd.dv = dv
-            
         # Smooth
         if self.smooth:
             self.smoothDepths()
@@ -124,6 +118,31 @@ class DepthDriver(object):
             
         print 'Finished depth interpolation.'
         
+    def interp_depths(self):
+
+        # Initialise the Interpolation class
+        if not self.isDEM:
+            print 'Building interpolant class...'
+            self.F = interpXYZ(self.indata.XY,self.xy,method=self.interpmethod,NNear=self.NNear,\
+                    p=self.p,varmodel=self.varmodel,nugget=self.nugget,sill=self.sill,vrange=self.vrange)
+
+            # Interpolate the data
+            print 'Interpolating data...'
+            dv = self.F(self.indata.Zin)*self.scalefac
+
+        else:
+            print 'Interpolating DEM data...'
+            dv = self.indata.interp(self.xy[:,0],self.xy[:,1])*self.scalefac
+
+        if self.interpnodes:
+            self.grd.dv = np.zeros_like(self.grd.xv)
+            for nn in range(self.grd.Nc):
+                self.grd.dv[nn] = np.max(dv[self.grd.cells[nn,0:self.grd.nfaces[nn] ] ])
+                #self.grd.dv[nn] = np.mean(dv[self.grd.cells[nn,0:self.grd.nfaces[nn] ] ])
+                
+        else:
+            self.grd.dv = dv
+ 
     def smoothDepths(self):
         """ 
         Smooth the data by running an interpolant over the model grid points

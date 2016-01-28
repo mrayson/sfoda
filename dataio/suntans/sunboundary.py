@@ -571,7 +571,8 @@ class Boundary(object):
             self.uc+=uc
             self.vc+=vc
 
-    def oceanmodel2bdy(self,ncfile,convert2utm=True,setUV=True,seth=True,name='HYCOM'):
+    def oceanmodel2bdy(self,ncfile,\
+        convert2utm=True,setUV=True,seth=True, zmax=6000., name='HYCOM'):
         """
         Interpolate data from a downloaded netcdf file to the open boundaries
 
@@ -579,14 +580,19 @@ class Boundary(object):
         print 'Loading boundary data from ocean model netcdf file:\n\t%s...'%ncfile
         # Load the temperature salinity data and coordinate data
         temp, nc = get_metocean_local(ncfile,'temp',name=name)
-        salt, nc = get_metocean_local(ncfile,'salt')
+        salt, nc = get_metocean_local(ncfile,'salt',name=name)
         if setUV:
             u, nc = get_metocean_local(ncfile,'u')
             v, nc = get_metocean_local(ncfile,'v')
 
 
+        if nc.X.ndim==1:
+            X, Y = np.meshgrid(nc.X, nc.Y)
+        else:
+            X, Y = nc.X, nc.Y
+
         # Convert to utm
-        ll = np.vstack([nc.X.ravel(),nc.Y.ravel()]).T
+        ll = np.vstack([X.ravel(),Y.ravel()]).T
         if convert2utm:
             xy = ll2utm(ll,self.utmzone,north=self.isnorth)
         else:
@@ -596,6 +602,9 @@ class Boundary(object):
         mask3d = temp.mask
         mask3d = mask3d[0,...]
         mask3d = mask3d.reshape((nc.nz,xy.shape[0]))
+
+        # Ensure that the bottom cell of the ocean model is deeper than the suntans grid
+        nc.Z[-1] = zmax
 
         # Type 3 cells
         if self.N3>0:
@@ -843,17 +852,26 @@ class InitialCond(Grid):
 
         print 'Done setting initial condition data from file.'
 
-    def oceanmodel2ic(self,ncfile,convert2utm=True,setUV=False,seth=False,name='HYCOM'):
+    def oceanmodel2ic(self,ncfile,\
+            convert2utm=True,setUV=False,seth=False,zmax=6000.,name='HYCOM'):
         """
         Interpolate data from a downloaded netcdf file to the initial condition
 
         """
         print 'Loading initial condition data from ocean model netcdf file:\n\t%s...'%ncfile
+        dt = timedelta(days=0.5)
+        trange = [self.time - dt, self.time + dt]
+
         # Get the temperature data and coordinate data
-        temp, nc = get_metocean_local(ncfile,'temp',name=name)
+        temp, nc = get_metocean_local(ncfile,'temp',name=name, trange=trange)
 
         # Convert to utm
-        ll = np.vstack([nc.X.ravel(),nc.Y.ravel()]).T
+        if nc.X.ndim==1:
+            X, Y = np.meshgrid(nc.X, nc.Y)
+        else:
+            X, Y = nc.X, nc.Y
+
+        ll = np.vstack([X.ravel(),Y.ravel()]).T
         if convert2utm:
             xy = ll2utm(ll,self.utmzone,north=self.isnorth)
         else:
@@ -864,21 +882,26 @@ class InitialCond(Grid):
         mask3d = mask3d[0,...]
         mask3d = mask3d.reshape((nc.nz,xy.shape[0]))
 
+        # Ensure that the bottom cell of the ocean model is deeper than the suntans grid
+        nc.Z[-1] = zmax
+
+
+
         # Construct the 4D interp class
         F4d =\
-            Interp4D(xy[:,0],xy[:,1],nc.Z,nc.time,\
+            Interp4D(xy[:,0],xy[:,1],nc.Z, nc.localtime,\
                 self.xv,self.yv,self.z_r,self.time,mask=mask3d,**self.interpdict)
 
         tempnew = F4d(temp)
         self.T[:] = tempnew
 
-        salt, nc = get_metocean_local(ncfile,'salt')
+        salt, nc = get_metocean_local(ncfile,'salt', name=name, trange=trange)
         saltnew = F4d(salt)
         self.S[:] = saltnew
 
         if seth:
             # Construct the 3D interp class for surface height
-            ssh, nc = get_metocean_local(ncfile,'ssh')
+            ssh, nc = get_metocean_local(ncfile,'ssh', name=name, trange=trange)
             mask2d = ssh.mask
             mask2d = mask2d[0,...].ravel()
 
