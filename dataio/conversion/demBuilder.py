@@ -15,6 +15,8 @@ import pandas as pd
 
 from soda.utils.maptools import ll2utm, readShpBathy, readDEM
 from soda.utils.kriging import kriging
+from soda.utils.interpXYZ import CurvMin
+
 
 # testing stuff
 import pdb
@@ -154,6 +156,11 @@ class demBuilder(object):
             elif self.interptype=='griddata':
                 print 'Building DEM using griddata...'
                 self.griddata()
+
+            elif self.interptype=='curvmin':
+                print 'Building DEM using curvmin...'
+                self.curvmin()
+ 
             else:
                 print 'Error - Unknown interpolation type: %s.'%self.interptype
         else: # Multiple file interpolation
@@ -343,6 +350,10 @@ class demBuilder(object):
                 Z[p1:p2] = self.Finterp(self.Zin)
                 
         self.Z = np.reshape(Z,(self.grd.ny,self.grd.nx))
+
+    def curvmin(self):
+        self.Finterp = CurvMin(self.XY, self.grd.ravel())
+        self.Z = self.Finterp(self.Zin).reshape((self.grd.ny,self.grd.nx))
     
     def loadnc(self,fv=1):
         """ Load the DEM data from a netcdf file"""        
@@ -478,18 +489,18 @@ class Grid(object):
     CS='NAD83'
     utmzone=15
     isnorth=True
-    convert2utm=True
+    #convert2utm=True
     
     def __init__(self,bbox,dx,dy,**kwargs):
         self.__dict__.update(kwargs)
 
         # Generate the grid
-        if self.convert2utm:
-            xy0 = ll2utm([bbox[0],bbox[2]],self.utmzone,self.CS,self.isnorth)
-            xy1 = ll2utm([bbox[1],bbox[3]],self.utmzone,self.CS,self.isnorth)
-        else:
-            xy0 = np.array([[bbox[0], bbox[2]]])
-            xy1 = np.array([[bbox[1], bbox[3]]])
+        #if self.convert2utm:
+        #    xy0 = ll2utm([bbox[0],bbox[2]],self.utmzone,self.CS,self.isnorth)
+        #    xy1 = ll2utm([bbox[1],bbox[3]],self.utmzone,self.CS,self.isnorth)
+        #else:
+        xy0 = np.array([[bbox[0], bbox[2]]])
+        xy1 = np.array([[bbox[1], bbox[3]]])
 
         self.x0 = xy0[0,0]
         self.y0 = xy0[0,1]

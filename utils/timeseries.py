@@ -16,6 +16,7 @@ import othertime
 from datetime import datetime, timedelta
 from uspectra import uspectra, getTideFreq
 import operator
+import xray
 
 from soda.dataio.netcdfio import queryNC
 
@@ -472,6 +473,32 @@ class timeseries(object):
             
         f.close()
 
+    def to_xray(self):
+        """
+        Convert the timeseries to an xray.DataArray object
+        """
+        # Define the coordinates
+        coords = {'time':self.t.copy()}
+        if self.y.ndim == 1:
+            dims = ('time',)
+        else:
+            dims = ('time','depth')
+            coords.update({'depth':self.Z})
+
+        # Define the attributes
+        attrs = {\
+            'units':self.units,\
+            'long_name':self.long_name,\
+            'stationid':self.stationid,\
+        }
+
+        return xray.DataArray( self.y.copy(), \
+                    dims=dims,\
+                    name=self.varname,\
+                    attrs = attrs,\
+                    coords = coords,\
+               )
+ 
     def copy(self):
         """
         Make a copy of the time-series object in memory
@@ -566,6 +593,8 @@ class timeseries(object):
 class ModVsObs(object):
     """
     Class for handling and comparing two time series i.e. model vs observations
+
+    DEPRECATED - moved to its own module modvsobs.py
     """
 
     units=' '
@@ -623,6 +652,15 @@ class ModVsObs(object):
 
         self.calcStats()
 
+        # Calculate the data limits
+        self.calc_data_lims()
+
+    def calc_data_lims(self):
+        y0 = min(self.TSobs.y.min(), self.TSmod.y.min())
+        y1 = max(self.TSobs.y.max(), self.TSmod.y.max())
+        #ymax = max[np.abs(y0), np.abs(y1)]
+        self.ylims = [y0, y1]
+
     def plot(self,colormod='r',colorobs='b',legend=True,loc='lower right',**kwargs):
         """
         Time-series plots of both data sets with labels
@@ -665,7 +703,7 @@ class ModVsObs(object):
         Scatter plot of the model vs observation
         """
         if ylims==None:
-            ylims = [self.TSobs.y.min(), self.TSobs.y.max()]
+            ylims = self.ylims
 
         h1 = plt.plot(self.TSobs.y.ravel(),self.TSmod.y.ravel(),'.',**kwargs)
         plt.plot([ylims[0],ylims[1]],[ylims[0],ylims[1]],'k--')
@@ -684,7 +722,32 @@ class ModVsObs(object):
 
         return h1, ax
 
+    def qqplot(self, percentiles=[1.,5.,25.,50.,75.,95.,99.],\
+                ylims=None, **kwargs):
+        """
+        Quantile-quantile plot
+        """
+        q_mod = np.percentile(self.TSmod.y, percentiles)
+        q_obs = np.percentile(self.TSobs.y, percentiles)
 
+        if ylims==None:
+            ylims = self.ylims
+
+        # scale the marker size
+        sizes = (1 - np.abs(np.array(percentiles)-50)/50)*50
+
+
+        h1 = plt.scatter(q_obs, q_mod,s=sizes, **kwargs)
+        plt.plot([ylims[0],ylims[1]],[ylims[0],ylims[1]],'k--')
+
+        ax = plt.gca()
+        ax.set_aspect('equal')
+        plt.xlim(ylims)
+        plt.ylim(ylims)
+        #ax.autoscale(tight=True)
+        plt.grid(b=True)
+
+        return h1, ax
 
     def calcStats(self):
         """

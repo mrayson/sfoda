@@ -340,7 +340,7 @@ def netcdfObs2DB(ncfile, dbfile, nctype=1):
                 ele=[0.0]
                 
             times = nc.groups[grp].variables['time']
-            dates = num2date(times[:],units=times.units)
+            dates = num2date([times[0],times[-1]],units=times.units)
 
         return lon, lat, long_name, StationID, StationName, ele, dates
 
@@ -363,7 +363,7 @@ def netcdfObs2DB(ncfile, dbfile, nctype=1):
             ele = 0.0
             
         times = nc.groups[grp].variables['time']
-        dates = num2date(times[:],units=times.units)
+        dates = num2date([times[0],times[-1]],units=times.units)
 
         return lon, lat, long_name, StationID, StationName, ele, dates
  

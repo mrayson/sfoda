@@ -2594,7 +2594,7 @@ class TimeSeries(timeseries, Spatial):
         else:
             if self.Z == None and self.klayer== None:
                 self.klayer = [-99]
-            elif not self.Z == None and self.klayer == None:
+            elif not self.Z == None or self.klayer == None:
                 self.klayer = self.findNearestZ(self.Z)
             else:
                 self.klayer=self.klayer
