@@ -10,7 +10,7 @@ import os
 import time
 import collections
 import numpy as np
-from netCDF4 import Dataset, num2date,date2num,date2index
+from netCDF4 import Dataset, MFDataset, num2date,date2num,date2index
 from datetime import datetime
 from soda.utils import othertime
 
@@ -359,7 +359,10 @@ class GetDAP(object):
 
         # Open the file
         if not self.multifile:
-            self._nc = Dataset(self.ncurl)
+            try:
+                self._nc = Dataset(self.ncurl)
+            except:
+                self._nc = MFDataset(self.ncurl)
         else:
             self._nc = Dataset(self.ncurl[0])
             self._ncfiles = self.ncurl
@@ -635,7 +638,7 @@ class GetDAP(object):
             tmp.setncattr(aa,getattr(V,aa))
 
     def create_ncfile(self,ncfile):
-        nc = Dataset(ncfile,'w')
+        nc = Dataset(ncfile, 'w', format='NETCDF4_CLASSIC')
         nc.Title = '%s model data'%(self.type)
         nc.url = '%s'%(self.ncurl)
         

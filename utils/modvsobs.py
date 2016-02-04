@@ -1,5 +1,10 @@
 """
 Model vs Observations modules
+
+Use function:
+    load_netcdf(ncfile, group)
+
+To load from a netcdf file
 """
 
 import numpy as np
@@ -208,6 +213,19 @@ class ModVsObs(object):
 
         outstr=''
 
+        #if header:
+        #    outstr += "-------------------------------------------------------------- \n"
+        #    outstr += "           Mean Model Mean Obs. Std. Mod. Std Obs RMSE   CC    skill \n"
+        #    
+        #    outstr += "---------- ---------- --------- --------- ------- ------ ----- ------ \n"
+
+        #outstr += " %s [%s]  %6.3f  %6.3f  %6.3f  %6.3f  %6.3f  %6.3f  %6.3f  \n"%\
+        #    (self.stationid, self.units, self.meanMod,\
+        #     self.meanObs, self.stdMod, self.stdObs,\
+        #     self.rmse,self.cc,self.skill)
+
+
+
         if header:
             outstr += "|      | Mean Model | Mean Obs. | Std. Mod. | Std Obs | RMSE |   CC   | skill |\n"
             
@@ -325,3 +343,40 @@ class ModVsObs(object):
         ds = self.to_xray(attrs=attrs)
 
         ds.to_netcdf(ncfile, group=ncgroup, format='NETCDF4', mode=mode)
+
+##########
+# User functions
+##########
+def load_netcdf(ncfile, group):
+    """
+    Load a ModVsObs object previously saved in a netcdf file
+    """
+    # Load the group into a ModVsObs object
+    ds = xray.open_dataset(ncfile, group=group)
+
+    # work out the varname
+    varnames = ds.data_vars.keys()
+
+    for vv in varnames:
+        if 'mod' in vv:
+            varname = vv.strip('_mod')
+
+    # Load the two variables (as Pandas objects)
+    TSobs = ds['%s_obs'%varname].to_pandas()
+    TSmod = ds['%s_mod'%varname].to_pandas()
+
+    # Load the attributes
+    attrs = ds['%s_obs'%varname].attrs
+
+    # Convert to a ModVsObs object
+    # Put the data into a ModVsObs object (model first then observed)
+    return ModVsObs(TSmod.index.to_pydatetime(),\
+            TSmod.values,\
+            TSobs.index.to_pydatetime(),\
+            TSobs.values,\
+            varname=varname,\
+            long_name=attrs['long_name'], \
+            units=attrs['units'], \
+            stationid=group,\
+        )
+ 

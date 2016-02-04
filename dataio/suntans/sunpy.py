@@ -77,6 +77,17 @@ suntans_dimvars = {'Np':'Np',\
                    'maxfaces':'numsides'\
                    }
 
+########
+# Utility functions
+########
+def calc_z(dz):
+    z_bot = np.cumsum(dz)
+    z_top = np.hstack((0.0,z_bot[:-1]))
+    return 0.5*(z_bot+z_top)
+
+##########
+# Classes
+##########
 class Grid(object):
     """ Class for handling SUNTANS grid data"""
 
@@ -710,9 +721,10 @@ class Grid(object):
         
         # Calculate the mid-point depth
         if not self.Nkmax == 1:
-            z_bot = np.cumsum(self.dz)
-            z_top = np.hstack((0.0,z_bot[:-1]))
-            self.z_r = 0.5*(z_bot+z_top)
+            #z_bot = np.cumsum(self.dz)
+            #z_top = np.hstack((0.0,z_bot[:-1]))
+            #self.z_r = 0.5*(z_bot+z_top)
+            self.z_r = calc_z(self.dz)
         else:
             self.z_r=np.array([0.0])
             

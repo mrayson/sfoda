@@ -37,7 +37,7 @@ with open('%s/dataio/ncmetadata.yaml'%_dirpath, 'r') as f:
 ###################
 # xray routines
 ###################
-def dict_toxray(data, **kwargs):
+def dict_toxray(data, ds={}, **kwargs):
     """
     Converts a dictionary with keys as variable names to an
     xray.Dataset object
@@ -48,7 +48,6 @@ def dict_toxray(data, **kwargs):
     **kwargs are passed directly to xray.DataArray()
     """
     
-    ds = {}
     for vv in data.keys():
         
         if ncmeta.has_key(vv):

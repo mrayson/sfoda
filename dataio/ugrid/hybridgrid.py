@@ -112,7 +112,7 @@ class HybridGrid(object):
             # Face->edge connectivity
             self.face = self.cell_edge_map()
 
-            self.markcell = self.calc_markcell(self.mark)
+            #self.markcell = self.calc_markcell(self.mark)
 
             if self.neigh is None:
                 self.make_neigh_from_cells()

@@ -226,10 +226,14 @@ class timeseries(object):
             else:
                 #mask = np.isnan(self.y) == False
                 mask = ~self.y.mask
-                F = interpolate.interp1d(self.tsec[mask],self.y[mask],kind=method,axis=axis,\
-                bounds_error=False,fill_value=0)
+                if np.all(self.y.mask):
+                    output = np.zeros(t.shape)
+                    output[:] = np.nan
+                else:
+                    F = interpolate.interp1d(self.tsec[mask],self.y[mask],kind=method,axis=axis,\
+                        bounds_error=False,fill_value=0)
 
-                output = F(t)
+                    output = F(t)
             
             
         return tnew, output

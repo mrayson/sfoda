@@ -581,10 +581,6 @@ class Boundary(object):
         # Load the temperature salinity data and coordinate data
         temp, nc = get_metocean_local(ncfile,'temp',name=name)
         salt, nc = get_metocean_local(ncfile,'salt',name=name)
-        if setUV:
-            u, nc = get_metocean_local(ncfile,'u')
-            v, nc = get_metocean_local(ncfile,'v')
-
 
         if nc.X.ndim==1:
             X, Y = np.meshgrid(nc.X, nc.Y)
@@ -628,7 +624,7 @@ class Boundary(object):
 
             if seth:
                 # Construct the 3D interp class for surface height
-                ssh, nc2d = get_metocean_local(ncfile,'ssh')
+                ssh, nc2d = get_metocean_local(ncfile,'ssh', name=name)
                 mask2d = ssh.mask
                 mask2d = mask2d[0,...].ravel()
 
@@ -647,14 +643,25 @@ class Boundary(object):
             tempnew = F4d(temp)
             self.boundary_T[:] = tempnew
 
+            del temp
+
             saltnew = F4d(salt)
             self.boundary_S[:] = saltnew
 
+            del salt
+
             if setUV:
+                u, nc = get_metocean_local(ncfile,'u', name=name)
                 unew = F4d(u)
                 self.boundary_u[:] += unew
+
+                del u
+
+                v, nc = get_metocean_local(ncfile,'v', name=name)
                 vnew = F4d(v)
                 self.boundary_v[:] += vnew
+
+                del v
 
         
     def otis2boundary(self,otisfile,conlist=None,setUV=False):

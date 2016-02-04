@@ -49,7 +49,7 @@ class Plot(HybridGrid):
 
         return ax, collection
 
-    def plotcelldata(self, z, xlims=None, ylims=None, **kwargs):
+    def plotcelldata(self, z, xlims=None, ylims=None, colorbar=True, **kwargs):
         """
         Plot cell centered data
         """
@@ -74,7 +74,10 @@ class Plot(HybridGrid):
         ax.set_xlim(xlims)
         ax.set_ylim(ylims)
 
-        axcb = fig.colorbar(collection)
+        axcb=None
+        if colorbar:
+            axcb = fig.colorbar(collection)
+
     
         return fig, ax, collection, axcb
 

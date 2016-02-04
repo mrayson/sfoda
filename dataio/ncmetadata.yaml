@@ -358,6 +358,21 @@ nu_v:
         mesh: suntans_mesh
         location: face
         coordinates: time z_r yv xv
+kappa_t:
+    fill_value: 999999.0
+    complevel: 1
+    dimensions:
+        time
+        Nk
+        Nc
+    dtype: f8
+    zlib: True
+    attributes:
+        units: m2 s-1
+        long_name: Vertical eddy diffusivity
+        mesh: suntans_mesh
+        location: face
+        coordinates: time z_r yv xv
 salt:
     fill_value: 999999.0
     complevel: 1
