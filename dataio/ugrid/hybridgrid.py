@@ -72,15 +72,22 @@ class HybridGrid(object):
         self.yp = yp
         self.cells=cells
 
-        # Make sure the inputs are ndarrays
-        self.check_inputs()
+        # Set the size parameters
+        self.Np = self.xp.shape[0]
+        self.Nc = self.cells.shape[0]
 
+
+        # Get the number of faces
         if self.nfaces is None:
             self.nfaces = 3*np.ones((self.Nc,),np.int64)
             self.MAXFACES = 3
         else:
             self.MAXFACES = np.max(self.nfaces)
+
+        # Make sure the inputs are ndarrays
+        self.check_inputs()
             
+        # Get the edges
         if self.edges is None or self.grad is None:
             self.make_edges_from_cells()
             #self.make_edges_from_cells_sparse()
@@ -88,14 +95,12 @@ class HybridGrid(object):
             self.edges = self.edges.astype(np.int64)
             self.grad = self.grad.astype(np.int64)
 
+        self.Ne = self.edges.shape[0]
+
         # make_edges_from_cells sets everything to zero
         if not self.mark is None:
             self.mark=self.mark.astype(np.int64)
 
-        # Set the size parameters
-        self.Np = self.xp.shape[0]
-        self.Nc = self.cells.shape[0]
-        self.Ne = self.edges.shape[0]
 
 
         # Make sure the BCs are ok
@@ -112,7 +117,7 @@ class HybridGrid(object):
             # Face->edge connectivity
             self.face = self.cell_edge_map()
 
-            #self.markcell = self.calc_markcell(self.mark)
+            self.markcell = self.calc_markcell(self.mark)
 
             if self.neigh is None:
                 self.make_neigh_from_cells()
