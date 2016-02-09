@@ -578,9 +578,13 @@ class Boundary(object):
 
         """
         print 'Loading boundary data from ocean model netcdf file:\n\t%s...'%ncfile
+
+        dt = timedelta(days=0.5)
+        trange = [self.time[0] - dt, self.time[-1] + dt]
+
         # Load the temperature salinity data and coordinate data
-        temp, nc = get_metocean_local(ncfile,'temp',name=name)
-        salt, nc = get_metocean_local(ncfile,'salt',name=name)
+        temp, nc = get_metocean_local(ncfile,'temp', name=name, trange=trange)
+        salt, nc = get_metocean_local(ncfile,'salt', name=name, trange=trange)
 
         if nc.X.ndim==1:
             X, Y = np.meshgrid(nc.X, nc.Y)
@@ -606,7 +610,7 @@ class Boundary(object):
         if self.N3>0:
             # Construct the 4D interp class
             F4d =\
-                Interp4D(xy[:,0],xy[:,1],nc.Z,nc.time,\
+                Interp4D(xy[:,0],xy[:,1],nc.Z,nc.localtime,\
                     self.xv,self.yv,self.z,self.time,mask=mask3d,**self.interpdict)
 
             tempnew = F4d(temp)
@@ -624,11 +628,11 @@ class Boundary(object):
 
             if seth:
                 # Construct the 3D interp class for surface height
-                ssh, nc2d = get_metocean_local(ncfile,'ssh', name=name)
+                ssh, nc2d = get_metocean_local(ncfile,'ssh', name=name, trange=trange)
                 mask2d = ssh.mask
                 mask2d = mask2d[0,...].ravel()
 
-                F3d = Interp4D(xy[:,0],xy[:,1],None,nc2d.time,\
+                F3d = Interp4D(xy[:,0],xy[:,1],None,nc2d.localtime,\
                     self.xv,self.yv,None,self.time,mask=mask2d,**self.interpdict)
                 sshnew = F3d(ssh)
                 self.h[:] += sshnew
@@ -637,7 +641,7 @@ class Boundary(object):
         if self.N2>0:
             # Construct the 4D interp class
             F4d =\
-             Interp4D(xy[:,0],xy[:,1],nc.Z,nc.time,\
+             Interp4D(xy[:,0], xy[:,1], nc.Z, nc.localtime,\
                  self.xe,self.ye,self.z,self.time,mask=mask3d,**self.interpdict)
 
             tempnew = F4d(temp)
@@ -651,13 +655,13 @@ class Boundary(object):
             del salt
 
             if setUV:
-                u, nc = get_metocean_local(ncfile,'u', name=name)
+                u, nc = get_metocean_local(ncfile,'u', name=name, trange=trange)
                 unew = F4d(u)
                 self.boundary_u[:] += unew
 
                 del u
 
-                v, nc = get_metocean_local(ncfile,'v', name=name)
+                v, nc = get_metocean_local(ncfile,'v', name=name, trange=trange)
                 vnew = F4d(v)
                 self.boundary_v[:] += vnew
 

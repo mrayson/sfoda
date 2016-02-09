@@ -234,9 +234,15 @@ def save_profile_nc(basedir, outfile, basetime, varnames=None, **kwargs):
             coords = {'time':V.time,\
                 'Nc':range(0,V.Np*V.Ni)}
 
+        encoding = {
+                'complevel':5,
+                'zlib':True,
+            }
+
         ds = dict_toxray(data, ds=ds,\
             dims=dims,\
-            coords = coords )
+            coords = coords,\
+            encoding = encoding)
 
 
     # Add in the coordinates last

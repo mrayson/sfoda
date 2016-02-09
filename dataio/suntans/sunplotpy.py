@@ -643,6 +643,9 @@ class SunPlotPy(wx.Frame, Spatial, Grid ):
             #self.tstep = range(self.Nt) # Use all time steps for animation
             #self.animate(cbar=self.cbar,cmap=self.cmap,\
             #    xlims=self.axes.get_xlim(),ylims=self.axes.get_ylim())
+            def initanim():
+                return (self.title, self.collection)
+
             def updateScalar(i):
                 if not self.plot_type=='particles':
                     self.tstep=[i]
@@ -654,12 +657,13 @@ class SunPlotPy(wx.Frame, Spatial, Grid ):
                         xlims=self.axes.get_xlim(),ylims=self.axes.get_ylim())
                     return (self.PTM.title,self.PTM.p_handle)
 
-            self.anim = animation.FuncAnimation(self.fig, updateScalar, frames=self.Nt, interval=50, blit=True)
+            self.anim = animation.FuncAnimation(self.fig, \
+                updateScalar, init_func = initanim, frames=self.Nt, interval=50, blit=True)
 
             if ext=='.gif':
                 self.anim.save(outfile,writer='imagemagick',fps=6)
             else:
-                self.anim.save(outfile,fps=6,bitrate=3600)
+                self.anim.save(outfile,writer='mencoder',fps=6,bitrate=3600)
 
             # Return the figure back to its status
             del self.anim

@@ -1,5 +1,9 @@
 """
-Unstructured grid generation utilities
+Unstructured grid generation and modification utilities
+
+Usage include:
+    - Create a cartesian mesh
+    - Reorder grid cells using metis
 """
 import numpy as np
 from soda.dataio.ugrid.hybridgrid import HybridGrid
@@ -77,3 +81,29 @@ def curv_ugrid_gen(X,Y,suntanspath=None,maskpoly=None):
         grd.write2suntans(suntanspath)
 
     return grd
+
+def reorder_ugrid(grd):
+    """
+    Re-order grid cells using METIS
+
+    Input:
+        grd - HybridGrid object
+    
+    Returns:
+        a reordered HybridGrid object
+    """
+    import cymetis
+
+    # Error check
+    assert isinstance(grd, HybridGrid)
+
+    # Create the graph for cymetis
+    xadj, adjncy = grd.create_graph()
+
+    # Find the new cell ordering
+    perm, iperm = cymetis.reorder_graph(xadj, adjncy)
+
+    # Create a new grid with this ordering
+    return HybridGrid(grd.xp, grd.yp, grd.cells[perm, ...])
+
+

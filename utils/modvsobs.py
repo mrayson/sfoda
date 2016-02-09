@@ -32,11 +32,12 @@ class ModVsObs(object):
     varname = ' '
     Z=0.0
 
-    def __init__(self,tmod,ymod,tobs,yobs,**kwargs):
+    def __init__(self,tmod,ymod,tobs,yobs, interpmodel=True, **kwargs):
         """
         Inputs:
             tmod,tobs - vector of datetime object
             ymod,yobs - vector of values
+            interpmodel - [default: True] interp the model onto the observations
 
         Keywords:
             long_name: string containing variable's name (used for plotting)
@@ -58,21 +59,28 @@ class ModVsObs(object):
         
         # Clip both the model and observation to this daterange
 
-        t0 = othertime.findNearest(time0,tmod)
-        t1 = othertime.findNearest(time1,tmod)
-        TSmod = timeseries(tmod[t0:t1],ymod[...,t0:t1], **kwargs)
+        t0m = othertime.findNearest(time0,tmod)
+        t1m = othertime.findNearest(time1,tmod)
+        TSmod = timeseries(tmod[t0m:t1m],ymod[...,t0m:t1m], **kwargs)
 
         t0 = othertime.findNearest(time0,tobs)
         t1 = othertime.findNearest(time1,tobs)
-        self.TSobs = timeseries(tobs[t0:t1],yobs[...,t0:t1], **kwargs)
+        TSobs = timeseries(tobs[t0:t1],yobs[...,t0:t1], **kwargs)
 
         # Interpolate the observed value onto the model step
         #tobs_i, yobs_i = TSobs.interp(tmod[t0:t1],axis=0)
         #self.TSobs = timeseries(tobs_i, yobs_i)
 
         # Interpolate the modeled value onto the observation time step
-        tmod_i, ymod_i = TSmod.interp(tobs[t0:t1],axis=-1)
-        self.TSmod = timeseries(tmod_i,ymod_i)
+        if interpmodel:
+            tmod_i, ymod_i = TSmod.interp(tobs[t0:t1],axis=-1)
+            self.TSmod = timeseries(tmod_i,ymod_i, **kwargs)
+            self.TSobs = TSobs
+        else:
+            tobs_i, yobs_i = TSobs.interp(tmod[t0m:t1m],axis=-1)
+            self.TSobs = timeseries(tobs_i,yobs_i, **kwargs)
+            self.TSmod = TSmod
+
 
         self.N = self.TSmod.t.shape[0]
         if self.N==0:
