@@ -116,6 +116,7 @@ class HybridGrid(object):
 
             # Face->edge connectivity
             self.face = self.cell_edge_map()
+            self.face[self.face==FILLVALUE] = -1
 
             self.markcell = self.calc_markcell(self.mark)
 
@@ -931,7 +932,8 @@ class HybridGrid(object):
         Calculates the cell-type based on the edge marker
 
         """
-        mask = self.cells.mask.copy()
+        #mask = self.cells.mask.copy()
+        mask = self.cells==FILLVALUE
         ctypes = self.mark[self.face]
         ctypes[mask] = 0
 
@@ -1051,6 +1053,7 @@ class HybridGrid(object):
 
 	self._cell_edge_map = ugridutils.cell_edge_map(self.cells,
 		self.nfaces, self._pnt2edges)
+
 	return self._cell_edge_map
 	####
 	# Pure python

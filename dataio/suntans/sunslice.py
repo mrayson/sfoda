@@ -71,19 +71,26 @@ class Slice(Spatial):
         # Find the colorbar limits if unspecified
 
             
-        a=self.data[t,:].squeeze()
-        am = np.ma.array (a, mask=np.isnan(a))
+        #a=self.data[t,:].squeeze()
+        am = np.ma.array (self.data, mask=np.isnan(self.data))
         
         if self.clim==None:
             self.clim=[]
             self.clim.append(np.min(am))
             self.clim.append(np.max(am))
         
-        h1 = plt.pcolor(self[xaxis],self.zslice,am,vmin=self.clim[0],vmax=self.clim[1],**kwargs)
+        #h1 = plt.pcolor(self[xaxis],self.zslice,am,vmin=self.clim[0],vmax=self.clim[1],**kwargs)
+        #X,Z = np.meshgrid(self[xaxis], self.zslice)
+        #h1 = plt.pcolormesh(X, Z, am,vmin=self.clim[0],vmax=self.clim[1],**kwargs)
+        h1 = plt.imshow(am,vmin=self.clim[0],vmax=self.clim[1],\
+                extent=[self[xaxis].min(), self[xaxis].max(),\
+                -self.z_w[-1], -self.z_w[0]], aspect='auto',\
+                 **kwargs)
         
         #Overlay the bed
         if bathyoverlay:
-            self._overlayBathy(self[xaxis][0,:],facecolor=[0.5,0.5,0.5])
+            self._overlayBathy(self[xaxis],facecolor=[0.5,0.5,0.5])
+            #self._overlayBathy(self[xaxis][0,:],facecolor=[0.5,0.5,0.5])
         
         # Set labels etc
         plt.xlabel(self._getXlabel(xaxis))
@@ -96,11 +103,11 @@ class Slice(Spatial):
         
         
         if titlestr==None:
-            plt.title(self.__genTitle())
+            title = plt.title(self.__genTitle())
         else:
-            plt.title(titlestr)
+            title = plt.title(titlestr)
         
-        return h1, axcb
+        return h1, axcb, title
             
     def contourslice(self,z,t=0,xaxis='xslice',clevs=20,titlestr=None,bathyoverlay=True,\
         filled = True, outline = False,colorbar=True,**kwargs):
@@ -442,6 +449,7 @@ class SliceEdge(Slice):
         # Update the x and y axis of the slice
         self.xslice=self.xp[self.nodelist]
         self.yslice=self.yp[self.nodelist]
+        self.zslice = -self.z_r
 
         self._getDistCoords()
 
@@ -500,7 +508,8 @@ class SliceEdge(Slice):
             elif self.hasDim(variable,self.griddims['Nc']): 
                 isCell=True
                 # Check if 3D
-            if self.hasDim(variable,self.griddims['Nk']): # 3D
+            if self.hasDim(variable,self.griddims['Nk']) or\
+                    self.hasDim(variable,'Nkw'): # 3D
                 is3D=True
             else:
                 is3D=False
@@ -517,6 +526,8 @@ class SliceEdge(Slice):
             nc2[ind2]=nc1[ind2]
 
         klayer,Nkmax = self.get_klayer()
+        if self.hasDim(variable,'Nkw'): # vertical velocity
+            Nkmax +=1
 
         def ncload(nc,variable,tt):
             if variable=='agemean':
@@ -569,7 +580,7 @@ class SliceEdge(Slice):
         #self.data[self.mask]=0.
         self.data[self.data==self._FillValue]=0.
         self.data = self.data.squeeze()
-        
+
         return self.data
 
     def edgexy(self):
@@ -695,13 +706,14 @@ class SliceEdge(Slice):
                     self.maskslice[k,ii]=True
  
 
-    def get_edgeindices(self,xpt,ypt,method=1):
+    def get_edgeindices(self,xpt,ypt,method=1, abortedge=False):
         """
         Return the indices of the edges (in order) along the line
 
         method - method for line finding algorithm
                0 - closest point to line
                1 - closest point without doing a u-turn  
+        abortedge - Set true to abort when slice hits a boundary
         """
         # Load the line as a shapely object
         #edgeline = asLineString([self.xslice,self.yslice])
@@ -816,7 +828,7 @@ class SliceEdge(Slice):
             #print 'Found new node: %d...'%newnode
             if newnode==None:
                 break
-            if ii>1:
+            if ii>1 and abortedge:
                 if self.mark[self.grd.find_edge([newnode,nodelist[-1]])] not in [0,5]:
                     print 'Warning: reached a boundary cell. Aborting edge finding routine'
                     break

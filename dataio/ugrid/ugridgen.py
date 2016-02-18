@@ -75,7 +75,7 @@ def curv_ugrid_gen(X,Y,suntanspath=None,maskpoly=None):
 
     cells = np.array(cells,dtype=np.int32)
     # Convert to a suntans grid
-    grd = HybridGrid(xp,yp,cells,nfaces=nfaces)
+    grd = HybridGrid(np.array(xp),np.array(yp),cells,nfaces=nfaces)
 
     if not suntanspath is None:
         grd.write2suntans(suntanspath)

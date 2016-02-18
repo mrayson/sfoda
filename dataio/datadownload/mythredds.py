@@ -206,7 +206,7 @@ class GridDAP(object):
             print '\t Downloading from file:\n%s'%ff
             data[p1:p2,...] = self.get_data_singlefile(varname,nc,t1,t2)
 
-            p1=p2+1
+            p1=p2+0
             nc.close()
         
         ####

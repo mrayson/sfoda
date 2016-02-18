@@ -87,18 +87,48 @@ class ModVsObs(object):
             print 'Error - zero model points detected'
             return None
 
+        # Compute the error 
+        self.error = self.TSmod.y - self.TSobs.y
+
         self.calcStats()
 
         # Calculate the data limits
-        self.calc_data_lims()
+        self._calc_data_lims()
 
-    def calc_data_lims(self):
+    def _calc_data_lims(self):
         y0 = min(self.TSobs.y.min(), self.TSmod.y.min())
         y1 = max(self.TSobs.y.max(), self.TSmod.y.max())
         #ymax = max[np.abs(y0), np.abs(y1)]
         self.ylims = [y0, y1]
 
-    def plot(self,colormod='r',colorobs='b',legend=True,loc='lower right',**kwargs):
+    def clip(self, t0, t1, fmt='%Y-%m-%d'):
+        """
+        Clip the object between the time limits t1 - t2
+
+        Inputs:
+                t1, t2 : date string
+                fmt : time format [default: '%Y-%m-%d'] 
+        Returns:
+                a NEW ModVsObs object
+        """
+        t0 = datetime.strptime(t0, fmt)
+        t1 = datetime.strptime(t1, fmt)
+
+        modt,mody = self.TSmod.subset(t0,t1)
+        obst,obsy = self.TSobs.subset(t0,t1)
+
+        return ModVsObs(modt, mody, obst, obsy,\
+            units=self.units,\
+            long_name=self.long_name,\
+            stationid = self.stationid,\
+            varname = self.varname,\
+            Z= self.Z,\
+        )
+
+
+
+    def plot(self, colormod='r', colorobs='b', ylims=None, \
+            legend=True, loc='lower right',**kwargs):
         """
         Time-series plots of both data sets with labels
         """
@@ -107,6 +137,11 @@ class ModVsObs(object):
         h1 = self.TSmod.plot(color=colormod,**kwargs)
 
         h2 = plt.plot(self.TSobs.t,self.TSobs.y,color=colorobs,**kwargs)
+
+        if ylims is None:
+            ylims = self.ylims
+
+        ax.set_ylim(ylims)
 
         plt.ylabel(r'%s [$%s$]'%(self.long_name,self.units)) # Latex formatting
 
@@ -139,7 +174,7 @@ class ModVsObs(object):
         """
         Scatter plot of the model vs observation
         """
-        if ylims==None:
+        if ylims is None:
             ylims = self.ylims
 
         h1 = plt.plot(self.TSobs.y.ravel(),self.TSmod.y.ravel(),'.',**kwargs)
@@ -153,8 +188,37 @@ class ModVsObs(object):
         plt.grid(b=True)
 
         if printstats:
-            textstr = '$r^2$ = %6.2f\nRMSE = %6.2f\nBias = %6.2f\n'%(\
-                self.cc.mean(),self.rmse.mean(),self.bias.mean())
+            textstr = 'skill = %6.2f\n$r^2$ = %6.2f\nRMSE = %6.2f\nBias = %6.2f\n'%(\
+                self.skill.mean(),self.cc.mean(),self.rmse.mean(),self.bias.mean())
+            plt.text(textw,texth,textstr,transform=ax.transAxes)
+
+        return h1, ax
+
+    def hist(self,nbins = 20, ylims=None, printstats=True,\
+                color='0.5', **kwargs):
+        """
+        Histogram plot of the errors
+        """
+        if ylims is None:
+            ylims = self.ylims
+
+        bins = np.linspace(ylims[0], ylims[1], nbins)
+
+        textw=0.05
+        texth=0.55
+        ax = plt.gca()
+
+        h1 = plt.hist(self.error, bins, color=color, **kwargs)
+        plt.grid(b=True)
+        plt.xlabel('Error [$X_{mod} - X_{obs}$]')
+        plt.ylabel('PDF')
+        ax.set_xlim(ylims)
+
+        plt.title('StationID: %s'%self.stationid)
+
+        if printstats:
+            textstr = 'skill = %6.2f\n$r^2$ = %6.2f\nRMSE = %6.2f\nBias = %6.2f\n'%(\
+                self.skill.mean(),self.cc.mean(),self.rmse.mean(),self.bias.mean())
             plt.text(textw,texth,textstr,transform=ax.transAxes)
 
         return h1, ax
@@ -167,7 +231,7 @@ class ModVsObs(object):
         q_mod = np.percentile(self.TSmod.y, percentiles)
         q_obs = np.percentile(self.TSobs.y, percentiles)
 
-        if ylims==None:
+        if ylims is None:
             ylims = self.ylims
 
         # scale the marker size
@@ -351,6 +415,106 @@ class ModVsObs(object):
         ds = self.to_xray(attrs=attrs)
 
         ds.to_netcdf(ncfile, group=ncgroup, format='NETCDF4', mode=mode)
+
+
+class ModVsObsUV(ModVsObs):
+    """
+    Special validation class for velocity data
+    """
+    
+    def __init__(self, tmod, uv_mod, tobs, uv_obs, **kwargs):
+        """
+        Pass complex variables (u+iv) instead of real
+        """
+        
+        # Make sure the arrays are complex
+        assert uv_mod.dtype == np.dtype('complex128')
+        assert uv_obs.dtype == np.dtype('complex128')
+        
+        ModVsObs.__init__(self, tmod, uv_mod, tobs, uv_obs, **kwargs)
+        
+        u_hat_mod = uv_mod
+        u_hat_obs = uv_obs
+
+        self.speed_mod = np.abs(u_hat_mod)
+        self.speed_obs = np.abs(u_hat_obs)
+
+        self.theta_mod = np.angle(u_hat_mod)
+        self.theta_obs = np.angle(u_hat_obs)
+    
+    def plot_speeddirn(self, speedmax=1.5,\
+        legend=True, loc='upper right', modcolor='r', obscolor='b', **kwargs):
+        
+        time = uc.TSmod.t
+        
+        ax1 = plt.subplot(211)
+        plt.plot(time, speed_obs, color='b', linewidth=0.25)
+        plt.plot(time, speed_mod, color='r', linewidth=0.25)
+        ax1.set_ylim(0,speedmax)
+        ax1.set_xticklabels([])
+        plt.ylabel('Speed [m/s]')
+
+        if legend:
+            plt.legend(('Model','Observed'),loc=loc)
+
+
+        ax = plt.subplot(212)
+        plt.plot(time, theta_obs*180./np.pi, color=obscolor,\
+                markersize=0.5, marker='.',**kwargs)
+        plt.plot(time, theta_mod*180./np.pi, color=modcolor,\
+                markersize=0.5, marker='.',**kwargs)
+        
+        ax.set_yticks([-180,-90.,0,90, 180])
+        ax.set_yticklabels(['W','S','E','N','W'])
+        ax.set_ylim(-180,180)
+        
+        plt.xticks(rotation=17)
+        
+        return ax1, ax
+    
+    def plot_pdf_polar(self, speedmax=1.0, cmap='RdYlBu_r'):
+        """
+        Polar plot of speed-direction joint frequency distribution
+        """
+        # Create a 2d histogram of speed direction
+        abins = np.linspace(-np.pi, np.pi, 90.0)      # 0 to 360 in steps of 360/N.
+        sbins = np.linspace(0.0, speedmax, 25) 
+
+        Hmod, xedges, yedges = np.histogram2d(self.theta_mod, self.speed_mod, bins=(abins,sbins), normed=True)
+        Hobs, xedges, yedges = np.histogram2d(self.theta_obs, self.speed_obs, bins=(abins,sbins), normed=True)
+
+        #Grid to plot your data on using pcolormesh
+        theta = 0.5*abins[1:]+0.5*abins[0:-1]
+        r = 0.5*sbins[1:]+0.5*sbins[0:-1]
+        #theta, r = np.mgrid[0:2*np.pi:360j, 1:100:50j]
+
+        # Contour levels precentages
+        clevs = [0.001, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0]
+        xlabels = ['E','ENE','N','WNW','W','WSW','S','ESE']
+
+        fig = plt.figure( figsize = (14,6))
+
+        ax1 = plt.subplot(121, projection='polar')
+        ax1.set_xticklabels(xlabels)
+        C = ax1.contourf(theta, r, Hobs.T, clevs, cmap = cmap)
+        #plt.colorbar(C)
+        plt.title('StationID: %s - Observed\n'%self.stationid)
+
+        ax2 = plt.subplot(122, projection='polar')
+        ax2.set_xticklabels(xlabels)
+        C = ax2.contourf(theta, r, Hmod.T, clevs, cmap = cmap)
+        #plt.colorbar(C)
+        plt.title('StationID: %s - Modelled\n'%self.stationid)
+
+        # Insert a colorbar
+        axcb = plt.axes([0.43,0.1, 0.16,0.05])
+        plt.colorbar(C, cax=axcb, orientation='horizontal', format='%3.1f')
+        axcb.set_title('[% frequency]')
+
+        plt.tight_layout()
+        
+        return fig, ax1, ax2, axcb
+
 
 ##########
 # User functions

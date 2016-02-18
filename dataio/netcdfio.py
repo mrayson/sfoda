@@ -88,14 +88,19 @@ def load_sql_ncstation(dbfile, station_name, varname, otherquery=None):
         'X',\
         'Y',\
         'height_start',\
+        'Variable_Name',\
         ]
 
     tablename = 'observations'
     if not otherquery is None:
-        condition = 'Variable_Name = "%s" and StationName LIKE "%%%s%%" and %s'\
+        #condition = 'Variable_Name = "%s" and StationName LIKE "%%%s%%" and %s'\
+        #    %(varname, station_name, otherquery)
+        condition = 'LOWER(Variable_Name) LIKE LOWER("%s") and StationName LIKE "%%%s%%" and %s'\
             %(varname, station_name, otherquery)
+
     else:
-        condition = 'Variable_Name = "%s" and StationName LIKE "%%%s%%"'\
+        #condition = 'Variable_Name = "%s" and StationName LIKE "%%%s%%"'\
+        condition = 'LOWER(Variable_Name) LIKE LOWER("%s") and StationName LIKE "%%%s%%"'\
             %(varname, station_name)
     
     # Query the database
@@ -106,12 +111,13 @@ def load_sql_ncstation(dbfile, station_name, varname, otherquery=None):
     # Loop through and extract the variable datasets from each of the files
     data = []
     ii = 0
-    for  ncfile, ncgroup in zip(query['NetCDF_Filename'], query['NetCDF_GroupID']):
+    for  ncfile, ncgroup, ncvarname in \
+                zip(query['NetCDF_Filename'], query['NetCDF_GroupID'], query['Variable_Name']):
         print ncfile, ncgroup
 
         nc = xray.open_dataset(ncfile, group=ncgroup)
 
-        ncdata = nc[varname]
+        ncdata = nc[ncvarname]
 
         # Make sure the metadata is in the attributes
         ncdata.attrs.update({'X':query['X'][ii],\
@@ -344,6 +350,9 @@ def netcdfObs2DB(ncfile, dbfile, nctype=1):
         return lon, lat, long_name, StationID, StationName, ele, dates
 
     def get_meta_type2(nc, grp ,vv):
+        """
+        Processed RPS files
+        """
 
         if vv in ['time','Longitude','Latitude','DepthHeight']:
             return None, None, None, None, None, None, None
@@ -365,6 +374,36 @@ def netcdfObs2DB(ncfile, dbfile, nctype=1):
         dates = num2date([times[0],times[-1]],units=times.units)
 
         return lon, lat, long_name, StationID, StationName, ele, dates
+
+    def get_meta_type3(nc, grp ,vv):
+        """
+        Processed xray data
+
+        This is probably the ideal way to store metadata for single
+        point time series data
+        """
+
+        if vv in ['time','Longitude','Latitude','DepthHeight']:
+            return None, None, None, None, None, None, None
+
+        # Use this variable
+        lon = nc.groups[grp].getncattr('Longitude')
+        lat = nc.groups[grp].getncattr('Latitude')
+        long_name = nc.groups[grp].variables[vv].long_name
+        StationID=nc.groups[grp].StationID
+        StationName = nc.groups[grp].StationName
+            
+        try:
+            ele = - nc.groups[grp].getncattr('Depth') + \
+                nc.groups[grp].getncattr('InstrumentDepth')
+        except:
+            ele = 0.0
+            
+        times = nc.groups[grp].variables['time']
+        dates = num2date([times[0],times[-1]],units=times.units)
+
+        return lon, lat, long_name, StationID, StationName, ele, dates
+ 
  
              
     # Write metadata to the sql database
@@ -393,6 +432,12 @@ def netcdfObs2DB(ncfile, dbfile, nctype=1):
                 print grp, vv
                 lon, lat, long_name, StationID, StationName, ele, dates = \
                     get_meta_type2(nc, grp ,vv)
+
+            elif nctype == 3:
+                print grp, vv
+                lon, lat, long_name, StationID, StationName, ele, dates = \
+                    get_meta_type3(nc, grp ,vv)
+
 
                 if lon is None:
                     write = False
