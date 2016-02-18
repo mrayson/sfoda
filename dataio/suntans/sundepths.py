@@ -115,6 +115,8 @@ class DepthDriver(object):
             self.plotvtk()
         elif self.plottype=='vtk3':
             self.plotvtk3D()
+        elif self.plottype==None:
+            print 'Not plotting'
             
         print 'Finished depth interpolation.'
         

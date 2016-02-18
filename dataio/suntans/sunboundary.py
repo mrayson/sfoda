@@ -1005,7 +1005,7 @@ class InitialCond(Grid):
         print 'Initial condition file written to: %s'%outfile
 
         
-def modifyBCmarker(suntanspath,bcfile):
+def modifyBCmarker(suntanspath, bcfile, saveplot=False):
     """
     Modifies SUNTANS boundary markers with a shapefile
 
@@ -1072,14 +1072,15 @@ def modifyBCmarker(suntanspath,bcfile):
     print 'Updated markers written to: %s'%(edgefile)
     
     # Plot the markers
-    plt.figure()
-    grd.plotBC()
-    if len(XY)>0:
-        plt.plot(XY[0][:,0],XY[0][:,1],'m',linewidth=2)
-    figfile = suntanspath+'/BoundaryMarkerTypes.pdf'
-    plt.savefig(figfile)
-    
-    print 'Marker plot saved to: %s'%(figfile)
+    if saveplot:
+        plt.figure()
+        grd.plotBC()
+        if len(XY)>0:
+            plt.plot(XY[0][:,0],XY[0][:,1],'m',linewidth=2)
+        figfile = suntanspath+'/BoundaryMarkerTypes.pdf'
+        plt.savefig(figfile)
+        print 'Marker plot saved to: %s'%(figfile)
+
     print 'Done.'
     print '#######################################################'
     

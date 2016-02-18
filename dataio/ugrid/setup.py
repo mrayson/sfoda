@@ -9,7 +9,7 @@ from Cython.Build import cythonize
 import os
 import numpy
 
-os.environ["CC"]='gcc'
+os.environ["CC"]='cc'
 
 extensions = Extension("ugridutils",["ugridutils.pyx"],
     include_dirs=[numpy.get_include()],
