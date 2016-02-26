@@ -195,6 +195,7 @@ class GridDAP(object):
 
         tindex,ncurl,tslice_dict = self.MF(self.localtime.tolist(), var=rawvar)
 
+
         ###
         # Download time chunks of data
         ###
@@ -204,9 +205,9 @@ class GridDAP(object):
             t1,t2 = tslice_dict[ff]
             p2 = p1+t2-t1
             print '\t Downloading from file:\n%s'%ff
-            data[p1:p2,...] = self.get_data_singlefile(varname,nc,t1,t2)
+            data[p1:p2+1,...] = self.get_data_singlefile(varname,nc,t1,t2+1)
 
-            p1=p2+0
+            p1=p2+1
             nc.close()
         
         ####
@@ -351,7 +352,7 @@ class GetDAP(object):
     # Set this to pass your own multi-file object
     MF = None
 
-    def __init__(self,vars=None,**kwargs):
+    def __init__(self,variables=None,**kwargs):
         """
         Initialise the variables to outfile
         """
@@ -368,12 +369,12 @@ class GetDAP(object):
             self._ncfiles = self.ncurl
 
         # Set the variables that need downloading
-        if vars==None and self.type=='ocean':
-            self.vars = self.oceanvars
-        elif vars==None and self.type=='atmosphere':
-            self.vars = self.airvars
+        if variables==None and self.type=='ocean':
+            self.variables = self.oceanvars
+        elif variables==None and self.type=='atmosphere':
+            self.variables = self.airvars
         else:
-            self.vars = vars
+            self.variables = variables
 
         # For each variable:
         # Get the coordinate variables
@@ -390,7 +391,7 @@ class GetDAP(object):
         trange=self.check_trange(trange)
 
         # Load the data for all variable and write
-        for vv in self.vars:
+        for vv in self.variables:
             data = self.load_data(vv,xrange,yrange,zrange,trange)
 
             # Write the data
@@ -409,12 +410,13 @@ class GetDAP(object):
         """
         Initialise each variable into an object with name "_name"
         """
-        for vv in self.vars:
+        for vv in self.variables:
             print 'loading grid data for variable: %s...'%getattr(self,vv)
             attrname = '_%s'%vv
 
             if self.multifile:
                 nc = self.MF.get_filename_only(var=vv)
+                print nc
                 self._nc = Dataset(nc)
             else:
                 nc = self._nc

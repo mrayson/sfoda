@@ -486,6 +486,10 @@ class ModVsObsUV(ModVsObs):
         #Grid to plot your data on using pcolormesh
         theta = 0.5*abins[1:]+0.5*abins[0:-1]
         r = 0.5*sbins[1:]+0.5*sbins[0:-1]
+
+        # Make sure plot covers the whole circle
+        theta[0] = -np.pi
+        theta[-1] = np.pi
         #theta, r = np.mgrid[0:2*np.pi:360j, 1:100:50j]
 
         # Contour levels precentages
