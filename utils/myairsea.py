@@ -26,7 +26,16 @@ rhoa = 1.20
 rho0 = 1024.0
 
 r_LW = 0.04
+
+KAPPA = 0.41 # Von Karman's constant
  
+
+def loglaw(zo, dz):
+    """
+    Returns a drag coefficient based on a log law of the wall
+    """
+    return np.power( np.log(dz / zo) / KAPPA, -2 )
+
 
 def mixedlayer(T,z,h0=-10,Tthresh=0.4,axis=0):
     """

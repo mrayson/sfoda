@@ -13,6 +13,7 @@ import matplotlib.pyplot as plt
 from sunpy import Grid
 from soda.dataio.ugrid.gridsearch import GridSearch
 from soda.utils.interpXYZ import Inputs, interpXYZ
+from soda.utils.ufilter import ufilter
 from soda.dataio.conversion.dem import DEM
 
 import time
@@ -50,8 +51,9 @@ class DepthDriver(object):
     
     # Smoothing options
     smooth=False
-    smoothmethod='kriging' # USe kriging or idw for smoothing
+    smoothmethod='kriging' # USe kriging, idw or gaussian for smoothing
     smoothnear=5 # No. of points to use for smoothing
+    smoothrange = 50.
 
     # Set if the input data is a DEM
     isDEM = False
@@ -150,7 +152,14 @@ class DepthDriver(object):
         Smooth the data by running an interpolant over the model grid points
         """
         print 'Smoothing the data...'
-        Fsmooth =interpXYZ(self.xy,self.xy,method=self.smoothmethod,NNear=self.smoothnear,vrange=self.vrange)
+        if self.smoothmethod=='gaussian':
+            print '\tUsing Gaussian filter...'
+            Fsmooth = ufilter(self.xy, self.smoothrange)
+
+        else:
+            Fsmooth =interpXYZ(self.xy,self.xy,\
+                method=self.smoothmethod,NNear=self.smoothnear,vrange=self.smoothrange)
+
         self.grd.dv = Fsmooth(self.grd.dv)
 
     def plot(self):

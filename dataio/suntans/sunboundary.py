@@ -871,7 +871,7 @@ class InitialCond(Grid):
         """
         print 'Loading initial condition data from ocean model netcdf file:\n\t%s...'%ncfile
         dt = timedelta(days=0.5)
-        trange = [self.time - dt, self.time + dt]
+        trange = [self.time - dt, self.time + 3*dt]
 
         # Get the temperature data and coordinate data
         temp, nc = get_metocean_local(ncfile,'temp',name=name, trange=trange)
@@ -895,8 +895,6 @@ class InitialCond(Grid):
 
         # Ensure that the bottom cell of the ocean model is deeper than the suntans grid
         nc.Z[-1] = zmax
-
-
 
         # Construct the 4D interp class
         F4d =\

@@ -43,6 +43,7 @@ class ufilter(object):
         """
         Performs the filtering operation on data in vector y
         """
+        print np.argwhere(self.G.sum(axis=1) == 0.0)
         return self.G*y
         
     def BuildFilterMatrix(self):
@@ -115,6 +116,9 @@ class ufilter(object):
         
         for nn,gg in enumerate(Gout):
             self.G[nn,i[nn,:]]=gg
+
+        # sets the first value to 1.
+        self.G[0,0] = 1.
             
 #        ind = [nn*self.n + i[nn,:] for nn,G in enumerate(G)]
 #        ind = np.array(ind)

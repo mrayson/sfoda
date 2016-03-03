@@ -32,6 +32,21 @@ metoceandict = {\
         'salt':'salinity',\
         'ssh':'surf_el',\
     },\
+    'BRAN_3p5':{\
+        'ncurl':[],\
+        'multifile':True,\
+        'type':'ocean',\
+        'u':'u',\
+        'v':'v',\
+        'temp':'temp',\
+        'salt':'salt',\
+        'ssh':'eta_t',\
+        'u_file':'u',\
+        'v_file':'v',\
+        'temp_file':'temp',\
+        'salt_file':'salt',\
+        'ssh_file':'eta',\
+    },\
     'GFS':{\
         'ncurl':[],\
         'type':'atmosphere',\
@@ -236,6 +251,21 @@ class CFSR_1hr(object):
 
         return fnamenew
 
+class GetDAP_BRAN(GetDAP):
+    """
+    Special class for dealing with Bran data
+    """
+    
+    def __init__(self,**kwargs):
+        GetDAP.__init__(self, **kwargs)
+
+    def get_coord_names(self,varname):
+        """
+        Just use the dimension names
+        """
+        timecoord,zcoord, ycoord,xcoord =  self._nc.variables[varname].dimensions
+        return timecoord, xcoord, ycoord,zcoord
+
 
 ##############################
 # Main functions for calling
@@ -287,7 +317,10 @@ def get_metocean_local(ncfile,varname,name='HYCOM',TDS=None,\
 
     # Construct the dap class
     if TDS==None:
-        TDS = GetDAP(vars=[varname],**oceandict)
+        if name == 'BRAN_3p5': # This is a total hack but oh well...
+            TDS = GetDAP_BRAN(variables=[varname],**oceandict)
+        else:
+            TDS = GetDAP(variables=[varname],**oceandict)
 
     ncobj = getattr(TDS,'_%s'%varname)
 
