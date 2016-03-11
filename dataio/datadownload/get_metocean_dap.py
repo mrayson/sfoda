@@ -59,6 +59,19 @@ metoceandict = {\
         'cloud':'tcdcclm',\
         'rain':'pratesfc',\
     },\
+    'ERA':{\
+        'ncurl':[],\
+        'type':'atmosphere',\
+        'multifile':True,\
+        'uwind':'u10',\
+        'vwind':'v10',\
+        'tair':'t2m',\
+        'pair':'msl',\
+        #'rh':'rh2m',\
+        'tdew':'d2m',\
+        'cloud':'tcc',\
+        'rain':'tp',\
+    },\
     'CFSR_1HR':{\
         'ncurl':[],\
         'type':'atmosphere',\

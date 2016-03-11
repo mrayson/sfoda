@@ -481,7 +481,7 @@ class GetDAP(object):
         else:
             if not self.__dict__.has_key('_outnc'):
                 print '\tOpening %s'%outfile
-                self._outnc = Dataset(outfile,'w')
+                self._outnc = Dataset(outfile,'w', data_model='NETCDF4_CLASSIC')
 
         ##
         if self.multifile:

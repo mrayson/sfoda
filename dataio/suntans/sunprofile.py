@@ -18,6 +18,7 @@ import xray
 from netCDF4 import num2date
 from datetime import datetime
 import numpy as np
+from scipy.interpolate import PchipInterpolator
 import os
 
 import pdb
@@ -52,24 +53,29 @@ vardict = {
 }
 
 class Profile(object):
+
     def __init__(self, ncfile):
         self.ds = xray.open_dataset(ncfile)
 
-    def __call__(self, x ,y, z, varname):
+    def __call__(self, x ,y, z, varname, zinterp='nearest', nnearest=1):
         """
-        Return 
+        Returns the profile data at the nearest point
+
+        Inputs:
+        ------
+                x, y, z: coordinates to extract
+                varname: string of variable name
+                zinterp: vertical interpolation 'nearest'(default) or 'phip'
+                nnearest: number of nearest neighbours (default=1)
+
+        Returns:
+        ------
+                data - xray.DataArray of the nearest point
+                if nnearest>1 returns an average of the nnearest points
         """
         # Find the nearest x index
         dist = np.sqrt( (x-self.ds.xv.values)**2 + (y-self.ds.yv.values)**2)
-        jj = np.argsort(dist)[0]
-
-        # Find the nearest z index
-        #dist = np.sqrt( (z-self.ds.z_r.values)**2)
-        #kk = np.argsort(dist)[0]
-        nk = self.ds.z_r.shape[0]
-        Zw = np.zeros((nk+1,))
-        Zw[1:] = self.ds.dz.values.cumsum()
-        kk = np.searchsorted(Zw, z) - 1 
+        jj = np.argsort(dist)[0:nnearest]
 
 
         # Return the data with x,y,z coordinates as attributes
@@ -77,14 +83,60 @@ class Profile(object):
         if ndim == 2:
             data = self.ds[varname][:,jj]
         elif ndim == 3:
-            data = self.ds[varname][:,kk,jj]
+            #data = self.ds[varname][:,kk,jj]
+            data = self._vertical_interpolation(self.ds[varname][:,:,jj], z, zinterp)
 
         #data.attrs.update({'X':self.ds.xv[jj],\
         #                   'Y':self.ds.yv[jj],\
         #                   'Z':self.ds.z_r[kk]})
+        if nnearest > 1:
+            # Zero nans
+            data.values[np.isnan(data.values)] = 0.
 
-        return data
+            # Take the mean of the three points
+            dataout = data[:,0]
+            dataout.values = data.values.mean(axis=-1)
+            dataout.xv = data.xv.mean()
+            dataout.yv = data.yv.mean()
+            print dataout.values.max()
 
+        else:
+            dataout = data
+
+        return dataout
+
+    def _vertical_interpolation(self, data2d, z, zinterp):
+        """
+
+        """
+        kk, znear = self.find_nearest_depth(z)
+
+        if zinterp == 'nearest':
+
+            return data2d[:,kk]
+
+        elif zinterp == 'pchip':
+            
+            Fi = PchipInterpolator(self.ds.z_r, data2d, axis=1, extrapolate=True)
+
+            data = data2d[:,kk]
+            data.values = Fi(z)
+
+            return data
+
+        else:
+             raise Exception, 'unknown value for zinterp: '%zinterp
+
+    def find_nearest_depth(self, z):
+        """
+        Find the nearest z index
+        """
+        nk = self.ds.z_r.shape[0]
+        Zw = np.zeros((nk+1,))
+        Zw[1:] = self.ds.dz.values.cumsum()
+        kk = np.searchsorted(Zw, z) - 1 
+
+        return kk, self.ds.z_r[kk]
 
 
 ###
@@ -113,7 +165,8 @@ class ProfData(object):
         self.dz = np.fromfile(f, '<f8', count=self.Nkmax)
 
         self.indices = np.fromfile(f, '<i4', count=self.Np)
-        self.xyorig = np.fromfile(f, '<f8', count=2*self.Np*self.Ni)
+        #self.xyorig = np.fromfile(f, '<f8', count=2*self.Np*self.Ni)
+        self.xyorig = np.fromfile(f, '<f8', count=2*self.Np)
 
         self.xv = np.fromfile(f, '<f8', count=self.Np*self.Ni)
         self.yv = np.fromfile(f, '<f8', count=self.Np*self.Ni)
