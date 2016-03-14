@@ -47,16 +47,20 @@ class SunTvtk(Spatial):
             self.data = np.zeros((self.Nc,self.Nkmax))
             self.data = np.ravel(self.data)
             
-            self.initTvtk3D()
+            if self.maxfaces==3:
+                self.initTvtk3D()
+            else:
+                self.initMixedTvtk3D()
+
         else:
             # Initialize the 2D object
             self.data = np.zeros((self.Nc,))
 
             self.returnPoints()
             if self.maxfaces==3:
-                self.initTvtk2D()
+                self.ug = self.initTvtk2D()
             else:
-                self.initMixedTvtk2D()
+                self.ug = self.initMixedTvtk2D()
 
         if self.offscreen:
             print 'Using offscreen rendering.'
@@ -92,30 +96,43 @@ class SunTvtk(Spatial):
         This is for a mixed data type
         """
 
-        #poly_type = tvtk.Polygon().cell_type
-        #poly_type = tvtk.Polyhedron().cell_type
-        #poly_type = tvtk.Voxel().cell_type
-        poly_type = tvtk.Quad().cell_type
+        poly_type = tvtk.Polygon().cell_type
         
-        self.ug = tvtk.UnstructuredGrid(points=self.points)
-
-        offsets, cells = self.to_metismesh()
-        #cells = np.array(self.cells[self.cells.mask==False])
-        cell_array = tvtk.CellArray()
-        cell_array.set_cells(self.Nc,cells)
-        #offsets = np.cumsum(self.nfaces)
-        #offsets = offsets - offsets[0]
-
-        poly_types = [poly_type for ii in range(self.Nc)]
-
-        #
-        #self.ug.set_cells(np.array(poly_types),offsets, cell_array)
-        # For a single cell type
-        self.ug.set_cells(poly_type,self.cells)
+        ug = tvtk.UnstructuredGrid(points=self.points)
+        
+        # Fill all of the cells with the first points
+        #    this is a bit of a hack but works...
+        cells = self.cells
+        for ii in range(self.Nc):
+            nf = self.nfaces[ii]
+            cells[ii,nf::] = cells[ii,0]
+            
+        #offsets, cells = self.to_metismesh()
+        ##cells = np.array(self.cells[self.cells.mask==False])
+        #cell_array = tvtk.CellArray()
+        #cell_array.set_cells(self.Nc,cells)
+        ##offsets = np.cumsum(self.nfaces)
+        ##offsets = offsets - offsets[0]
+        #poly_types = [poly_type for ii in range(self.Nc)]
+        ##
+        ##self.ug.set_cells(np.array(poly_types),offsets, cell_array)
+        ## For a single cell type
+        
+        ug.set_cells(poly_type,self.cells)
     
-        self.ug.cell_data.scalars = self.data
-        self.ug.cell_data.scalars.name = 'suntans_scalar'
+        ug.cell_data.scalars = self.data
+        ug.cell_data.scalars.name = 'suntans_scalar'
+        
+        return ug
 
+    def initMixedTvtk3D(self):       
+        """
+        Still need to work this out...
+        
+        Requires setting Hexahedron, PentagonalPrism, HexagonalPrism...
+        """
+        
+        raise Exception, NotImplementedError
 
 
     def initTvtk2D(self):
@@ -125,11 +142,13 @@ class SunTvtk(Spatial):
         
         tri_type = tvtk.Triangle().cell_type
         
-        self.ug = tvtk.UnstructuredGrid(points=self.points)
-        self.ug.set_cells(tri_type, self.cells)
+        ug = tvtk.UnstructuredGrid(points=self.points)
+        ug.set_cells(tri_type, self.cells)
     
-        self.ug.cell_data.scalars = self.data
-        self.ug.cell_data.scalars.name = 'suntans_scalar'
+        ug.cell_data.scalars = self.data
+        ug.cell_data.scalars.name = 'suntans_scalar'
+        
+        return ug
         
     def returnPoints(self):
         """
@@ -658,25 +677,32 @@ class SunTvtk(Spatial):
         #            
         #        print 'SUNTANS image saved to file:%s'%outfile
         
-    def plotbathy3d(self,clims=None,**kwargs):
+    def plotbathy3d(self,clims=None, zscale=None, **kwargs):
         """
         Adds 3D plot of the bathymetry to the current scene
         """
         # Create a new scene if there isn't one
         if not self.__dict__.has_key('fig'):
             self.newscene()
+        
+        if zscale is None:
+            zscale = self.zscale
             
         depth = -self.dv
         if clims==None:
-            clim = [depth.min(), depth.max()]
+            clims = [depth.min(), depth.max()]
             
         #  Create an unstructured grid object to interpolate cells onto points
         points = np.column_stack((self.xp,self.yp,0.0*self.xp))
-        tri_type = tvtk.Triangle().cell_type
+        tri_type = tvtk.Polygon().cell_type
+        
+        cells = self.cells
+        for ii in range(self.Nc):
+            nf = self.nfaces[ii]
+            cells[ii,nf::] = cells[ii,0]
         
         ug = tvtk.UnstructuredGrid(points=points)
-        ug.set_cells(tri_type, self.cells)
-    
+        ug.set_cells(tri_type, cells)
         ug.cell_data.scalars = depth
         ug.cell_data.scalars.name = 'suntans_depth'
         
@@ -685,15 +711,19 @@ class SunTvtk(Spatial):
         dp = mlab.pipeline.probe_data(F,self.xp,self.yp,0.0*self.xp)
         
         # Now set up a new object with the 3D points
-        points = np.column_stack((self.xp,self.yp,dp*self.zscale))
+        points = np.column_stack((self.xp,self.yp,dp*zscale))
         ug = tvtk.UnstructuredGrid(points=points)
         ug.set_cells(tri_type, self.cells)
+        
         ug.cell_data.scalars = depth
         ug.cell_data.scalars.name = 'suntans_depth'
         
+        #ug.point_data.scalars = dp*self.zscale
+        #ug.point_data.scalars.name = 'suntans_depth_nodes'
+        
         # Plot as a 3D surface
         src = mlab.pipeline.add_dataset(ug)
-        h=mlab.pipeline.surface(src,vmin=clim[0],vmax=clim[1],**kwargs)
+        h=mlab.pipeline.surface(src,vmin=clims[0],vmax=clims[1],**kwargs)
         return h
         
     def loadData(self, variable=None):
