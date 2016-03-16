@@ -17,6 +17,7 @@ import matplotlib.pyplot as plt
 
 from soda.utils.inpolygon import inpolygon
 from soda.dataio.ugrid.hybridgrid import HybridGrid
+from soda.dataio.ugrid import searchutils
 
 import pdb
 
@@ -82,7 +83,17 @@ class GridSearch(HybridGrid):
         newcell = self.cellind.copy()
         
         # Check if the particle has crossed any edges (ie is it in the same cell)
-        changedcell, neigh = self.checkEdgeCrossingVec(self.cellind,xnew,ynew,self.xpt,self.ypt)
+        #changedcell, neigh = self.checkEdgeCrossingVec(self.cellind,xnew,ynew,self.xpt,self.ypt)
+        #pdb.set_trace()
+
+        changedcell, neigh = searchutils.check_cell_crossing(\
+                self.cellind, xnew, ynew, self.xpt, self.ypt,
+                self.xp, self.yp, self.nfaces, self.cells)
+
+        changedcell = changedcell == 1
+
+        #pdb.set_trace()
+
         newcell[changedcell] = self.neigh[self.cellind[changedcell],neigh[changedcell]]
         
         # Check if particle is actually in new cell
