@@ -52,6 +52,8 @@ vardict = {
         },
 }
 
+FILL_VALUE = -999999.
+
 class Profile(object):
 
     def __init__(self, ncfile):
@@ -63,7 +65,7 @@ class Profile(object):
 
         Inputs:
         ------
-                x, y, z: coordinates to extract
+                x, y, z: coordinates to extract. Set z=None to return all layers
                 varname: string of variable name
                 zinterp: vertical interpolation 'nearest'(default) or 'phip'
                 nnearest: number of nearest neighbours (default=1)
@@ -84,21 +86,25 @@ class Profile(object):
             data = self.ds[varname][:,jj]
         elif ndim == 3:
             #data = self.ds[varname][:,kk,jj]
-            data = self._vertical_interpolation(self.ds[varname][:,:,jj], z, zinterp)
+            if not z is None:
+                data = self._vertical_interpolation(self.ds[varname][:,:,jj], z, zinterp)
+            else:
+                data = self.ds[varname][:,:,jj]
 
         #data.attrs.update({'X':self.ds.xv[jj],\
         #                   'Y':self.ds.yv[jj],\
         #                   'Z':self.ds.z_r[kk]})
         if nnearest > 1:
             # Zero nans
-            data.values[np.isnan(data.values)] = 0.
+            #data.values[np.isnan(data.values)] = 0.
 
             # Take the mean of the three points
-            dataout = data[:,0]
-            dataout.values = data.values.mean(axis=-1)
+            dataout = data[...,0]
+            #dataout.values = data.values.mean(axis=-1)
+            dataout.values = np.nanmean(data.values, axis=-1)
             dataout.xv = data.xv.mean()
             dataout.yv = data.yv.mean()
-            print dataout.values.max()
+            #print dataout.values.max()
 
         else:
             dataout = data

@@ -512,7 +512,7 @@ class SunPlotPy(wx.Frame, Spatial, Grid ):
             self.canvas.draw()
 
     def on_load_ptm(self, event):
-        file_choices = "PTM Binary (*_bin.out)|*_bin.out|PTM NetCDF (*.nc)|*.nc|All Files (*.*)|*.*"
+        file_choices = "PTM NetCDF (*.nc)|*.nc|PTM Binary (*_bin.out)|*_bin.out|All Files (*.*)|*.*"
         
         dlg = wx.FileDialog(
             self, 
@@ -527,13 +527,14 @@ class SunPlotPy(wx.Frame, Spatial, Grid ):
             path = dlg.GetPath()
 
             # Initialise the class
-            if dlg.GetFilterIndex() == 1: #SUNTANS
+            if dlg.GetFilterIndex() == 0: #SUNTANS
                 self.flash_status_message("Opening PTM netcdf file: %s" % path)
                 self.PTM = PtmNC(path)
-            elif dlg.GetFilterIndex() == 0: #PTM
+            elif dlg.GetFilterIndex() == 1: #PTM
                 self.flash_status_message("Opening PTM binary file: %s" % path)
                 self.PTM = PtmBin(path)
-                self.Nt = self.PTM.nt
+
+            self.Nt = self.PTM.nt
             
             # Update the time drop down list
             self.timestr = [datetime.strftime(tt,'%d-%b-%Y %H:%M:%S') for tt in self.PTM.time]
@@ -644,7 +645,10 @@ class SunPlotPy(wx.Frame, Spatial, Grid ):
             #self.animate(cbar=self.cbar,cmap=self.cmap,\
             #    xlims=self.axes.get_xlim(),ylims=self.axes.get_ylim())
             def initanim():
-                return (self.title, self.collection)
+                if not self.plot_type=='particles':
+                    return (self.title, self.collection)
+                else:
+                    return (self.PTM.title,self.PTM.p_handle)
 
             def updateScalar(i):
                 if not self.plot_type=='particles':
