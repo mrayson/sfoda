@@ -102,8 +102,8 @@ class Profile(object):
             dataout = data[...,0]
             #dataout.values = data.values.mean(axis=-1)
             dataout.values = np.nanmean(data.values, axis=-1)
-            dataout.xv = data.xv.mean()
-            dataout.yv = data.yv.mean()
+            dataout['xv'] = data.xv.mean()
+            dataout['yv'] = data.yv.mean()
             #print dataout.values.max()
 
         else:
