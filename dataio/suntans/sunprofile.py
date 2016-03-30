@@ -144,6 +144,15 @@ class Profile(object):
 
         return kk, self.ds.z_r[kk]
 
+    def close(self):
+        """
+        Close the opened data file
+        """
+        self.ds.close()
+
+    def __del__(self):
+        self.ds.close()
+
 
 ###
 # Read the profdata
