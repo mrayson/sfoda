@@ -56,9 +56,10 @@ def subsample(phi, sample_dt):
     Computes moving average first 
     """
     dt = get_dt(phi)
-    window = sample_dt//dt
-    phi_mean = pd.rolling_mean(phi,window)
-    return phi_mean[::window]
+    window = int(sample_dt//dt)
+    #phi_mean = pd.rolling_mean(phi,window)
+    phi_mean = phi.rolling(window=window,center=False).mean()
+    return phi_mean[::window].interpolate() # Fills in nans
 
 
 def rms(phi,cutoff_dt):

@@ -1,13 +1,35 @@
-Sunpy
+SODA - **S**erious **O**cean **D**ata **A**nalysis
 =====
 
 # Overview
 
-A suite of python tools for pre- and post-processing numerical model data. Specifically designed for use with the [SUNTANS model](https://github.com/ofringer/suntans).
+A suite of python tools for pre- and post-processing ocean model data. Originally designed for use with the [SUNTANS model](https://github.com/ofringer/suntans).
 
-The python files are organized into the following directories based on their general usage:
+Not everything in this toolbox is specific to the SUNTANS model though. Other uses include:
+     
+    - Processing [ROMS](www.myroms.org) model data
+    - Download ocean and atmosphere model data via opendap e.g., CFSR, HYCOM.
+    - Downloading observations from e.g., NOAA PORTS, NWS, USGS
+    - Time-series analysis and signal processing (tidal harmonic fitting, power spectra, ...)
+    - Interfacing with GIS data
+    - Interfacing with SQL data
+    - ...
 
-Not everything in this toolbox is specific to the SUNTANS model. 
+*Created*:
+   
+   - Matt Rayson
+   - Stanford University
+   - 2012
+
+# Installation
+
+Set the *PYTHONPATH* environment variable to point to the path of this package.
+
+# Usage
+
+There is some incomplete documentation [here](http://suntanspy.readthedocs.org/en/latest/).
+
+The python files are(were) organized into the following directories based on their general usage:
 
 * **DataDownload** Scripts for downloading observations and model data from different web servers.
 
@@ -19,12 +41,4 @@ Not everything in this toolbox is specific to the SUNTANS model.
 	
 * **Utils** Miscellaneous utilities for performing general tasks like signal processing, interpolation and other data manipulation processes.
 
-*Created* Matt Rayson, Stanford University 2012
 
-# Installation
-
-Set the *PYTHONPATH* environment variable to point to each of the paths in this package.
-
-# Usage
-
-Check out the [wiki](../../wiki)

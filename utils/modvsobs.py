@@ -12,10 +12,12 @@ import matplotlib.pyplot as plt
 from matplotlib import mlab
 from matplotlib.lines import Line2D
 from scipy import signal, interpolate
-import othertime
 from datetime import datetime, timedelta
 import xray
+import operator
 
+
+from soda.utils import othertime
 from soda.utils.timeseries import timeseries, rms
 
 import pdb
@@ -228,8 +230,9 @@ class ModVsObs(object):
         """
         Quantile-quantile plot
         """
-        q_mod = np.percentile(self.TSmod.y, percentiles)
-        q_obs = np.percentile(self.TSobs.y, percentiles)
+        idx = operator.and_( ~np.isnan(self.TSmod.y), ~np.isnan(self.TSobs.y) )
+        q_mod = np.percentile(self.TSmod.y[idx], percentiles)
+        q_obs = np.percentile(self.TSobs.y[idx], percentiles)
 
         if ylims is None:
             ylims = self.ylims
@@ -299,7 +302,7 @@ class ModVsObs(object):
 
 
         if header:
-            outstr += "|      | Mean Model | Mean Obs. | Std. Mod. | Std Obs | RMSE |   CC   | skill |\n"
+            outstr += "|      | Mean Model | Mean Obs. | Std. Mod. | Std. Obs. | RMSE |   CC   | Skill |\n"
             
             outstr += "|------| ---------- | --------- | --------- | ------- | --- | ----- | ------| \n"
 
@@ -311,6 +314,34 @@ class ModVsObs(object):
             print outstr
         else:
             f.write(outstr)
+
+    def printStats2(self,f=None,header=True, stationstr=None):
+        """
+        Prints the statistics to a markdown language style table
+        """
+        if not self.__dict__.has_key('meanMod'):
+            self.calcStats()
+
+        outstr=''
+
+
+        if header:
+            outstr += "| Station | Std. Mod. | Std. Obs. | Bias | RMSE |   CC   | Skill |\n"
+            
+            outstr += "|---------| --------- | --------- | ------- | --- | ----- | ------| \n"
+
+        if stationstr is None:
+            stationstr = '%s [%s]'%(self.stationid, self.units)
+
+        outstr += "| %s  | %6.3f | %6.3f |  %6.3f | %6.3f | %6.3f | %6.3f | \n"%\
+            (stationstr,  self.stdMod, self.stdObs, self.bias,\
+            self.rmse,self.cc,self.skill)
+
+        if f == None:
+            print outstr
+        else:
+            f.write(outstr)
+
 
 
     def printStatsZ(self,f=None,header=True):

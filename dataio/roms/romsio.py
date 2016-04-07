@@ -77,7 +77,7 @@ class ROMSGrid(object):
         el = self.lat_rho[self.mask_rho==1.0].ptp()
         
         # Write ROMS grid to file
-        nc = Dataset(outfile, 'w', format='NETCDF3_CLASSIC')
+        nc = Dataset(outfile, 'w', format='NETCDF4_CLASSIC')
         nc.Description = 'ROMS subsetted history file'
         nc.Author = ''
         nc.Created = datetime.now().isoformat()
@@ -796,8 +796,11 @@ class ROMS(ROMSGrid):
         if ndim == 4:
             self.zcoord = C[2] 
             self.Nz = len(self[self.zcoord])
-            
+
             if self.K[0] == -99:
+                self.K = range(0,self.Nz)
+
+            if not len(self.K) == self.Nz:
                 self.K = range(0,self.Nz)
                 
             if self.zlayer==True: # Load all layers when zlayer is true
