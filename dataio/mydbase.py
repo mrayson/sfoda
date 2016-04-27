@@ -77,7 +77,11 @@ def returnQuery(dbfile,outvar,tablename,condition):
     conn = sqlite3.connect(dbfile)
     c = conn.cursor()
     
-    querystr = 'SELECT %s FROM %s WHERE %s'%(', '.join(outvar),tablename,condition)
+    if condition is None:
+        querystr = 'SELECT %s FROM %s'%(', '.join(outvar),tablename)
+    else:
+        querystr = 'SELECT %s FROM %s WHERE %s'%(', '.join(outvar),tablename,condition)
+
     #print querystr
     query = c.execute(querystr)
     

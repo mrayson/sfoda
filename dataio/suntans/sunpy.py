@@ -1682,7 +1682,9 @@ class Spatial(Grid):
         if self.VERBOSE:
             print 'SUNTANS image saved to file:%s'%outfile
     
-    def     animate(self,xlims=None,ylims=None,vector_overlay=False,scale=1e-4, subsample=10,cbar=None,**kwargs):
+    def animate(self,xlims=None, ylims=None,\
+            vector_overlay=False, scale=1e-4, subsample=10,\
+            cbar=None, **kwargs):
         """
         Animates a spatial plot over all time steps
         
@@ -1723,6 +1725,10 @@ class Spatial(Grid):
         ax.set_aspect('equal')
         ax.set_xlim(xlims)
         ax.set_ylim(ylims)
+
+        ax.set_xlabel('Easting [m]')
+        ax.set_ylabel('Northing [m]')
+
         title=ax.set_title("")
         if cbar==None:
             fig.colorbar(collection)
@@ -1738,9 +1744,12 @@ class Spatial(Grid):
             collection.set_array([])
             title.set_text("")
             qh.set_UVC([],[])
-            return (collection,title)
+            return (title, collection)
                
         def updateScalar(i):
+            if self.VERBOSE:
+                print '\tStep %d of %d...'%(i,len(self.tstep))
+
             collection.set_array(np.array(self.data[i,:]))
             collection.set_edgecolors(collection.to_rgba(np.array((self.data[i,:])))) 
             title.set_text(self.genTitle(i))
@@ -1749,18 +1758,38 @@ class Spatial(Grid):
 
             return (title,collection,qh)
   
-        self.anim = animation.FuncAnimation(fig, updateScalar, frames=len(self.tstep), interval=50, blit=True)
+        self.anim = animation.FuncAnimation(fig, updateScalar,\
+                init_func=init, frames=len(self.tstep), interval=50, blit=True)
 
     def saveanim(self,outfile,fps=15):
         """
         Save the animation object to an mp4 movie
         """
-        try:
-            print 'Building animation sequence...'
-            self.anim.save(outfile, fps=fps,bitrate=3600)
-            print 'Complete - animation saved to: %s'%outfile
-        except:
-            print 'Error with animation generation - check if either ffmpeg or mencoder are installed.'
+
+        print 'Building animation sequence...'
+
+        ext = outfile[-4:]
+
+        if ext=='.gif':
+            self.anim.save(outfile,writer='imagemagick',fps=6)
+        elif ext=='.mp4':
+            print 'Saving html5 video...'
+            # Ensures html5 compatibility
+            self.anim.save(outfile,writer='mencoder',fps=6,\
+                bitrate=3600,extra_args=['-ovc','x264']) # mencoder options
+                #bitrate=3600,extra_args=['-vcodec','libx264'])
+        else:
+            self.anim.save(outfile,writer='mencoder',fps=6,bitrate=3600)
+
+        print 'Complete - animation saved to: %s'%outfile
+
+
+        #try:
+        #    print 'Building animation sequence...'
+        #    self.anim.save(outfile, fps=fps,bitrate=3600)
+        #    print 'Complete - animation saved to: %s'%outfile
+        #except:
+        #    print 'Error with animation generation - check if either ffmpeg or mencoder are installed.'
             
     def animateVTK(self,figsize=(640,480),vector_overlay=False,scale=1e-3,subsample=1):
         """

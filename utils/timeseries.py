@@ -12,12 +12,12 @@ import matplotlib.pyplot as plt
 from matplotlib import mlab
 from matplotlib.lines import Line2D
 from scipy import signal, interpolate
-import othertime
 from datetime import datetime, timedelta
-from uspectra import uspectra, getTideFreq
 import operator
 import xray
 
+import othertime
+from uspectra import uspectra, getTideFreq
 from soda.dataio.netcdfio import queryNC
 
 import pdb
@@ -51,7 +51,12 @@ class timeseries(object):
         self.shape = self.y.shape
         self.ndim = len(self.shape)
         
-        self.tsec = othertime.SecondsSince(self.t,basetime=self.basetime)
+        # Convert the time to seconds
+        if isinstance(self.t[0], np.datetime64):
+            time = self.t
+            self.tsec = ((time - time[0])*1e-9).astype(np.float64)
+        else:
+            self.tsec = othertime.SecondsSince(self.t,basetime=self.basetime)
         
         self.ny = np.size(self.y)
 
@@ -68,11 +73,12 @@ class timeseries(object):
         if self.y.shape[-1] != self.Nt:
             self.y=self.y.T
         
-    def psd(self, plot=True,nbandavg=1,**kwargs):
+    def psd(self, plot=True, nbandavg=1, scale=1.,**kwargs):
         """
         Power spectral density
         
         nbandavg = Number of fft bins to average
+        scale = scale factor (for plotting only)
         """
         
         if self.isequal==False and self.VERBOSE:
@@ -80,12 +86,19 @@ class timeseries(object):
         
 
         NFFT = int(2**(np.floor(np.log2(self.ny/nbandavg)))) # Nearest power of 2 to length of data
-            
-        Pyy,frq = mlab.psd(self.y-self.y.mean(),Fs=2*np.pi/self.dt,NFFT=NFFT,window=mlab.window_hanning,scale_by_freq=True)
+        # Remove the mean and nan's
+        y = self.y - self.y.mean()
+        y[y.mask] = 0.
+
+        Pyy,frq = mlab.psd(y,\
+                Fs=2*np.pi/self.dt,\
+                NFFT=NFFT,\
+                window=mlab.window_hanning,\
+                scale_by_freq=True)
         
         if plot:
-            plt.loglog(frq,Pyy,**kwargs)
-            plt.xlabel('Freq. [$cycles s^{-1}$]')
+            plt.loglog(frq,Pyy*scale,**kwargs)
+            plt.xlabel('Freq. [$radians s^{-1}$]')
             plt.ylabel('PSD')
             plt.grid(b=1)
         
@@ -371,9 +384,6 @@ class timeseries(object):
 
         return self._update_windowed_data(np.sqrt( 1./N * ytmp2),windowsize)
 
-
-
-        
     def despike(self,nstd=4.,windowlength=3*86400.0,overlap=12*3600.0,\
         upper=np.inf,lower=-np.inf,maxdiff=np.inf,fillval=0.):
         """
@@ -463,8 +473,13 @@ class timeseries(object):
         """
         Returns a subset of the array between time1 and time2
         """
-        t0 = othertime.findNearest(time1,self.t)
-        t1 = othertime.findNearest(time2,self.t)
+        try:
+            t0 = othertime.findNearest(time1,self.t)
+            t1 = othertime.findNearest(time2,self.t)
+        except:
+            t0 = np.searchsorted(self.t, np.datetime64(time1))
+            t1 = np.searchsorted(self.t, np.datetime64(time2))
+            
         return self.t[t0:t1],self.y[...,t0:t1]
         
     def savetxt(self,txtfile):

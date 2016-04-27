@@ -402,7 +402,7 @@ class ROMS(ROMSGrid):
          
         return get_depth(self.S,self.C,self.hc,h,zeta=zeta, Vtransform=self.Vtransform).squeeze()
         
-    def depthInt(self,var,grid='rho',cumulative=False):
+    def depthInt(self,var,grid='rho', z_w=None, cumulative=False):
         """
         Depth-integrate data in variable, var (array [Nz, Ny, Nx])
         
@@ -425,7 +425,8 @@ class ROMS(ROMSGrid):
         elif grid == 'v':
             h = 0.5 * (self.h[1:,:] + self.h[0:-1,:])
             
-        z_w = get_depth(self.s_w,self.Cs_w,self.hc,h,Vtransform=self.Vtransform).squeeze()
+        if z_w is None:
+            z_w = get_depth(self.s_w,self.Cs_w,self.hc,h,Vtransform=self.Vtransform).squeeze()
         
         dz = np.diff(z_w,axis=0)
         
@@ -434,7 +435,7 @@ class ROMS(ROMSGrid):
         else:
             return np.sum(dz*var,axis=0)
         
-    def depthAvg(self,var,grid='rho'):
+    def depthAvg(self, var, grid='rho', z_w=None):
         """
         Depth-average data in variable, var (array [Nz, Ny, Nx])
         """
@@ -455,7 +456,8 @@ class ROMS(ROMSGrid):
         elif grid == 'v':
             h = 0.5 (self.h[1:,:] + self.h[0:-1,:])
             
-        z_w = get_depth(self.s_w,self.Cs_w,self.hc,h,Vtransform=self.Vtransform).squeeze()
+        if z_w is None:
+            z_w = get_depth(self.s_w,self.Cs_w,self.hc,h,Vtransform=self.Vtransform).squeeze()
         
         dz = np.diff(z_w,axis=0)
         

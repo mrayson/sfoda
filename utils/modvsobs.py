@@ -152,7 +152,8 @@ class ModVsObs(object):
         plt.title('StationID: %s'%self.stationid)
 
         if legend:
-            plt.legend(('Model','Observed'),loc=loc)
+            leg = plt.legend(('Model','Observed'),loc=loc)
+            leg.get_frame().set_alpha(0.5)
 
         return h1, h2, ax
         

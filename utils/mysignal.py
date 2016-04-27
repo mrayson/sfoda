@@ -66,6 +66,38 @@ def powerspec2D(phi,dx=1.,dz=1.,window=np.hanning,quadrant=0):
 
     return result, kx, kz
 
+def power_spectra(tsec,u_r,K=3,power=2.):
+    """
+    Calculates the power spectral density from a real valued quanity
+    
+    """
+    
+    M = tsec.shape[0]
+    dt = tsec[1]-tsec[0]
+    M_2 = np.floor(M/2)
+    
+    h_tk = window_sinetaper(M,K=K)
+   
+    # Weight the time-series and perform the fft
+    u_r_t = u_r[...,np.newaxis,:]*h_tk
+    S_k = np.fft.fft(u_r_t,axis=-1)
+    S_k = dt *np.abs(S_k)**power
+    S = np.mean(S_k,axis=-2)
+        
+    omega = np.fft.fftfreq(int(M),d=dt/(2*np.pi))
+    
+    #domega = 2*np.pi/(M*dt)
+    domega = 1/(M*dt)
+    
+    # Extract the positive and negative frequencies
+    omega_ccw = omega[0:M_2]
+    #omega_cw = omega[M_2::] # negative frequencies
+    S_ccw = S[...,0:M_2]
+    #S_cw = S[...,M_2::]
+
+    return omega_ccw,S_ccw,domega
+
+
 def rotary_spectra(tsec,u,v,K=3,power=2.):
     """
     Calculates the rotary spectral kinetic energy from velocity.
