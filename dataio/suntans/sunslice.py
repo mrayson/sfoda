@@ -62,7 +62,7 @@ class Slice(Spatial):
         return self.data.squeeze()
         
         
-    def pcolorslice(self,t=0,xaxis='xslice',titlestr=None,bathyoverlay=True,**kwargs):
+    def pcolorslice(self, z, t=0,xaxis='xslice',titlestr=None,bathyoverlay=True,**kwargs):
         """
         Pcolor plot of the slice
         
@@ -72,7 +72,7 @@ class Slice(Spatial):
 
             
         #a=self.data[t,:].squeeze()
-        am = np.ma.array (self.data, mask=np.isnan(self.data))
+        am = np.ma.array (z, mask=np.isnan(self.data))
         
         if self.clim==None:
             self.clim=[]
@@ -117,6 +117,9 @@ class Slice(Spatial):
         Returns a handle to the pcolor object and the colorbar
         """
           
+        if not filled:
+            outline=True
+
         #a=self.data[t,:].squeeze()
         am = np.ma.array (z, mask=np.isnan(z))
         

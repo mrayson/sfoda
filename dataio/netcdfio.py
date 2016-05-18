@@ -85,10 +85,13 @@ def load_sql_ncstation(dbfile, station_name, varname, otherquery=None):
     outvar = ['NetCDF_Filename',\
         'NetCDF_GroupID',\
         'StationName',\
+        'StationID',\
         'X',\
         'Y',\
         'height_start',\
         'Variable_Name',\
+        'time_start',\
+        'time_end',\
         ]
 
     tablename = 'observations'
@@ -123,6 +126,10 @@ def load_sql_ncstation(dbfile, station_name, varname, otherquery=None):
         ncdata.attrs.update({'X':query['X'][ii],\
                 'Y':query['Y'][ii],\
                 'Z':query['height_start'][ii],\
+                'time_start':query['time_start'][ii],\
+                'time_end':query['time_end'][ii],\
+                'StationName':query['StationName'][ii],\
+                'StationID':query['StationID'][ii],\
         })
 
         data.append(ncdata)
@@ -389,7 +396,11 @@ def netcdfObs2DB(ncfile, dbfile, nctype=1):
         # Use this variable
         lon = nc.groups[grp].getncattr('Longitude')
         lat = nc.groups[grp].getncattr('Latitude')
-        long_name = nc.groups[grp].variables[vv].long_name
+        try:
+            long_name = nc.groups[grp].variables[vv].long_name
+        except:
+            long_name = vv
+
         StationID=nc.groups[grp].StationID
         StationName = nc.groups[grp].StationName
             
@@ -399,8 +410,12 @@ def netcdfObs2DB(ncfile, dbfile, nctype=1):
         except:
             ele = 0.0
             
-        times = nc.groups[grp].variables['time']
-        dates = num2date([times[0],times[-1]],units=times.units)
+        try:
+            times = nc.groups[grp].variables['time']
+            dates = num2date([times[0],times[-1]],units=times.units)
+        except:
+            times = nc.groups[grp].getncattr('Time')
+            dates = [datetime.strptime(times, '%Y-%m-%d %H:%M:%S')]
 
         return lon, lat, long_name, StationID, StationName, ele, dates
  
