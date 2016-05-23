@@ -13,7 +13,7 @@ from collections import OrderedDict
 #ugrid={}
 ugrid = OrderedDict()
 
-fillval=999999.0
+fillval=-999999.0
 
 vname = 'suntans_mesh'
 dimensions = ()

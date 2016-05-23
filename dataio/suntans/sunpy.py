@@ -36,6 +36,7 @@ import pdb
 
 # Constants
 GRAV=9.81
+FILLVALUE=-999999
 
 ###############################################################        
 # Dictionary with lookup table between object variable name and netcdf file
@@ -92,7 +93,7 @@ class Grid(object):
     """ Class for handling SUNTANS grid data"""
 
     MAXFACES=3 # Default number of faces
-    _FillValue=999999
+    _FillValue=FILLVALUE
     gridvars = suntans_gridvars
     griddims = suntans_dimvars
 
@@ -1312,9 +1313,8 @@ class Spatial(Grid):
 #        try:
 #            fillval = nc.variables[variable]._FillValue
 #        except:
-        fillval = 999999.0
         
-        self.mask = self.data==fillval
+        self.mask = self.data==self._FillValue
         self.data[self.mask]=0.
         self.data = self.data.squeeze()
         

@@ -367,7 +367,11 @@ def netcdfObs2DB(ncfile, dbfile, nctype=1):
         # Use this variable
         lon = nc.groups[grp].variables['Longitude'][:]
         lat = nc.groups[grp].variables['Latitude'][:]
-        long_name = nc.groups[grp].variables[vv].long_name
+        try:
+            long_name = nc.groups[grp].variables[vv].long_name
+        except:
+            long_name = ''
+
         StationID='none'
         StationName = nc.groups[grp].stationname
             
@@ -454,17 +458,16 @@ def netcdfObs2DB(ncfile, dbfile, nctype=1):
                     get_meta_type3(nc, grp ,vv)
 
 
-                if lon is None:
-                    write = False
+            if lon is None:
+                write = False
 
-                else:
-                    dbtuple = (ncfile, grp, vv, lon,\
-                        lat, lon, lon,\
-                        lat, lat, dates[0], dates[-1],\
-                        ele,ele,StationName,StationID,'Point')
+            else:
+                dbtuple = (ncfile, grp, vv, lon,\
+                    lat, lon, lon,\
+                    lat, lat, dates[0], dates[-1],\
+                    ele,ele,StationName,StationID,'Point')
  
     
-               
             if write:
                 # Create the tuple to insert into the database
                 dbstr = '("%s", "%s", "%s", %4.6f, %4.6f, %4.6f, %4.6f, %4.6f, %4.6f, "%s", "%s", %4.6f, %4.6f, "%s", "%s","%s")'%dbtuple

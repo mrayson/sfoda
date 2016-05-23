@@ -30,7 +30,7 @@ DELETED_EDGE = -1
 BOUNDARY = -1 # cell marker for edge of domain
 UNMESHED = -2 # cell marker for edges not yet meshed
 
-FILLVALUE=999999
+FILLVALUE=-999999
 
 class TriGridError(Exception):
     pass
