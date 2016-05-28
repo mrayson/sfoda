@@ -59,6 +59,7 @@ class HybridGrid(object):
     nfaces=None
     edges=None
     mark=None
+    markcell=None
     grad=None
     neigh=None
     xv=None
@@ -118,7 +119,8 @@ class HybridGrid(object):
             self.face = self.cell_edge_map()
             self.face[self.face==FILLVALUE] = -1
 
-            self.markcell = self.calc_markcell(self.mark)
+            if self.markcell is None:
+                self.markcell = self.calc_markcell(self.mark)
 
             if self.neigh is None:
                 self.make_neigh_from_cells()
