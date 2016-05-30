@@ -34,7 +34,7 @@ import matplotlib.animation as animation
 
 from soda.dataio.suntans.sunpy import Spatial, Grid
 from soda.dataio.ugrid.untrim_tools import untrim_gridvars, untrim_griddims, UNTRIMSpatial
-from soda.dataio.ugrid.ptm_tools import PtmBin
+from soda.utils.ptm_tools import PtmBin
 from soda.dataio.suntans.suntrack import PtmNC
 from datetime import datetime
 import numpy as np
