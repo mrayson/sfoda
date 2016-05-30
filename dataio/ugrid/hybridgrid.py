@@ -30,7 +30,8 @@ DELETED_EDGE = -1
 BOUNDARY = -1 # cell marker for edge of domain
 UNMESHED = -2 # cell marker for edges not yet meshed
 
-FILLVALUE=-999999
+#FILLVALUE=-999999
+FILLVALUE=999999
 
 class TriGridError(Exception):
     pass
@@ -63,6 +64,8 @@ class HybridGrid(object):
     neigh=None
     xv=None
     yv=None
+
+    _FillValue = FILLVALUE # Default is 999999
 
     def __init__(self,xp,yp,cells,**kwargs):
 
@@ -101,8 +104,6 @@ class HybridGrid(object):
         if not self.mark is None:
             self.mark=self.mark.astype(np.int64)
 
-
-
         # Make sure the BCs are ok
         self.check_missing_bcs()
 
@@ -116,7 +117,7 @@ class HybridGrid(object):
 
             # Face->edge connectivity
             self.face = self.cell_edge_map()
-            self.face[self.face==FILLVALUE] = -1
+            self.face[self.face==self._FillValue] = -1
 
             self.markcell = self.calc_markcell(self.mark)
 
@@ -346,7 +347,7 @@ class HybridGrid(object):
         p2 = self.edges[:,1]
 
         face = self.face.copy()
-        cellmask = self.face==FILLVALUE
+        cellmask = self.face==self._FillValue
         face[cellmask]=0
         
         de1 = dist(self.xp[p1],self.xe,self.yp[p1],self.ye)
@@ -933,7 +934,7 @@ class HybridGrid(object):
 
         """
         #mask = self.cells.mask.copy()
-        mask = self.cells==FILLVALUE
+        mask = self.cells==self._FillValue
         ctypes = self.mark[self.face]
         ctypes[mask] = 0
 

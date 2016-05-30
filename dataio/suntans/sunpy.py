@@ -27,6 +27,7 @@ from soda.utils import othertime
 from soda.dataio.suntans.suntans_ugrid import ugrid
 from soda.utils.timeseries import timeseries
 from soda.utils.ufilter import ufilter
+from soda.utils.maptools import utm2ll
 from soda.dataio.ugrid.hybridgrid import HybridGrid, circumcenter
 from soda.dataio.ugrid.gridsearch import GridSearch
 
@@ -309,7 +310,7 @@ class Grid(object):
         Converts the suntans grid to a HybridGrid type
         """
         return HybridGrid(self.xp,self.yp,self.cells,nfaces=self.nfaces,\
-            xv=self.xv,yv=self.yv)
+            xv=self.xv,yv=self.yv, _FillValue=self._FillValue)
 
 
     def reCalcGrid(self):
@@ -460,6 +461,27 @@ class Grid(object):
         self.fig,self.ax,self.collection,self.cb=edgeplot(xylines,z,xlim=xlims,ylim=ylims,\
             clim=self.clim,**kwargs)
             
+    def to_wgs84(self, utmzone, isnorth):
+        """
+        Convert the node coordinates to WGS84 map projection
+        """
+        # Convert the nodes
+        ll = utm2ll(np.column_stack([self.xp, self.yp]),\
+                utmzone, north=isnorth)
+        self.xp = ll[:,0]
+        self.yp = ll[:,1]
+
+        # Convert the cell centers
+        ll = utm2ll(np.column_stack([self.xv, self.yv]),\
+                utmzone, north=isnorth)
+        self.xv = ll[:,0]
+        self.yv = ll[:,1]
+
+
+
+        # Update the plot coordinates
+        self.xy = self.cellxy()
+
     def cellxy(self):
         """ 
         Returns a list of Nx2 vectors containing the grid cell node coordinates
