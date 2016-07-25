@@ -508,28 +508,39 @@ def Contour2Shp(C,outfile,projection='WGS84',zone=15,north=True):
     layer.CreateField(field_def)
     layerDefinition = layer.GetLayerDefn()
     
-    
+    def create_feature(line, lev, ctr):
+        # Update the feature with the line data
+        featureIndex = ctr
+        feature = osgeo.ogr.Feature(layerDefinition)
+        feature.SetGeometry(line)
+        feature.SetFID(featureIndex)
+        feature.SetGeometryDirectly(line)
+
+        # Set the contour level
+        feature.SetField('Contour',lev)
+        layer.CreateFeature(feature)
+
     # Loop through the contour object to get the coordinates of each layer
     ctr=0
     for coll,lev in zip(C.collections,C.levels):
         coords = coll.get_paths()
+        line = osgeo.ogr.Geometry(osgeo.ogr.wkbLineString)
         for xyObj in coords:
-            ctr+=1
-            line = osgeo.ogr.Geometry(osgeo.ogr.wkbLineString)
             # Add points individually to the line
-            for xy in xyObj.vertices:
-                line.AddPoint_2D(xy[0],xy[1])
-            
-            # Update the feature with the line data
-            featureIndex = ctr
-            feature = osgeo.ogr.Feature(layerDefinition)
-            feature.SetGeometry(line)
-            feature.SetFID(featureIndex)
-            feature.SetGeometryDirectly(line)
-            # Set the contour level
-            feature.SetField('Contour',lev)
-            
-            layer.CreateFeature(feature)
+            ii=-1
+            for xy, codes in zip(xyObj.vertices, xyObj.codes):
+                ii+=1
+                if ii>0:
+                    # Code = 1 means lift pen in matplotlib
+                    # We need to create a new line in this case or else shapefile
+                    # will just connect them all together
+                    if codes > 1:
+                        line.AddPoint_2D(xy[0],xy[1])
+                    else:
+                        # Create save the current feature
+                        ctr+=1
+                        create_feature(line, lev, ctr)
+                        line = osgeo.ogr.Geometry(osgeo.ogr.wkbLineString)
     
     # Close the shape file
     shapeData.Destroy()
@@ -678,6 +689,23 @@ def checkfile(shpfile):
         print 'File %s exists. Removing...'%shpfile
         os.remove(shpfile) 
 
+def contour2shapely(C):
+    """
+    Converts matplotlib contour object to shapely.Polygon objects
+
+    Use: shapely2shp to save in GIS format
+    """
+    polys = []
+    for coll, lev in zip(C.collections, C.levels):
+        coords = coll.get_paths()
+        v = coords[0].vertices
+        x = v[:,0]
+        y = v[:,1]
+        poly = geometry.Polygon([(i[0], i[1]) for i in zip(x,y)])
+
+        polys.append(poly)
+
+    return poly, C.levels
     
 ###Testing###
 #LL=[-94.2,27.0]

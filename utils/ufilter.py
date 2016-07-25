@@ -43,7 +43,7 @@ class ufilter(object):
         """
         Performs the filtering operation on data in vector y
         """
-        print np.argwhere(self.G.sum(axis=1) == 0.0)
+        #print np.argwhere(self.G.sum(axis=1) == 0.0)
         return self.G*y
         
     def BuildFilterMatrix(self):
