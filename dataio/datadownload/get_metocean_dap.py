@@ -4,10 +4,14 @@ datasets from an opendap server
 """
 
 from mythredds import GetDAP, Dataset, MFncdap
-from datetime import datetime,timedelta
 
+from datetime import datetime,timedelta
 import pandas as pd
 import numpy as np
+import urllib2  
+from xml.dom import minidom
+from collections import OrderedDict
+
 
 ###
 # Dictionary containing opendap server specific
@@ -279,6 +283,111 @@ class GetDAP_BRAN(GetDAP):
         timecoord,zcoord, ycoord,xcoord =  self._nc.variables[varname].dimensions
         return timecoord, xcoord, ycoord,zcoord
 
+class AVHRR52(object):
+    """
+    NOAA Advanced Very High Resolution Radiometer data
+    """
+    
+    def __init__(self, trange, useday=False):
+
+        baseurl = 'http://data.nodc.noaa.gov/thredds/dodsC/'
+        dt = 1
+        dt_units = 'D'
+        self.tformat = '%Y%m%d.%H%M%S'
+
+        # generate a list of time variables
+        self.t0 = pd.datetime.strptime(trange[0], '%Y%m%d.%H%M%S')
+        self.t1 = pd.datetime.strptime(trange[1], '%Y%m%d.%H%M%S')
+
+        time = pd.date_range(self.t0, self.t1,\
+               freq = '%d%s'%(dt, dt_units))
+
+        # Generate a list of years
+        years = np.unique([t.year for t in time])
+
+        # Generate a list of all files in that year range
+        urllist = []
+        for year in years:
+            print 'Getting urls for year %d'%year
+            url = self.get_url_year(year, useday)
+            for u in url:
+                urllist.append('%s%s'%(baseurl, u))
+
+        # Create a lookup dictionary for all time steps
+        self._timelookup = OrderedDict()
+
+        print 'Generating time lookup table...'
+        badidx = np.ones((time.shape[0]), dtype=np.bool)
+        for ii, tt in enumerate(time):
+            tday = '_%d%03d_'%(tt.year,tt.dayofyear)
+            tstr = tt.strftime(self.tformat)
+
+            for url in urllist:
+                if tday in url:
+                    self._timelookup.update({tstr:url})
+                    urllist.remove(url)
+                    break
+
+            # Check that each day exists
+
+            if not self._timelookup.has_key(tstr):
+                print 'Warning could not find file for: %s'%tstr
+                badidx[ii] = False
+
+
+        # Generate a list of time steps (also remove bad steps)
+        self.time = np.array([tout.to_datetime() for tout in time[badidx]])
+
+        # Use the first file as the lookup url
+        self.ncurl = []
+        for nc in self._timelookup.keys():
+            self.ncurl.append(self._timelookup[nc])
+
+    def __call__(self, localtime, var=None):
+        """
+        Overloaded call function
+
+        Return an OrderedDict with filenames and time steps
+        """
+
+        tslice_dict = OrderedDict()
+        for tt in localtime:
+            tstr =  tt.strftime(self.tformat)
+            tslice_dict.update({self._timelookup[tstr]:(0,1)}) # always first step
+
+        return 0, self.ncurl, tslice_dict
+
+    def get_filename_only(self, var=None):
+        return self.ncurl[0]
+        
+    def get_url_year(self, year, useday):
+        """
+        Finds the url name for a given year
+        """
+        yearmax = 2012
+
+        xmlfile =\
+          'http://data.nodc.noaa.gov/thredds/catalog/pathfinder/Version5.2/%s/catalog.xml'%year
+
+        if year < 1981 or year > yearmax:
+            raise Exception, 'year outside of %d to %d'%(1981, yearmax)
+
+        doc = minidom.parse(urllib2.urlopen(xmlfile))
+
+        urls = []
+        for node in doc.getElementsByTagName('dataset'):
+            url = node.getAttribute('urlPath')
+            #if len(url)>0:
+            if useday:
+                if '_day' in url:
+                    urls.append(url)
+            else:
+                if '_night' in url:
+                    urls.append(url)
+                #print url
+
+        return urls
+
 
 ##############################
 # Main functions for calling
@@ -390,5 +499,26 @@ def get_cfsr_tds(xrange, yrange, trange, outfile, outfile_pair):
     # Call the object
     TDS(xrange,yrange,trange,outfile=outfile_pair)
 
+def get_avhrr52(xrange, yrange, trange, outfile):
+    """
+    Get the AVHRR v5.2 data set
+    """
+    vars = ['sst','ssterr']
+    mydict = {
+            'multifile':True,\
+            'ncurl':[],\
+            'type':None,\
+            'sst':'sea_surface_temperature',\
+            'ssterr':'pathfinder_quality_level',\
+            }
 
+    # Multifile like object
+    MF = AVHRR52(trange, useday=useday)
+    mydict['ncurl'] = MF.ncurl
+
+    # Create the thredds object
+    TDS = GetDAP(variables=vars, MF = MF, **mydict)
+    # Call the object
+    TDS(xrange, yrange, trange, outfile=outfile)
+ 
 

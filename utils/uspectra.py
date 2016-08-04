@@ -263,6 +263,7 @@ class uspectra(object):
         amp = np.sort(np.ravel(amp))
         frq = self.frq[ind]
         return amp[-N:], frq[-N:]
+
     def bandAvg(self):
         """
         Band average the spectral coefficients

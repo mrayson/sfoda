@@ -38,9 +38,12 @@ class timeseries(object):
     
     units=''
     long_name=''
-    stationid = ''
+    StationID = ''
+    StationName = ''
     varname = ''
     Z=0.0
+    X=0.0
+    Y=0.0
     
     def __init__(self,t,y,**kwargs):
         
@@ -51,12 +54,14 @@ class timeseries(object):
         self.shape = self.y.shape
         self.ndim = len(self.shape)
         
+
         # Convert the time to seconds
-        if isinstance(self.t[0], np.datetime64):
-            time = self.t
-            self.tsec = ((time - time[0])*1e-9).astype(np.float64)
-        else:
-            self.tsec = othertime.SecondsSince(self.t,basetime=self.basetime)
+        self.tsec = self._get_tsec(t)
+        #if isinstance(self.t[0], np.datetime64):
+        #    time = self.t
+        #    self.tsec = ((time - time[0])*1e-9).astype(np.float64)
+        #else:
+        #    self.tsec = othertime.SecondsSince(self.t,basetime=self.basetime)
         
         self.ny = np.size(self.y)
 
@@ -65,7 +70,7 @@ class timeseries(object):
             mask = ~np.isfinite(self.y)
             self.y = np.ma.MaskedArray(self.y,mask=mask)
         
-        self._checkDT()
+        self.dt, self.isequal = self._check_dt(self.tsec)
 
         self.Nt = self.t.shape[0]
         
@@ -149,17 +154,18 @@ class timeseries(object):
     
         return Pyy,frq,tmid
         
-    def filt(self,cutoff_dt, btype='low',order=3,axis=-1):
+    def filt(self, cutoff_dt, btype='low', order=3, axis=-1):
         """
         Butterworth filter the time series
         
         Inputs:
             cutoff_dt - cuttoff period [seconds]
-            btype - 'low' or 'high'
+            btype - 'low' or 'high' or 'band'
         """
         
         if self.isequal==False and self.VERBOSE:
-            print 'Warning - time series is unequally spaced. Use self.interp to interpolate onto an equal grid'
+            print 'Warning - time series is unequally spaced.\
+                Use self.interp to interpolate onto an equal grid'
         
         if not btype == 'band':
             Wn = self.dt/cutoff_dt
@@ -216,9 +222,12 @@ class timeseries(object):
             tend=timein[1]
             dt=timein[2]
             tnew = othertime.TimeVector(tstart,tend,dt,timeformat=timeformat)
+            tsec = self._get_tsec(tnew)
         except:
             tnew=timein
-            dt = (tnew[1]-tnew[0]).total_seconds()
+            tsec = self._get_tsec(tnew)
+            dt = tsec[1] - tsec[0]
+            #dt = (tnew[1]-tnew[0]).total_seconds()
             
         
         if method=='nearest':
@@ -448,6 +457,27 @@ class timeseries(object):
         
         
         
+    def find_trend(self, axis=-1):
+        """
+        Return the linear trend as a numpy array
+        """
+        # Make sure time is along the last axis
+        ytmp = np.swapaxes(self.y,-1,axis)
+
+        # Make sure there are no NaNs
+        ytmp[ytmp.mask] = 0.0
+
+        # Fit
+        model = np.polyfit(self.tsec, ytmp.data.T, 1) # Linear fit
+
+        # 
+        Nz = model.shape[1]
+        trend = np.zeros((Nz, self.Nt))
+        for kk in range(Nz):
+             trend[kk,:] = np.polyval(model[:,kk], self.tsec)
+
+        return trend
+
     def plot(self,angle=17,**kwargs):
         """
         Plot
@@ -469,9 +499,9 @@ class timeseries(object):
         
         return h1 
 
-    def subset(self,time1,time2):
+    def get_tslice(self,time1,time2):
         """
-        Returns a subset of the array between time1 and time2
+        Returns the time indices bounded by time1 and time2
         """
         try:
             t0 = othertime.findNearest(time1,self.t)
@@ -479,8 +509,18 @@ class timeseries(object):
         except:
             t0 = np.searchsorted(self.t, np.datetime64(time1))
             t1 = np.searchsorted(self.t, np.datetime64(time2))
-            
-        return self.t[t0:t1],self.y[...,t0:t1]
+
+        t1 = min( self.Nt, t1+1)
+
+        return t0, t1
+ 
+    def subset(self,time1,time2):
+        """
+        Returns a subset of the array between time1 and time2
+        """
+        t0, t1 = self.get_tslice(time1, time2)
+           
+        return self.t[t0:t1], self.y[..., t0:t1]
         
     def savetxt(self,txtfile):
         f = open(txtfile,'w')
@@ -508,7 +548,7 @@ class timeseries(object):
         attrs = {\
             'units':self.units,\
             'long_name':self.long_name,\
-            'stationid':self.stationid,\
+            'StationID':self.StationID,\
         }
 
         return xray.DataArray( self.y.copy(), \
@@ -525,25 +565,37 @@ class timeseries(object):
         from copy import deepcopy
         return deepcopy(self)
         
-    def _checkDT(self):
+    def _get_tsec(self, time):
+
+        # Convert the time to seconds
+        if isinstance(time[0], np.datetime64):
+            tsec = ((time - time[0])*1e-9).astype(np.float64)
+        else:
+            tsec = othertime.SecondsSince(time,basetime=self.basetime)
+
+        return tsec
+ 
+    def _check_dt(self, tsec):
         """
         Check that the time series is equally spaced
         """
-        dt = np.diff(self.tsec)
+        dt = np.diff(tsec)
         
         dt_unique = np.unique(dt)
         
         if np.size(dt_unique) == 1:
-            self.isequal = True
+            isequal = True
         else:
-            self.isequal = False
+            isequal = False
         
         try:
-            self.dt = dt[1]
+            dt = dt[1]
         except:
-            self.dt = 0.0
+            dt = 0.0
+
+        return dt, isequal
             
-    def _evenly_dist_data(self,dt):
+    def _evenly_dist_data(self, dt):
         """
         Distribute the data onto an evenly spaced array
         
@@ -565,7 +617,10 @@ class timeseries(object):
         yout[...,tind] = self.y
         
         def updatetime(tsec):
-            return timedelta(seconds=tsec) + self.t[0]
+            try:
+                return np.timedelta64(int(tsec), 's') + self.t[0]
+            except:
+                return timedelta(seconds=tsec) + self.t[0]
             
         self.t = np.array(map(updatetime,tout))
         self.y = yout
@@ -618,7 +673,7 @@ class ModVsObs(object):
 
     units=' '
     long_name=' '
-    stationid = ' '
+    StationID = ' '
     varname = ' '
     Z=0.0
 
@@ -694,7 +749,7 @@ class ModVsObs(object):
 
         plt.grid(b=True)
 
-        plt.title('StationID: %s'%self.stationid)
+        plt.title('StationID: %s'%self.StationID)
 
         if legend:
             plt.legend(('Model','Observed'),loc=loc)
@@ -809,7 +864,7 @@ class ModVsObs(object):
             outstr += "|------| ---------- | --------- | --------- | ------- | --- | ----- | ------| \n"
 
         outstr += "| %s [%s] | %6.3f | %6.3f | %6.3f | %6.3f | %6.3f | %6.3f | %6.3f | \n"%\
-            (self.stationid,self.units, self.meanMod, self.meanObs, self.stdMod, self.stdObs,\
+            (self.StationID,self.units, self.meanMod, self.meanObs, self.stdMod, self.stdObs,\
             self.rmse,self.cc,self.skill)
 
         if f == None:
@@ -1455,6 +1510,21 @@ def crms(t,y):
     """
     fac = 1.0/(t[-1]-t[0])
     return np.sqrt(fac*np.trapz(y**2,x=t))
+
+def rmse(x1, x2, axis=-1):
+    """
+    Root mean squared error
+    """
+    return rms(x1-x2, axis=axis)
+
+def skill(xmod, xobs, axis=-1):
+    """
+    Murphy skill score
+    """
+    varmod = ((xobs - xmod)**2.).sum(axis=axis)
+    varobs = ((xobs - xobs.mean(axis=axis))**2.).sum(axis=axis)
+
+    return 1 - varmod/varobs
     
 def tidalrmse(Ao,Am,Go,Gm):
     """

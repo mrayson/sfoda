@@ -45,12 +45,15 @@ class GridDAP(object):
     # Set this to pass your own multi-file object
     MF = None
 
+    # Try and grab all steps together
+    graball = True
+
     def __init__(self,url,**kwargs):
 
         self.__dict__.update(kwargs)
 
         # Open the opendap dataset
-        if isinstance(url,str):
+        if isinstance(url,str) or isinstance(url, unicode):
             self._nc = Dataset(url)
         elif isinstance(url,Dataset):
             # we're passing Dataset object
@@ -75,7 +78,7 @@ class GridDAP(object):
     def get_coords(self):
         """ Download the coordinates"""
 
-        print self._gridnc.variables.keys()
+        #print self._gridnc.variables.keys()
         self.X = self._gridnc.variables[self.xcoord][:]
         self.Y = self._gridnc.variables[self.ycoord][:]
 
@@ -117,14 +120,14 @@ class GridDAP(object):
         # Check if X/Y are 1D or gridded
 
         if self.X.ndim==1:
-            if xrange==None:
+            if xrange is None:
                 self.x1=0
                 self.x2=self.X.shape[0]
             else:
                 self.x1 = self.find_nearest_1d(self.X,xrange[0])
                 self.x2 = self.find_nearest_1d(self.X,xrange[1])
 
-            if yrange==None:
+            if yrange is None:
                 self.y1=0
                 self.y2 = self.Y.shape[0]
             else:
@@ -271,17 +274,25 @@ class GridDAP(object):
         ndim = nc.variables[varname].ndim
         if ndim==3:
             try:
-                data = nc.variables[varname]\
-                    [t1:t2,self.y1:self.y2,self.x1:self.x2]
+                if self.graball:
+                    data = nc.variables[varname]\
+                        [t1:t2,self.y1:self.y2,self.x1:self.x2]
+                else:
+                    data = np.zeros((self.nt, self.ny, self.nx))
+                    data = get_3d_step(data,t1)
             except:
                 data = np.zeros((self.nt, self.ny, self.nx))
                 data = get_3d_step(data,t1)
 
         elif ndim==4:
             try:
-                data = nc.variables[varname]\
-                    [t1:t2,self.z1:self.z2,\
-                    self.y1:self.y2,self.x1:self.x2]
+                if self.graball:
+                    data = nc.variables[varname]\
+                        [t1:t2,self.z1:self.z2,\
+                        self.y1:self.y2,self.x1:self.x2]
+                else:
+                    data = np.zeros((self.nt, self.nz, self.ny, self.nx))
+                    data = get_4d_step(data,t1)
             except:
                 data = np.zeros((self.nt, self.nz, self.ny, self.nx))
                 data = get_4d_step(data,t1)
@@ -397,6 +408,8 @@ class GetDAP(object):
             # Write the data
             if not outfile == None:
                 self.write_var(outfile,vv,data)
+        
+        return data
 
 
     def load_data(self,varname,xr,yr,zr,tr):
@@ -459,18 +472,25 @@ class GetDAP(object):
             coordlist = coordinates.split()
             coordlist.reverse()
 
-            timecoord,zcoord,ycoord,xcoord = \
+            timecoord, zcoord, ycoord0, xcoord0 = \
                 dims[0],dims[1],coordlist[-2],coordlist[-1]
         except:
             if ndims==4:
-                timecoord,zcoord,ycoord,xcoord = dims
+                timecoord, zcoord, ycoord0 ,xcoord0 = dims
             else:
-                 timecoord,ycoord,xcoord = dims
+                 timecoord, ycoord0 ,xcoord0 = dims
         if ndims==3:
             zcoord=None
 
+        # Do a hackish check to see if x and y are in the right order
+        if 'lat' in xcoord0.lower() or 'lon' in ycoord0.lower():
+            xcoord = ycoord0
+            ycoord = xcoord0
+        else:
+            xcoord = xcoord0
+            ycoord = ycoord0
+            
         return timecoord,xcoord,ycoord,zcoord
-
 
     def write_var(self,outfile,var,data):
 
