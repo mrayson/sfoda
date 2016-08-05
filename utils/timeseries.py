@@ -276,9 +276,11 @@ class timeseries(object):
             frq,frqnames = getTideFreq(Fin=frqnames)
             
         # Call the uspectra method
-        U = uspectra(self.tsec,self.y,frq=frq,method='lsqfast')
+        U = uspectra(self.t, self.y, frq=frq, method='lsqfast')
+
         amp,phs = U.phsamp(phsbase=basetime)
-        return amp, phs, frq, frqnames, U.invfft()   
+
+        return amp, phs, frq, frqnames, U.invfft()
         #amp, phs, mean = \
         #    harmonic_fit(self.tsec,self.y,frq,phsbase=basetime,axis=axis)
         #

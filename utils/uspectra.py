@@ -50,10 +50,14 @@ class uspectra(object):
         
         self.__dict__.update(kwargs)
         
-        if type(self.t[0]) == datetime:
+        #if type(self.t[0]) == datetime:
+        if isinstance(self.t[0], datetime):
             # convert to seconds since the start
             self.t0 = getT0time(self.t)
             self.istime = True
+        elif isinstance(self.t[0], np.datetime64):
+            self.t0 = (self.t - self.t[0])/np.timedelta64(1,'s')
+            self.istime = True # unused
         else:
             # Convert to units since the start
             self.t0 = getT0(self.t)
@@ -359,8 +363,6 @@ def lstsqfft(t,y,frq):
     return A+1j*B
 
 
-
-
 def getT0time(t):
     #print 'Convert the time to seconds since the start...'
     tsec = np.zeros((len(t)))
@@ -386,11 +388,13 @@ def phase_offset(frq,start,base):
         Compute a phase offset for a given fruequency
         """
         
-        if type(start)==datetime:
+        if isinstance(start, datetime):
             dx = start - base
             dx = dx.total_seconds()
+        elif isinstance(start, np.datetime64):
+            dx = (start - base)/np.timedelta64(1,'s')
         else:
-            dx = start -base
+            dx = start - base
         
         return np.mod(dx*np.array(frq),2*np.pi)
         
