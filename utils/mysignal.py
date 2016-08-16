@@ -66,7 +66,7 @@ def powerspec2D(phi,dx=1.,dz=1.,window=np.hanning,quadrant=0):
 
     return result, kx, kz
 
-def power_spectra(tsec,u_r,K=3,power=2.):
+def power_spectra(tsec, u_r, K=3, power=2., axis=-1):
     """
     Calculates the power spectral density from a real valued quanity
     
@@ -80,7 +80,7 @@ def power_spectra(tsec,u_r,K=3,power=2.):
    
     # Weight the time-series and perform the fft
     u_r_t = u_r[...,np.newaxis,:]*h_tk
-    S_k = np.fft.fft(u_r_t,axis=-1)
+    S_k = np.fft.fft(u_r_t, axis=axis)
     S_k = dt *np.abs(S_k)**power
     S = np.mean(S_k,axis=-2)
         

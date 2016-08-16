@@ -309,8 +309,13 @@ class Grid(object):
         """
         Converts the suntans grid to a HybridGrid type
         """
-        return HybridGrid(self.xp,self.yp,self.cells,nfaces=self.nfaces,\
-            xv=self.xv,yv=self.yv, _FillValue=self._FillValue)
+        return HybridGrid(self.xp, self.yp, self.cells, nfaces=self.nfaces,\
+            xv=self.xv, yv=self.yv,\
+            mark=self.mark,\
+            edges=self.edges,\
+            grad=self.grad,\
+            neigh=self.neigh,\
+            _FillValue=self._FillValue)
 
 
     def reCalcGrid(self):
