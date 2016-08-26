@@ -406,7 +406,7 @@ class Grid(object):
         Plots the outline of the grid mesh
         """
         fig = plt.gcf()
-        if ax==None:
+        if ax is None:
             ax = fig.gca()
     
         xlim=self.xlims
@@ -453,12 +453,12 @@ class Grid(object):
             ' length of z scalar vector not equal to number of edges, Ne.'
         
         # Find the colorbar limits if unspecified
-        if self.clim==None:
+        if self.clim is None:
             self.clim=[]
             self.clim.append(np.min(z))
             self.clim.append(np.max(z))
         # Set the xy limits
-        if xlims==None or ylims==None:
+        if xlims is None or ylims is None:
             xlims=self.xlims 
             ylims=self.ylims
         
@@ -1193,7 +1193,7 @@ class Spatial(Grid):
         
         """
         
-        if variable==None:
+        if variable is None:
             variable=self.variable
             
         if variable=='speed':
@@ -1261,13 +1261,13 @@ class Spatial(Grid):
             Load the specified suntans variable data as a vector
             
         """
-        if variable==None:
+        if variable is None:
             variable=self.variable
 	
         # Get the indices of the horizontal dimension
-        if self.hasDim(variable,self.griddims['Ne']) and self.j==None:
+        if self.hasDim(variable,self.griddims['Ne']) and self.j is None:
             j=range(self.Ne)
-        elif self.hasDim(variable,self.griddims['Nc']) and self.j==None:
+        elif self.hasDim(variable,self.griddims['Nc']) and self.j is None:
             j=range(self.Nc)
         else:
             j = self.j
@@ -1351,7 +1351,7 @@ class Spatial(Grid):
         """
         Load a 3D variable and depth-average i.e. u
         """
-        if variable==None:
+        if variable is None:
             variable=self.variable
             
         ndim = self.nc.variables[variable].ndim
@@ -1368,7 +1368,7 @@ class Spatial(Grid):
         tstep = self.tstep
         for ii,t in enumerate(tstep):
             self.tstep=[t]
-            data = self.loadData()
+            data = self.loadData(variable=variable)
             databar[ii,:] = self.depthave(data)            
             
         self.tstep=tstep
@@ -1509,26 +1509,26 @@ class Spatial(Grid):
           Plot the unstructured grid data
         """
             
-        if z==None:
+        if z is None:
             # Load the data if it's needed
             if not self.__dict__.has_key('data'):
                 self.loadData() 
             z=self.data.ravel()
         
         # Find the colorbar limits if unspecified
-        if self.clim==None:
+        if self.clim is None:
             self.clim=[]
             self.clim.append(np.min(z))
             self.clim.append(np.max(z))
         # Set the xy limits
-        if xlims==None or ylims==None:
+        if xlims is None or ylims is None:
             xlims=self.xlims 
             ylims=self.ylims
         
         self.fig,self.ax,self.patches,self.cb=unsurf(self.xy,z,xlim=xlims,ylim=ylims,\
             clim=self.clim,**kwargs)
             
-        if titlestr==None:
+        if titlestr is None:
             plt.title(self.genTitle())
         else:
             plt.title(titlestr)
@@ -1543,7 +1543,7 @@ class Spatial(Grid):
           Plot the unstructured grid edge data
         """
             
-        if z==None:
+        if z is None:
             # Load the data if it's needed
             if not self.__dict__.has_key('data'):
                 self.loadData() 
@@ -1553,12 +1553,12 @@ class Spatial(Grid):
             ' length of z scalar vector not equal to number of edges, Ne.'
         
         # Find the colorbar limits if unspecified
-        if self.clim==None:
+        if self.clim is None:
             self.clim=[]
             self.clim.append(np.min(z))
             self.clim.append(np.max(z))
         # Set the xy limits
-        if xlims==None or ylims==None:
+        if xlims is None or ylims is None:
             xlims=self.xlims 
             ylims=self.ylims
         
@@ -1566,7 +1566,7 @@ class Spatial(Grid):
         self.fig,self.ax,self.collection,self.cb=edgeplot(xylines,z,xlim=xlims,ylim=ylims,\
             clim=self.clim,**kwargs)
             
-        if titlestr==None:
+        if titlestr is None:
             plt.title(self.genTitle())
         else:
             plt.title(titlestr)
@@ -1581,16 +1581,16 @@ class Spatial(Grid):
         #if not self.__dict__.has_key('data'):
         #    self.loadData()
             
-        if z==None:
+        if z is None:
             z=self.data
             
         # Find the colorbar limits if unspecified
-        if self.clim==None:
+        if self.clim is None:
             self.clim=[]
             self.clim.append(np.min(z))
             self.clim.append(np.max(z))
         # Set the xy limits
-        if xlims==None or ylims==None:
+        if xlims is None or ylims is None:
             xlims=self.xlims 
             ylims=self.ylims
         
@@ -1626,7 +1626,7 @@ class Spatial(Grid):
         if filled and colorbar:
             self.cb = fig.colorbar(camp)
         
-        if titlestr==None:
+        if titlestr is None:
             plt.title(self.genTitle())
         else:
             plt.title(titlestr)
@@ -1734,13 +1734,13 @@ class Spatial(Grid):
         #ax.set_animated('True')
         
         # Find the colorbar limits if unspecified
-        if self.clim==None:
+        if self.clim is None:
             self.clim=[]
             self.clim.append(np.min(self.data.ravel()))
             self.clim.append(np.max(self.data.ravel()))
            
         # Set the xy limits
-        if xlims==None or ylims==None:
+        if xlims is None or ylims is None:
             xlims=self.xlims 
             ylims=self.ylims
         
@@ -1757,7 +1757,7 @@ class Spatial(Grid):
         ax.set_ylabel('Northing [m]')
 
         title=ax.set_title("")
-        if cbar==None:
+        if cbar is None:
             fig.colorbar(collection)
         
         qh=plt.quiver([],[],[],[])
@@ -1835,7 +1835,7 @@ class Spatial(Grid):
         
         
         # Find the colorbar limits if unspecified
-        if self.clim==None:
+        if self.clim is None:
             self.clim=[]
             self.clim.append(np.min(self.data))
             self.clim.append(np.max(self.data))
@@ -2201,9 +2201,9 @@ class Spatial(Grid):
         """
         Calculate the kinetic energy
         """
-        if u==None:
+        if u is None:
             u=self.loadDataRaw(variable='uc')
-        if v==None:
+        if v is None:
             v=self.loadDataRaw(variable='vc')
 
         self.long_name = 'Kinetic energy'
@@ -2279,7 +2279,7 @@ class Spatial(Grid):
         """
         ndim = np.ndim(data)
         
-        if h==None:
+        if h is None:
             h = self.dv
             
         if ndim == 2:
@@ -2301,7 +2301,7 @@ class Spatial(Grid):
                 
         if ndim == 2:
             nx = np.size(data,1)
-            if dz==None:
+            if dz is None:
                 dz2=np.reshape(self.dz,(nz,1))
                 dz2 = np.tile(dz2,(1,nx))
             else:
@@ -2315,7 +2315,7 @@ class Spatial(Grid):
         if ndim == 3:
             nt = np.size(data,0)
             nx = np.size(data,2)
-            if dz==None:
+            if dz is None:
                 dz3 = np.reshape(self.dz,(1,nz,1))
                 dz3 = np.tile(dz3,(nt,1,nx))
             else:
@@ -2372,7 +2372,7 @@ class Spatial(Grid):
         """
         Calculate the area-integral of data at phi points 
         """
-        if mask==None:#no mask
+        if mask is None:#no mask
             mask = np.ones_like(phi)
 
         phiA = np.sum(phi*self.Ac*mask)
@@ -2463,7 +2463,7 @@ class Spatial(Grid):
         """
         Return the layer of the top edge
         """
-        if j==None:
+        if j is None:
             eta_edge = self.get_edgevar(eta,U=U,method=method)
         else:
             eta_edge = eta
@@ -2560,7 +2560,7 @@ class Spatial(Grid):
             return 0.5*(phi[nc1]+phi[nc2]) 
 
         elif method=='upwind':
-            if U==None:
+            if U is None:
                 raise Exception, 'U must be set to use upwind method'
 
             ind = U>0
@@ -2572,7 +2572,7 @@ class Spatial(Grid):
 
     def genTitle(self,tt=None):
         
-        if tt ==None:
+        if tt  is None:
             if type(self.tstep)==int:
                 tt = self.tstep
             else:
@@ -2608,7 +2608,7 @@ class TimeSeries(timeseries, Spatial):
         
         self.XY = XY
         self.klayer = klayer
-        if not Z==None:
+        if not Z is None:
             self.Z = np.abs(Z)
         else:
             self.Z=Z
@@ -2863,7 +2863,7 @@ class Profile(object):
         
         
         # Update the colorbar limits if not set
-        if self.clim==None:
+        if self.clim is None:
             self.clim=[np.min(self.data),np.max(self.data)]
         
     
@@ -3054,7 +3054,7 @@ class Profile(object):
         self.tstep = tsteps
         self.loadData()
         
-        if (ax==None) or (h ==None) or (fig==None):
+        if (ax is None) or (h  is None) or (fig is None):
             fig, ax, h, cb = self.pcolor(data=np.squeeze(self.data[0,:,:]))
          
         
@@ -3143,7 +3143,7 @@ def unsurfm(points, cells, z,clim=None,title=None,**kwargs):
     Plot cell-centred data using the mayavi/tvtk libraries
     
     """        
-    if clim==None:
+    if clim is None:
         clim=[]
         clim.append(np.min(z))
         clim.append(np.max(z))
@@ -3191,7 +3191,7 @@ def unsurf(xy,z,xlim=[0,1],ylim=[0,1],clim=None,colorbar=True,**kwargs):
     
 
     # Find the colorbar limits if unspecified
-    if clim==None:
+    if clim is None:
         clim=[]
         clim.append(np.min(z))
         clim.append(np.max(z))
@@ -3232,7 +3232,7 @@ def edgeplot(xylines,edata,xlim=[0,1],ylim=[0,1],clim=None,**kwargs):
     
 
     # Find the colorbar limits if unspecified
-    if clim==None:
+    if clim is None:
         clim=[]
         clim.append(np.min(z))
         clim.append(np.max(z))
@@ -3278,7 +3278,7 @@ def unanimate(xy,z,tsteps,xlim=[0,1],ylim=[0,1],clim=None,**kwargs):
     #ax.set_animated('True')
     
     # Find the colorbar limits if unspecified
-    if clim==None:
+    if clim is None:
         clim=[]
         clim.append(np.min(z))
         clim.append(np.max(z))
