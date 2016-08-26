@@ -61,6 +61,8 @@ class SunPlotPy(wx.Frame, Spatial, Grid ):
     oldcollectiontype='cells'
 
     tindex=0 
+
+    _FillValue=999999
     
     def __init__(self):
         wx.Frame.__init__(self, None, -1, self.title)
@@ -460,7 +462,10 @@ class SunPlotPy(wx.Frame, Spatial, Grid ):
             # Initialise the class
             if dlg.GetFilterIndex() == 0 or dlg.GetFilterIndex() > 1: #SUNTANS
                 self.flash_status_message("Opening SUNTANS file: %s" % path)
-                Spatial.__init__(self,path)
+		try:
+		    Spatial.__init__(self, path, _FillValue=self._FillValue)
+		except:
+		    Spatial.__init__(self, path, _FillValue=-999999)
                 startvar='dv'
             if dlg.GetFilterIndex()==1: #UnTRIM
                 self.flash_status_message("Opening UnTRIMS file: %s" % path)
