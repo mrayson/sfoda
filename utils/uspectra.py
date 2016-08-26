@@ -50,10 +50,14 @@ class uspectra(object):
         
         self.__dict__.update(kwargs)
         
-        if type(self.t[0]) == datetime:
+        #if type(self.t[0]) == datetime:
+        if isinstance(self.t[0], datetime):
             # convert to seconds since the start
             self.t0 = getT0time(self.t)
             self.istime = True
+        elif isinstance(self.t[0], np.datetime64):
+            self.t0 = (self.t - self.t[0])/np.timedelta64(1,'s')
+            self.istime = True # unused
         else:
             # Convert to units since the start
             self.t0 = getT0(self.t)
@@ -85,7 +89,11 @@ class uspectra(object):
             self.N = len(self.t)    
             self.getWindow()
             
-            self.C, self.frq, wk2,phs = lspr(self.t0,self.y.copy()*self.w_n,ofac=2.0,verbose=self.verbose)
+            self.C, self.frq, wk2,phs = lspr(self.t0,\
+                self.y.copy()*self.w_n,\
+                ofac=2.0,\
+                verbose=self.verbose)
+
             self.frq *= 2.0*np.pi
             
             # Convert the power amplitude to spectral amp
@@ -263,6 +271,7 @@ class uspectra(object):
         amp = np.sort(np.ravel(amp))
         frq = self.frq[ind]
         return amp[-N:], frq[-N:]
+
     def bandAvg(self):
         """
         Band average the spectral coefficients
@@ -358,8 +367,6 @@ def lstsqfft(t,y,frq):
     return A+1j*B
 
 
-
-
 def getT0time(t):
     #print 'Convert the time to seconds since the start...'
     tsec = np.zeros((len(t)))
@@ -385,11 +392,13 @@ def phase_offset(frq,start,base):
         Compute a phase offset for a given fruequency
         """
         
-        if type(start)==datetime:
+        if isinstance(start, datetime):
             dx = start - base
             dx = dx.total_seconds()
+        elif isinstance(start, np.datetime64):
+            dx = (start - base)/np.timedelta64(1,'s')
         else:
-            dx = start -base
+            dx = start - base
         
         return np.mod(dx*np.array(frq),2*np.pi)
         
@@ -412,7 +421,8 @@ def getTideFreq(Fin=None):
 #                'M4':twopi/(6.21*3600.0)
 #                }
                 
-    tidedict = {'J1':                           15.5854433,
+    tidedict = {
+    'J1':                           15.5854433,
     'K1':                           15.0410686,
     'K2':                           30.0821373,
     'L2':                           29.5284789,
@@ -586,7 +596,14 @@ def getTideFreq(Fin=None):
     '2MNK8':                       116.4900752,
     '2(MS)N10':                    146.4079379,
     'MNUS2':                        27.4966873,
-    '2MK2':                         27.8860711}
+    '2MK2':                         27.8860711,
+    '60d':                          360/(60.*24.), # 6th annual harmonic
+    '72d':                          360/(72.*24.), # 5th annual harmonic
+    '90d':                          360/(90.*24.), # 4th annual harmonic
+    '120d':                         360/(120.*24.), # 3rd annual harmonic
+    '18y':                          360/(18.61*365.25*24), # 18.6 year tide
+    '4y':                           360/(4.4*365.25*24), # 4.4 year tide
+    }
     
     # Set default constituents    
     if Fin==None:

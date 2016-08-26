@@ -5,7 +5,6 @@ import os
 import sqlite3
 import numpy as np
 
-
 def dict2sql(dbfile, myDict, table):
     """
     Converts a dictionary to an sql database table

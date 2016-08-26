@@ -74,7 +74,7 @@ class Slice(Spatial):
         #a=self.data[t,:].squeeze()
         am = np.ma.array (z, mask=np.isnan(self.data))
         
-        if self.clim==None:
+        if self.clim is None:
             self.clim=[]
             self.clim.append(np.min(am))
             self.clim.append(np.max(am))
@@ -102,7 +102,7 @@ class Slice(Spatial):
         axcb = plt.colorbar(h1)
         
         
-        if titlestr==None:
+        if titlestr is None:
             title = plt.title(self.__genTitle())
         else:
             title = plt.title(titlestr)
@@ -124,7 +124,7 @@ class Slice(Spatial):
         am = np.ma.array (z, mask=np.isnan(z))
         
         # Find the colorbar limits if unspecified
-        if self.clim==None:
+        if self.clim is None:
             self.clim=[]
             self.clim.append(np.min(am))
             self.clim.append(np.max(am))
@@ -157,7 +157,7 @@ class Slice(Spatial):
             axcb = plt.colorbar(h1)
         
         
-        if titlestr==None:
+        if titlestr is None:
             plt.title(self.__genTitle())
         else:
             plt.title(titlestr)
@@ -198,7 +198,7 @@ class Slice(Spatial):
             
         am = np.ma.array (a, mask=np.isnan(a))
         
-        if self.clim==None:
+        if self.clim is None:
             self.clim=[]
             self.clim.append(np.min(am))
             self.clim.append(np.max(am))
@@ -399,7 +399,7 @@ class Slice(Spatial):
         
     def __genTitle(self,tt=None):
         
-        if tt ==None:
+        if tt  is None:
             if type(self.tstep)==int:
                 tt = self.tstep
             else:
@@ -490,7 +490,7 @@ class SliceEdge(Slice):
 
         nc = self.nc
 
-        if variable==None:
+        if variable is None:
             variable=self.variable
 
         if setunits:
@@ -640,7 +640,7 @@ class SliceEdge(Slice):
         Pcolor plot of the slice
         """
 
-        if self.clim==None:
+        if self.clim is None:
             self.clim=[]
             self.clim.append(np.min(z))
             self.clim.append(np.max(z))
@@ -670,7 +670,7 @@ class SliceEdge(Slice):
         """
         Calculate thee cross-sectional area of each face
         """
-        if eta==None:
+        if eta is None:
             eta = np.zeros((self.nslice,)) # Assumes the free-surface is zero
 
         dzf = self.getdzf(eta)
@@ -829,7 +829,7 @@ class SliceEdge(Slice):
             elif method==1:
                 newnode = min_dist_angle(nodelist[-1],cnodes,self.edgeline)
             #print 'Found new node: %d...'%newnode
-            if newnode==None:
+            if newnode is None:
                 break
             if ii>1 and abortedge:
                 if self.mark[self.grd.find_edge([newnode,nodelist[-1]])] not in [0,5]:
