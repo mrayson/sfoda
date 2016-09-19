@@ -19,8 +19,8 @@ def godin(phi):
     Godin type filter of a time series
     """
     dt = get_dt(phi)
-    window24 = 24.*3600//dt
-    window25 = 25.*3600//dt
+    window24 = int(24.*3600//dt)
+    window25 = int(25.*3600//dt)
     phi_f = pd.rolling_mean(phi,window24,center=True)
     phi_f = pd.rolling_mean(phi_f,window25,center=True)
     phi_f = pd.rolling_mean(phi_f,window24,center=True)
@@ -67,7 +67,7 @@ def rms(phi,cutoff_dt):
     rolling rms
     """
     dt = get_dt(phi)
-    window = cutoff_dt//dt
+    window = int(cutoff_dt//dt)
     phi_rms = pd.rolling_mean(phi**2,window,center=True)
 
     return np.sqrt(phi_rms)
@@ -86,6 +86,7 @@ def get_dt(phi):
 
 ############################
 # Extension classes
+# --NOT USED--
 ############################
 class MetaData(object):
 

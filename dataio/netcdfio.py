@@ -329,7 +329,7 @@ def netcdfObs2DB(ncfile, dbfile, nctype=1):
         # Find the variables that have coordinates
         allatts = nc.groups[grp].variables[vv].ncattrs()
 
-        if 'coordinates' in allatts:
+        if 'coordinates' in allatts or 'units' in allatts:
             # Use this variable
             lon = nc.groups[grp].variables['longitude'][:]
             lat = nc.groups[grp].variables['latitude'][:]
@@ -439,6 +439,9 @@ def netcdfObs2DB(ncfile, dbfile, nctype=1):
     for grp in nc.groups:
         # Loop through the variables
         for vv in nc.groups[grp].variables:
+
+	    if vv in ['time','longitude','latitude','elevation']:
+	    	continue
                
             write = True
 

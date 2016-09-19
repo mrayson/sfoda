@@ -1080,8 +1080,8 @@ def loadDBstation(dbfile, stationName, varname, timeinfo=None, \
     
     outvar = ['NetCDF_Filename','NetCDF_GroupID','StationName']
     tablename = 'observations'
-    #condition = 'Variable_Name = "%s" and StationID = "%s"' % (varname,stationID)
-    condition = 'Variable_Name = "%s" and StationName LIKE "%%%s%%"' % (varname,stationName)
+    condition = 'Variable_Name = "%s" and StationID = "%s"' % (varname,stationName)
+    #condition = 'Variable_Name = "%s" and StationName LIKE "%%%s%%"' % (varname,stationName)
     
     print 'Querying database...'
     print condition

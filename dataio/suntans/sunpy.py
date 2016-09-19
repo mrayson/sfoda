@@ -1270,7 +1270,10 @@ class Spatial(Grid):
         elif self.hasDim(variable,self.griddims['Nc']) and self.j is None:
             j=range(self.Nc)
         else:
-            j = self.j
+	    if isinstance(self.j, np.ndarray):
+	    	j = [self.j[0]]
+	    else:
+		j = [self.j]
 
 
         nc = self.nc
@@ -1303,7 +1306,7 @@ class Spatial(Grid):
             #print self.j
             self.data=nc.variables[variable][self.tstep,j]
         else: # 3D array
-            data=nc.variables[variable][self.tstep,klayer,j]
+            data = nc.variables[variable][self.tstep,klayer,j]
             if self.klayer[0]==-99:
                 self.data=data
             elif self.klayer[0]=='surface':
@@ -2650,7 +2653,8 @@ class TimeSeries(timeseries, Spatial):
     def update(self):
         
         # Update the j position
-        dist, self.j = self.find_nearest(self.XY)
+        dist, j = self.find_nearest(self.XY)
+	self.j = j
         
         # Find the klayer
         if isinstance(self.Z,type(np.array(()))):
@@ -2668,7 +2672,8 @@ class TimeSeries(timeseries, Spatial):
                 self.klayer=self.klayer
 
         # Loads in a time series object                     
-        timeseries.__init__(self,self.time[self.tstep],self.loadData())
+	data = self.loadDataRaw().reshape((self.Nt, len(self.klayer)))
+        timeseries.__init__(self, self.time[self.tstep], data)
         
     def contourf(self,clevs=20,**kwargs):
         """
