@@ -512,7 +512,7 @@ class timeseries(object):
             t0 = np.searchsorted(self.t, np.datetime64(time1))
             t1 = np.searchsorted(self.t, np.datetime64(time2))
 
-        t1 = min( self.Nt, t1+1)
+        #t1 = min( self.Nt, t1+1)
 
         return t0, t1
  
