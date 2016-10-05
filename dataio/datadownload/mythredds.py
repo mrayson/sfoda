@@ -501,7 +501,8 @@ class GetDAP(object):
         else:
             if not self.__dict__.has_key('_outnc'):
                 print '\tOpening %s'%outfile
-                self._outnc = Dataset(outfile,'w', data_model='NETCDF4_CLASSIC')
+                self._outnc = Dataset(outfile, mode='w', \
+                    format='NETCDF4_CLASSIC', data_model='NETCDF4_CLASSIC')
 
         ##
         if self.multifile:
@@ -653,14 +654,16 @@ class GetDAP(object):
         # Create the variable
         print varname
         V = self._nc.variables[varname]
-        tmp= self._outnc.createVariable(varname, V.dtype, V.dimensions)
+        tmp= self._outnc.createVariable(varname, V.dtype, V.dimensions,
+                zlib=True)
 
         # Copy the attributes
         for aa in V.ncattrs():
             tmp.setncattr(aa,getattr(V,aa))
 
     def create_ncfile(self,ncfile):
-        nc = Dataset(ncfile, 'w', format='NETCDF4_CLASSIC')
+        nc = Dataset(ncfile, mode='w',\
+                data_model='NETCDF4_CLASSIC', format='NETCDF4_CLASSIC')
         nc.Title = '%s model data'%(self.type)
         nc.url = '%s'%(self.ncurl)
         

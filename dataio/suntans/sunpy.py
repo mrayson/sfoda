@@ -37,7 +37,7 @@ import pdb
 
 # Constants
 GRAV=9.81
-FILLVALUE=-999999
+FILLVALUE=999999
 
 ###############################################################        
 # Dictionary with lookup table between object variable name and netcdf file
@@ -1576,11 +1576,11 @@ class Spatial(Grid):
  
     def contourf(self, clevs=20,z=None,xlims=None,ylims=None,filled=True,\
             k=0,cellind=None,vector_overlay=False,colorbar=True,\
-            scale=1e-4,subsample=10,titlestr=None,**kwargs):
+            scale=1e-4,subsample=10,titlestr=None,\
+            ax=None, fig=None, **kwargs):
         """
         Filled contour plot of  unstructured grid data
         """
-        
         #if not self.__dict__.has_key('data'):
         #    self.loadData()
             
@@ -1600,9 +1600,10 @@ class Spatial(Grid):
         # Build the triangulation object
         self.build_tri()
        
-        # Filled contour of amplitude
-        fig = plt.gcf()
-        ax = fig.gca()
+        if fig is None:
+            fig = plt.gcf()
+        if ax is None:
+            ax = fig.gca()
         
         # Calculate the nodal data and mask if necessary
         #zdata = self.cell2node(z)
@@ -1618,9 +1619,9 @@ class Spatial(Grid):
             V = clevs
             
         if filled:
-            camp = plt.tricontourf(self._tri, zdata, V, **kwargs)
+            camp = ax.tricontourf(self._tri, zdata, V, **kwargs)
         else:
-            camp = plt.tricontour(self._tri, zdata, V, **kwargs)
+            camp = ax.tricontour(self._tri, zdata, V, **kwargs)
                 
         ax.set_aspect('equal')
         ax.set_xlim(xlims)

@@ -60,7 +60,10 @@ class SunPlotPy(wx.Frame, Spatial, Grid ):
     collectiontype='cells'
     oldcollectiontype='cells'
 
+    # 
     tindex=0 
+    depthlevs = [0., 10., 100., 200., 300., 400., 500.,\
+        1000.,2000.,3000.,4000.,5000]
 
     _FillValue=999999
     
@@ -116,6 +119,10 @@ class SunPlotPy(wx.Frame, Spatial, Grid ):
 
         m_countcells = menu_tools.Append(-1, "&Count # grid cells", "Grid cell count")
         self.Bind(wx.EVT_MENU, self.on_count_cells, m_countcells)
+
+        m_overlaybathy = menu_tools.Append(-1, "&Overlay depth contours", "Depth overlay")
+        self.Bind(wx.EVT_MENU, self.on_overlay_bathy, m_overlaybathy)
+
         
         ###
         # Help Menu
@@ -711,6 +718,14 @@ class SunPlotPy(wx.Frame, Spatial, Grid ):
         dlg = wx.MessageDialog(self, msg, "No. cells", wx.OK)
         dlg.ShowModal()
         dlg.Destroy()
+
+    def on_overlay_bathy(self,event):
+        # Plot depth contours
+        print 'Plotting contours...'
+        self.contourf(z=self.dv, clevs=self.depthlevs,\
+            ax=self.axes,\
+            filled=False, colors='0.5', linewidths=0.5, zorder=1e6)
+        print 'Done'
    
     def on_plot_gridstat(self, event):
         """
