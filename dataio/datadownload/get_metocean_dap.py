@@ -124,10 +124,8 @@ class GFSFiles:
     baseurl =\
         'http://nomads.ncep.noaa.gov:9090/dods/gfs_0p50/gfs%s/gfs_0p50_00z'
 
-    def __init__self(**kwargs):
+    def __init__(self, trange, tdsdict, **kwargs):
         self.__dict__.update(**kwargs)
-
-    def __call__(self,trange):
 
         self.basetime = datetime(1900,1,1)
 
@@ -143,7 +141,20 @@ class GFSFiles:
             time.append(t1)
             print t1
 
-        return time,[self.generate_url(tt) for tt in time]
+        self.tdsdict = tdsdict
+
+        self.time = np.array(time)
+        self.ncfilelist = [self.generate_url(tt) for tt in time]
+
+        self.tdsdict['ncurl'] = self.ncfilelist
+
+        # Create an MFncdap object for time/variable lookup
+        self.MF = MFncdap(self.ncfilelist)
+
+        #return time,[self.generate_url(tt) for tt in time]
+
+    def __call__(self, time, var=None):
+        return self.MF(time)
 
     def generate_url(self,time):
         """
@@ -185,6 +196,13 @@ class GFSFiles:
                 hours = (time-self.basetime).total_seconds()/3600
                 url = _gen_url(yymmdd,yyyymm,hours)
                 return url
+
+    def get_filename_only(self, var=None):
+        """
+        Returns the first file only
+        """
+        return  self.ncfilelist[0]
+        
 
 class CFSR_1hr(object):
     """
@@ -459,14 +477,14 @@ def get_gfs_tds(xrange,yrange,zrange,trange,outfile):
     gfsdict = metoceandict['GFS']
 
     # Get the file names for the given time range from the class
-    gfs = GFSFiles()
-    time,files = gfs(trange)
+    gfs = GFSFiles(trange, gfsdict)
+    #time,files = gfs(trange)
 
     # Update the dictionary
-    gfsdict['ncurl']=files
+    #gfsdict['ncurl']=files
 
     # Create the thredds object
-    TDS = GetDAP(**gfsdict)
+    TDS = GetDAP(MF=gfs, **gfsdict)
     
     # Call the object
     TDS(xrange,yrange,trange,zrange=zrange,outfile=outfile)
