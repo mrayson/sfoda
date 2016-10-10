@@ -546,7 +546,8 @@ def Contour2Shp(C,outfile,projection='WGS84',zone=15,north=True):
     shapeData.Destroy()
     print 'Complete - shapefile written to:\n      %s'%outfile
  
-def Polygon2GIS(xynodes,shpfile,zone,CS='WGS84',north=True):
+def Polygon2GIS(xynodes, shpfile, zone, CS='WGS84', north=True,
+        data=None):
     """
     Convert a list of polygons (Nx2 arrays) to a GIS vector format: KML or SHP.
     
@@ -588,11 +589,13 @@ def Polygon2GIS(xynodes,shpfile,zone,CS='WGS84',north=True):
     # Create a layer
     layer = shapeData.CreateLayer('Grid', srs, osgeo.ogr.wkbPolygon)
     layerDefinition = layer.GetLayerDefn()    
+
+    # Create a data field
+    if data is not None:
+        layer.CreateField(ogr.FieldDefn('data', ogr.OFTReal))
     
     # Loop through the list of nodes to get the coordinates of each polygon
-    ctr=0
-    for xy in xynodes:
-        ctr+=1
+    for ii, xy in enumerate(xynodes):
         ring = osgeo.ogr.Geometry(osgeo.ogr.wkbLinearRing)
         
         # Add points individually to the polygon
@@ -603,12 +606,18 @@ def Polygon2GIS(xynodes,shpfile,zone,CS='WGS84',north=True):
         poly.AddGeometry(ring)
     
         # Update the feature with the polygon data
-        featureIndex = ctr
+        featureIndex = ii
         feature = osgeo.ogr.Feature(layerDefinition)
         feature.SetGeometry(poly)
         feature.SetFID(featureIndex)
+
+        # Update the data attribute (used to output scalar data)
+        if data is not None:
+            feature.SetField('data', data[ii])
+
         layer.CreateFeature(feature)
         feature.Destroy()
+
     # Close the shape file
     shapeData.Destroy()
     print 'Complete - file written to:\n      %s'%shpfile
