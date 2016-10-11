@@ -464,6 +464,7 @@ class GetDAP(object):
         dims = self._nc.variables[varname].dimensions
 
         ndims = len(dims)
+
         try:
             coordinates = self._nc.variables[varname].coordinates
 
@@ -489,6 +490,11 @@ class GetDAP(object):
         else:
             xcoord = xcoord0
             ycoord = ycoord0
+
+        # Another hack...
+        if xcoord=='X' or ycoord=='Y':
+            xcoord='Longitude'
+            ycoord='Latitude'
             
         return timecoord,xcoord,ycoord,zcoord
 
