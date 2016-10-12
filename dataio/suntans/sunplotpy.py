@@ -39,6 +39,14 @@ from soda.dataio.suntans.suntrack import PtmNC
 from datetime import datetime
 import numpy as np
 
+# Use cmocean colormaps (these are awesome!!)
+try:
+    from cmocean import cm
+    USECMOCEAN=True
+except:
+    print 'No cmocean'
+    USECMOCEAN=False
+
 import pdb
 
 class SunPlotPy(wx.Frame, Spatial, Grid ):
@@ -196,7 +204,15 @@ class SunPlotPy(wx.Frame, Spatial, Grid ):
             style=wx.ALIGN_RIGHT)
         self.show_edge_check.Bind(wx.EVT_CHECKBOX, self.on_show_edges)
 
-        cmaps = matplotlib.cm.datad.keys()
+        if USECMOCEAN:
+            cmaps=[]
+            for cmap in cm.cmapnames:
+                cmaps.append(cmap)
+                cmaps.append(cmap+'_r') # Add all reverse map options
+        else:
+            # Use matplotlib standard
+            cmaps = matplotlib.cm.datad.keys()
+
         cmaps.sort()
         self.colormap_list = wx.ComboBox(
             self.panel, 
@@ -590,7 +606,10 @@ class SunPlotPy(wx.Frame, Spatial, Grid ):
 
     def on_select_cmap(self,event):
         self.cmap=event.GetString()
-        self.collection.set_cmap(self.cmap)
+        if USECMOCEAN:
+            self.collection.set_cmap(getattr(cm,self.cmap))
+        else:
+            self.collection.set_cmap(self.cmap)
 
         # Update the figure
         self.update_figure()

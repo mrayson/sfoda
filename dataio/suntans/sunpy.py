@@ -279,9 +279,10 @@ class Grid(object):
         else:
             self.cellmask=self.cells.mask
 
-        if type(self.DEF) == type(np.ma.MaskedArray()):
-            if np.all(self.DEF.mask):
-                self.calc_def()
+        #if type(self.DEF) == type(np.ma.MaskedArray()):
+        #    if np.all(self.DEF.mask):
+        #        self.calc_def()
+        self.calc_def()
        
     def maskgrid(self):
         """
@@ -1203,9 +1204,9 @@ class Spatial(Grid):
             self.long_name = 'Vertical vorticity'
             self.units = 's-1'
             return
-        elif variable=='strain':
-            self.data = self.strain()
-            self.long_name = 'Horizontal strain'
+        elif variable=='div_H':
+            self.data = self.calc_divergence()
+            self.long_name = 'Horizontal divergence'
             self.units = 's-1'
             return
         elif variable=='PEanom':
@@ -1428,6 +1429,7 @@ class Spatial(Grid):
         if 'vc' in vname and 'uc' in vname:
             vname.append('speed')
             vname.append('vorticity')
+            vname.append('div_H') # Horizontal strain
             vname.append('KE')
         if 'rho' in vname:
             vname.append('PE')
@@ -2006,6 +2008,7 @@ class Spatial(Grid):
         derivedvars  =[\
                       'speed',\
                       'vorticity',\
+                      'div_H',\
                       'KE',\
                       'PE',\
                       'buoyancy',\
@@ -2024,9 +2027,9 @@ class Spatial(Grid):
         #except:
         #    return False
      
-    def strain(self):
+    def calc_divergence(self):
         """
-        Calculate the horizontal component of strain (e_12)
+        Calculate the horizontal divergence
         """
         
         u,v,w = self.getVector()
@@ -2037,7 +2040,8 @@ class Spatial(Grid):
             du_dx,du_dy = self.gradH(u,k=self.klayer[0])
             dv_dx,dv_dy = self.gradH(v,k=self.klayer[0])
             
-            data = du_dy + dv_dx
+            #data = du_dy + dv_dx
+            data = du_dx + dv_dy
             
         else: # 3D
             data = np.zeros(sz)
