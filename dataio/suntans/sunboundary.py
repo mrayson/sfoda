@@ -33,6 +33,7 @@ from datetime import datetime, timedelta
 import os
 
 from soda.dataio.datadownload.get_metocean_dap import get_metocean_local
+from soda.dataio.roms import romsio
 from soda.utils.maptools import readShpPoly,ll2utm,utm2ll
 from soda.utils.interpXYZ import Interp4D
 from soda.utils.inpolygon import inpolygon
@@ -555,21 +556,35 @@ class Boundary(object):
         Interpolates ROMS data onto the type-3 boundary cells
         
         """
-        import romsio
+        # Include type 3 cells 
+	if self.N3>0:
+	    roms = romsio.roms_interp(romsfile,self.xv,self.yv,-self.z,self.time,**kwargs)
+	    
+	    h, T, S, uc, vc = roms.interp(setUV=setUV,seth=seth)
 
-        # Include type 3 cells only
-        roms = romsio.roms_interp(romsfile,self.xv,self.yv,-self.z,self.time,**kwargs)
-        
-        h, T, S, uc, vc = roms.interp(setUV=setUV,seth=seth)
+	    self.T+=T
+	    self.S+=S
+	    
+	    if seth:
+		self.h+=h
+	    if setUV:
+		self.uc+=uc
+		self.vc+=vc
 
-        self.T+=T
-        self.S+=S
-        
-        if seth:
-            self.h+=h
-        if setUV:
-            self.uc+=uc
-            self.vc+=vc
+        # Include type 2 cells 
+	if self.N2 > 0:
+	    roms = romsio.roms_interp(romsfile,self.xe,self.ye,-self.z,self.time,**kwargs)
+	    
+	    h, T, S, uc, vc = roms.interp(setUV=setUV,seth=False)
+
+	    self.boundary_T+=T
+	    self.boundary_S+=S
+	    
+	    if setUV:
+		self.boundary_u + =uc
+		self.boundary_v += vc
+
+
 
     def oceanmodel2bdy(self,ncfile,\
         convert2utm=True,setUV=True,seth=True, zmax=6000., name='HYCOM'):
@@ -812,8 +827,6 @@ class InitialCond(Grid):
         """
         Interpolates ROMS data onto the SUNTANS grid
         """
-        import romsio
-        
         romsi = romsio.roms_interp(romsfile,self.xv.reshape((self.Nc,1)),\
             self.yv.reshape((self.Nc,1)),-self.z_r,[self.time,self.time],**kwargs)
 
