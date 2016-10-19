@@ -282,7 +282,10 @@ class Grid(object):
         #if type(self.DEF) == type(np.ma.MaskedArray()):
         #    if np.all(self.DEF.mask):
         #        self.calc_def()
-        self.calc_def()
+	try:
+	    self.calc_def()
+	except:
+ 	    print 'No def array...'
        
     def maskgrid(self):
         """

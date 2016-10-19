@@ -581,7 +581,7 @@ class Boundary(object):
 	    self.boundary_S+=S
 	    
 	    if setUV:
-		self.boundary_u + =uc
+		self.boundary_u += uc
 		self.boundary_v += vc
 
 
@@ -828,7 +828,7 @@ class InitialCond(Grid):
         Interpolates ROMS data onto the SUNTANS grid
         """
         romsi = romsio.roms_interp(romsfile,self.xv.reshape((self.Nc,1)),\
-            self.yv.reshape((self.Nc,1)),-self.z_r,[self.time,self.time],**kwargs)
+            self.yv.reshape((self.Nc,1)),-self.z_r,[self.time],**kwargs)
 
         self.h, self.T, self.S, self.uc, self.vc = romsi.interp()
         
