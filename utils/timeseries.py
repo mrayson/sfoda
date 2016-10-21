@@ -230,21 +230,23 @@ class timeseries(object):
             #dt = (tnew[1]-tnew[0]).total_seconds()
             
         
-        if method=='nearest':
+        if method=='nearestmask':
             # Nearest neighbour doesn't use interp1d to preserve mask
             self._evenly_dist_data(dt)
             tnew, output = self.subset(tnew[0],tnew[-1])
 
         else:
 
-            t = othertime.SecondsSince(tnew,basetime = self.basetime)
+            #t = othertime.SecondsSince(tnew,basetime = self.basetime)
             # Don't include nan points
             if self.ndim > 1:
                 # Interpolate multidimensional arrays without a mask
-                F = interpolate.interp1d(self.tsec,self.y,kind=method,axis=axis,\
+                F = interpolate.interp1d(self.tsec, self.y,\
+		    kind=method,axis=axis,\
                     bounds_error=False,fill_value=0)
 
-                output = F(t)
+                output = F(tnew)
+
             else:
                 #mask = np.isnan(self.y) == False
                 mask = ~self.y.mask
@@ -252,11 +254,12 @@ class timeseries(object):
                     output = np.zeros(t.shape)
                     output[:] = np.nan
                 else:
-                    F = interpolate.interp1d(self.tsec[mask],self.y[mask],kind=method,axis=axis,\
-                        bounds_error=False,fill_value=0)
+                    F = interpolate.interp1d(\
+		    	self.tsec[mask], self.y[mask],\
+			kind=method, axis=axis,\
+                        bounds_error=False, fill_value=0)
 
-                    output = F(t)
-            
+                    output = F(tnew)
             
         return tnew, output
         
@@ -484,7 +487,7 @@ class timeseries(object):
         """
         Plot
         
-        Rotates date lables
+        Rotates date labels
         """
         
         h1=plt.plot(self.t,self.y,**kwargs)
@@ -513,6 +516,12 @@ class timeseries(object):
             t1 = np.searchsorted(self.t, np.datetime64(time2))
 
         #t1 = min( self.Nt, t1+1)
+	t1+=1
+	if t1 > self.Nt:
+	    t1=self.Nt
+	#t0-=1
+	#if t0<0:
+	#    t0 = 0
 
         return t0, t1
  
