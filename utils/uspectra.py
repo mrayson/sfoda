@@ -65,13 +65,13 @@ class uspectra(object):
         
         if self.method in ['lsq','lsqfast']:
             # Least-squares method - need to find the frequencies
-            if self.nfft == None and self.frq == None:
+            if self.nfft is None and self.frq is None:
                 # Work out the number of frequency bands and frequencies
                 self.getTs()
                 self.getk()            
                 self.getNFFT()
                 self.getfrq()
-            elif self.frq == None:
+            elif self.frq is None:
                 self.getTs()  
                 self.getfrq()
                 
@@ -127,7 +127,7 @@ class uspectra(object):
         
     def getWindow(self):
         """ Gets the window function w_n"""
-        if self.window == None:
+        if self.window is None:
             self.w_n = np.ones((self.N,))
         elif self.window == 'hanning':
             n =  np.floor(self.N * self.t0/self.t0[-1])
@@ -221,13 +221,13 @@ class uspectra(object):
         
         # Output needs to be scaled by the inverse of the window weights
         # The weights need to be interpolated onto the new x variable
-        if not self.window==None:
+        if not self.window is None:
             f = interp1d(self.t0,self.w_n,kind='linear')
             w_n = 1.0/f(t)
         else:
             w_n = 1.0
             
-        if nbands == None:
+        if nbands is None:
             ii=-1
             for f in self.frq:
                 ii+=1
@@ -292,7 +292,7 @@ class uspectra(object):
         amp = np.abs(self.C)
         phs = np.angle(self.C)+np.pi # [0, 2*pi]
         
-        if not phsbase == None:
+        if not phsbase is None:
             phs = np.mod(phs+phase_offset(self.frq,self.t[0],phsbase),2*np.pi)
         
         return amp, phs
@@ -606,7 +606,7 @@ def getTideFreq(Fin=None):
     }
     
     # Set default constituents    
-    if Fin==None:
+    if Fin is None:
         #Fin=tidedict.keys()
         Fin = ['M2','S2','N2','K2','K1','O1','P1','Q1','M4']
     elif Fin=='all':

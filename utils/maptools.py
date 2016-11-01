@@ -528,19 +528,30 @@ def Contour2Shp(C,outfile,projection='WGS84',zone=15,north=True):
         for xyObj in coords:
             # Add points individually to the line
             ii=-1
-            for xy, codes in zip(xyObj.vertices, xyObj.codes):
-                ii+=1
-                if ii>0:
-                    # Code = 1 means lift pen in matplotlib
-                    # We need to create a new line in this case or else shapefile
-                    # will just connect them all together
-                    if codes > 1:
-                        line.AddPoint_2D(xy[0],xy[1])
-                    else:
-                        # Create save the current feature
-                        ctr+=1
-                        create_feature(line, lev, ctr)
-                        line = osgeo.ogr.Geometry(osgeo.ogr.wkbLineString)
+            if xyObj.codes is None:
+                # One line
+                for xy in xyObj.vertices:
+                    line.AddPoint_2D(xy[0],xy[1])
+
+                # Create save the current feature
+                ctr+=1
+                create_feature(line, lev, ctr)
+                line = osgeo.ogr.Geometry(osgeo.ogr.wkbLineString)
+
+            else:
+                for xy, codes in zip(xyObj.vertices, xyObj.codes):
+                    ii+=1
+                    if ii>0:
+                        # Code = 1 means lift pen in matplotlib
+                        # We need to create a new line in this case or else shapefile
+                        # will just connect them all together
+                        if codes > 1:
+                            line.AddPoint_2D(xy[0],xy[1])
+                        else:
+                            # Create save the current feature
+                            ctr+=1
+                            create_feature(line, lev, ctr)
+                            line = osgeo.ogr.Geometry(osgeo.ogr.wkbLineString)
     
     # Close the shape file
     shapeData.Destroy()
