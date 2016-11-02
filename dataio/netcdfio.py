@@ -423,6 +423,33 @@ def netcdfObs2DB(ncfile, dbfile, nctype=1):
 
         return lon, lat, long_name, StationID, StationName, ele, dates
  
+    def get_meta_type4(nc, grp ,vv):
+        """
+        Processed IMOS data
+
+        """
+
+        if vv in ['TIME','LONGITUDE','LATITUDE','NOMINAL_DEPTH']:
+            return None, None, None, None, None, None, None
+
+        # Use this variable
+        lon = nc.groups[grp].variables['LONGITUDE'][:]
+        lat = nc.groups[grp].variables['LATITUDE'][:]
+        long_name = nc.groups[grp].variables[vv].long_name
+
+        StationID=nc.groups[grp].site_code 
+        StationName = nc.groups[grp].stationname
+
+        times = nc.groups[grp].variables['TIME']
+        dates = num2date([times[0],times[-1]],units=times.units)
+            
+        try:
+            ele = nc.groups[grp].variables['NOMINAL_DEPTH'][:]
+        except:
+            ele = nc.groups[grp].instrument_nominal_depth
+            
+        return lon, lat, long_name, StationID, StationName, ele, dates
+ 
  
              
     # Write metadata to the sql database
@@ -460,6 +487,10 @@ def netcdfObs2DB(ncfile, dbfile, nctype=1):
                 lon, lat, long_name, StationID, StationName, ele, dates = \
                     get_meta_type3(nc, grp ,vv)
 
+            elif nctype == 4:
+                print grp, vv
+                lon, lat, long_name, StationID, StationName, ele, dates = \
+                    get_meta_type4(nc, grp ,vv)
 
             if lon is None:
                 write = False
