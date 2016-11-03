@@ -1028,11 +1028,11 @@ def harmonic_fit(t,X,frq,mask=None,axis=0,phsbase=None):
     Amp, Phs= phsamp(C)
 
     # Reference the phase to some time
-    if not phsbase == None:
+    if not phsbase is None:
         base = othertime.SecondsSince(phsbase)
 	phsoff = phase_offset(frq,t[0],base)
 	phsoff = np.repeat(phsoff.reshape((phsoff.shape[0],1)),lenX,axis=1)
-	phs = np.mod(Phs+phsoff,2*np.pi)
+	Phs = np.mod(Phs+phsoff,2*np.pi)
     
     # Non-vectorized method (~20x slower)
 #    Amp = np.zeros((Nfrq,lenX))

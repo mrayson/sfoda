@@ -43,7 +43,7 @@ class suntides(Spatial):
         
         Spatial.__init__(self,ncfile,**kwargs)
         
-        if self.hasVar('eta_amp'):
+        if self.hasVar('uc_amp'): # This check needs to be made more robust...
             print 'Loading existing harmonic data...'
             self._loadVars()
             
@@ -95,7 +95,11 @@ class suntides(Spatial):
                 else:
                     data=self.loadData()
                 print 'Performing harmonic fit on variable, %s...'%(self.variable)
-                self.Amp[vv], self.Phs[vv], self.Mean[vv] = harmonic_fit(time,data,self.frq,phsbase=self.reftime)
+                self.Amp[vv], self.Phs[vv], self.Mean[vv] =\
+                        harmonic_fit(time, data, self.frq, \
+                        phsbase=self.reftime,\
+                        #phsbase=None,\
+                        )
                 
             elif ndim == 3:
                 for k in range(self.Nkmax):
@@ -103,7 +107,11 @@ class suntides(Spatial):
                     print 'Loading data...'
                     data = self.loadData()
                     print 'Performing harmonic fit on variable, %s, layer = %d of %d...'%(self.variable,self.klayer[0],self.Nkmax)
-                    self.Amp[vv][:,k,:], self.Phs[vv][:,k,:], self.Mean[vv][k,:] = harmonic_fit(time,data,self.frq,phsbase=self.reftime)
+                    self.Amp[vv][:,k,:], self.Phs[vv][:,k,:], self.Mean[vv][k,:] =\
+                        harmonic_fit(time, data, self.frq, \
+                        phsbase=self.reftime,\
+                        #phsbase=None,
+                        )
         
     def _prepDict(self,varnames):
         """
@@ -433,8 +441,8 @@ class suntides(Spatial):
             vP = self.Phs['vc'][iicon,k,:]
             
         # Calculate the phse gradient
-        phiu_x,phiu_y = self.gradH(uP,k=k)
-        phiv_x,phiv_y = self.gradH(vP,k=k)
+        phiu_x,phiu_y = self.gradH(np.mod(uP,2*np.pi),k=k)
+        phiv_x,phiv_y = self.gradH(np.mod(vP,2*np.pi),k=k)
         
         cff = 1.0/(2.0*self.frq[iicon])
         us = phiu_x*uA**2*cff
