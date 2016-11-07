@@ -198,6 +198,40 @@ def tide_pred_old(modfile,lon,lat,time,z=None,conlist=None):
     return h.reshape(szo), u.reshape(szo), v.reshape(szo)
     
     
+
+def extract_phsamp(tidemod, lon, lat, basetime, conlist):
+    """
+    Extract the phase and amplitude
+    """
+    u_re, u_im, v_re, v_im, h_re, h_im, omega, conlist =\
+        extract_HC(tidemod, X, Y, conlist = conlist)
+
+    t1992 = othertime.SecondsSince(basetime,basetime=datetime(1992,1,1))/86400.0
+    
+    pu,pf,v0u = nodal(t1992+48622.0,conlist)
+
+    u_amp = np.abs(u_re + 1j*u_im)
+    v_amp = np.abs(v_re + 1j*v_im)
+    h_amp = np.abs(h_re + 1j*h_im)
+ 
+    u_phs = np.angle(u_re + 1j*u_im)
+    v_phs = np.angle(v_re + 1j*v_im)
+    h_phs = np.angle(h_re + 1j*h_im)
+
+    # Apply the corrections
+    for ii, cc in enumerate(omega):
+        u_amp *= pf[ii]
+        v_amp *= pf[ii]
+        h_amp *= pf[ii]
+
+        u_phs += (v0u[ii] + pu[ii])
+        v_phs += (v0u[ii] + pu[ii])
+        h_phs += (v0u[ii] + pu[ii])
+
+    return u_amp, u_phs,\
+        v_amp, v_phs,\
+        h_amp, h_phs, omega
+
 def extract_HC(modfile,lon,lat,z=None,conlist=None):
     """
     Extract harmonic constituents from OTIS binary output and interpolate onto points in lon,lat
@@ -607,11 +641,11 @@ def nodal(time,con):
     rad = np.pi/180.0
     
     s,h,p,omega=astrol(time)
-#    
-#    omega = 
-   #
-   #     determine nodal corrections f and u 
-   #     -----------------------------------
+    #    
+    #    omega = 
+    #
+    #     determine nodal corrections f and u 
+    #     -----------------------------------
     sinn = np.sin(omega*rad);
     cosn = np.cos(omega*rad);
     sin2n = np.sin(2*omega*rad);
@@ -635,9 +669,10 @@ def nodal(time,con):
             
     # Prepare the output data
     ncon = len(con)
-    pu = np.zeros((ncon,1))
-    pf = np.ones((ncon,1))
-    v0u = np.zeros((ncon,1))
+    nt = omega.shape[0]
+    pu = np.zeros((ncon,nt))
+    pf = np.ones((ncon,nt))
+    v0u = np.zeros((ncon,nt))
     for ii,vv in enumerate(con):
         if ndict.has_key(vv):
             pu[ii,:] = ndict[vv]['u']*rad
