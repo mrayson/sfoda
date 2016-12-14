@@ -11,6 +11,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import mlab
 from matplotlib.lines import Line2D
+import matplotlib.dates as mdates
 from scipy import signal, interpolate
 from datetime import datetime, timedelta
 import xray
@@ -52,15 +53,18 @@ class ModVsObs(object):
 
 
         # Set the range inclusive of both observation and model result
-        time0 = max(tmod[0],tobs[0])
-        time1 = min(tmod[-1],tobs[-1])
+        if isinstance(tmod,list):
+            time0 = max(tmod[0],tobs[0])
+            time1 = min(tmod[-1],tobs[-1])
+        elif isinstance(tmod[0], np.datetime64):
+            time0 = max(tmod[0],tobs[0])
+            time1 = min(tmod[-1],tobs[-1])
 
         if time1 < time0:
             print 'Error - the two datasets have no overlapping period.'
             return None
         
         # Clip both the model and observation to this daterange
-
         t0m = othertime.findNearest(time0,tmod)
         t1m = othertime.findNearest(time1,tmod)
         TSmod = timeseries(tmod[t0m:t1m],ymod[...,t0m:t1m], **kwargs)
@@ -75,12 +79,14 @@ class ModVsObs(object):
 
         # Interpolate the modeled value onto the observation time step
         if interpmodel:
-            tmod_i, ymod_i = TSmod.interp(tobs[t0:t1],axis=-1)
-            self.TSmod = timeseries(tmod_i,ymod_i, **kwargs)
+            tmod_i, ymod_i = TSmod.interp(tobs[t0:t1],axis=-1,method='nearestmask')
+            #self.TSmod = timeseries(tmod_i,ymod_i, **kwargs)
+            self.TSmod = timeseries(tobs[t0:t1], ymod_i, **kwargs)
             self.TSobs = TSobs
         else:
-            tobs_i, yobs_i = TSobs.interp(tmod[t0m:t1m],axis=-1)
-            self.TSobs = timeseries(tobs_i,yobs_i, **kwargs)
+            tobs_i, yobs_i = TSobs.interp(tmod[t0m:t1m],axis=-1,method='nearestmask')
+            #self.TSobs = timeseries(tobs_i,yobs_i, **kwargs)
+            self.TSobs = timeseries(tmod[t0m:t1m], yobs_i, **kwargs)
             self.TSmod = TSmod
 
 
@@ -130,7 +136,9 @@ class ModVsObs(object):
 
 
     def plot(self, colormod='r', colorobs='b', ylims=None, \
-            legend=True, loc='lower right',**kwargs):
+            legend=True, loc='lower right',
+            dateformat=None,\
+            **kwargs):
         """
         Time-series plots of both data sets with labels
         """
@@ -144,6 +152,9 @@ class ModVsObs(object):
             ylims = self.ylims
 
         ax.set_ylim(ylims)
+
+        if dateformat is not None:
+            ax.format_xdata = mdates.DateFormatter(dateformat)
 
         plt.ylabel(r'%s [$%s$]'%(self.long_name,self.units)) # Latex formatting
 

@@ -82,7 +82,7 @@ class timeseries(object):
         """
         Power spectral density
         
-        nbandavg = Number of fft bins to average
+        nbandavg = Number of fft bnns to average
         scale = scale factor (for plotting only)
         """
         

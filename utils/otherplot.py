@@ -123,9 +123,9 @@ def axcolorbar(cbobj,pos=[0.7, 0.8, 0.2, 0.04],ax=None,fig=None,orientation='hor
 	Derived from this post:
 		http://stackoverflow.com/questions/22413211/cant-fix-position-of-colorbar-in-image-with-multiple-subplots
 	"""
-	if fig == None:
+	if fig is None:
 		fig=plt.gcf()
-	if ax == None:
+	if ax is None:
 		ax=plt.gca()
 		
 	fig.tight_layout()  # You call fig.tight_layout BEFORE creating the colorbar
