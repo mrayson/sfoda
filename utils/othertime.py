@@ -104,6 +104,12 @@ def datenum2datetime(timein):
         timeout.append(tday+timedelta(days=hms))
         
     return timeout
+
+def datetime64todatetime(t):
+    """
+    Convert a vector of datetime64 to datetime objects
+    """
+    return np.array([datetime.utcfromtimestamp(ii.astype(int)*1e-9) for ii in t])
     
 def YearDay(timein):
     """

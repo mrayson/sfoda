@@ -19,6 +19,7 @@ import operator
 
 
 from soda.utils import othertime
+from soda.utils.otherplot import stackplot
 from soda.utils.timeseries import timeseries, rms
 
 import pdb
@@ -146,7 +147,7 @@ class ModVsObs(object):
 
         h1 = self.TSmod.plot(color=colormod,**kwargs)
 
-        h2 = plt.plot(self.TSobs.t,self.TSobs.y,color=colorobs,**kwargs)
+        h2 = plt.plot(self.TSobs.t, self.TSobs.y.T, color=colorobs,**kwargs)
 
         if ylims is None:
             ylims = self.ylims
@@ -270,6 +271,7 @@ class ModVsObs(object):
         Calculates statistics including:
             moments, RMS, CC, skill, ...
         """
+        #idxobs = ~np.isnan(self.TSobs.y)
         self.meanObs = self.TSobs.y.mean(axis=-1)
         self.meanMod = self.TSmod.y.mean(axis=-1)
         self.stdObs = self.TSobs.y.std(axis=-1)
