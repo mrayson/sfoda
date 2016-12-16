@@ -37,27 +37,36 @@ def TimeVector(starttime,endtime,dt,istimestr=True,timeformat='%Y%m%d.%H%M%S'):
     return np.asarray(time)
     
     
-def SecondsSince(timein,basetime = datetime(1990,1,1)):
+def SecondsSince(timein, basetime = datetime(1990,1,1)):
     """
     Converts a list or array of datetime object into an array of seconds since "basetime"
     
     Useful for interpolation and storing in netcdf format
     """
-    timeout=[]
-    try:
-        timein = timein.tolist()
-    except:
-        timein = timein
-    
-    try:
-        for t in timein:
-            dt = t - basetime
-            timeout.append(dt.total_seconds())
-    except:
-        dt = timein - basetime
-        timeout.append(dt.total_seconds()) 
+    # Convert the time to seconds
+    if isinstance(timein, np.datetime64) or isinstance(timein, np.ndarray):
+        time0 = np.datetime64(basetime)
+        tsec = ((timein - time0)*1e-9).astype(np.float64)
+
+        return tsec
+
+    else: # datetime, etc
+
+        timeout=[]
+        try:
+            timein = timein.tolist()
+        except:
+            timein = timein
         
-    return np.asarray(timeout)
+        try:
+            for t in timein:
+                dt = t - basetime
+                timeout.append(dt.total_seconds())
+        except:
+            dt = timein - basetime
+            timeout.append(dt.total_seconds()) 
+        
+        return np.asarray(timeout)
     
 def MinutesSince(timein,basetime = datetime(1970,1,1)):
     """
@@ -95,6 +104,12 @@ def datenum2datetime(timein):
         timeout.append(tday+timedelta(days=hms))
         
     return timeout
+
+def datetime64todatetime(t):
+    """
+    Convert a vector of datetime64 to datetime objects
+    """
+    return np.array([datetime.utcfromtimestamp(ii.astype(int)*1e-9) for ii in t])
     
 def YearDay(timein):
     """
@@ -149,7 +164,10 @@ def findNearest(t,timevec):
     #idx = np.argwhere(tdist == tdist.min())
     
     #return int(idx[0])
-    return np.searchsorted(tvec,tnow)[0]
+    try:
+        return np.searchsorted(tvec,tnow)[0]
+    except:
+        return np.searchsorted(tvec,tnow)
     
 def findGreater(t,timevec):
     """

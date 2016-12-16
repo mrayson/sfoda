@@ -81,7 +81,7 @@ class Plot(HybridGrid):
     
         return fig, ax, collection, axcb
 
-    def plotedgedata(self, z, xlims=None,ylims=None,**kwargs):
+    def plotedgedata(self, z, xlims=None,ylims=None, colorbar=True, **kwargs):
         """
           Plot the unstructured grid edge data
         """
@@ -117,7 +117,9 @@ class Plot(HybridGrid):
         ax.set_xlim(xlims)
         ax.set_ylim(ylims)
 
-        axcb = fig.colorbar(collection)
+        axcb=None
+        if colorbar:
+            axcb = fig.colorbar(collection)
         
         return fig, ax, collection, axcb
 
