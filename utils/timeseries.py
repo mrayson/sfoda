@@ -245,7 +245,7 @@ class timeseries(object):
 		    kind=method,axis=axis,\
                     bounds_error=False,fill_value=0)
 
-                output = F(tnew)
+                output = F(tsec)
 
             else:
                 #mask = np.isnan(self.y) == False
@@ -254,12 +254,13 @@ class timeseries(object):
                     output = np.zeros(t.shape)
                     output[:] = np.nan
                 else:
+
                     F = interpolate.interp1d(\
 		    	self.tsec[mask], self.y[mask],\
 			kind=method, axis=axis,\
                         bounds_error=False, fill_value=0)
 
-                    output = F(tnew)
+                    output = F(tsec)
             
         return tnew, output
         
@@ -517,8 +518,8 @@ class timeseries(object):
 
         #t1 = min( self.Nt, t1+1)
 	t1+=1
-	if t1 > self.Nt:
-	    t1=self.Nt
+	if t1 > self.t.shape[0]:
+	    t1=self.t.shape[0]
 	#t0-=1
 	#if t0<0:
 	#    t0 = 0

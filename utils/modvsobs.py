@@ -73,6 +73,10 @@ class ModVsObs(object):
         #tobs_i, yobs_i = TSobs.interp(tmod[t0:t1],axis=0)
         #self.TSobs = timeseries(tobs_i, yobs_i)
 
+	## Don't interpolate if datasets are the same
+	#if np.all(tobs==tmod):
+	#   self.TSobs = TSobs
+	#   self.TSmod = TSmod
         # Interpolate the modeled value onto the observation time step
         if interpmodel:
             tmod_i, ymod_i = TSmod.interp(tobs[t0:t1],axis=-1)
@@ -578,9 +582,12 @@ def load_netcdf(ncfile, group):
 
     # Convert to a ModVsObs object
     # Put the data into a ModVsObs object (model first then observed)
-    return ModVsObs(TSmod.index.to_pydatetime(),\
+    return ModVsObs(\
+    	    TSmod.index.to_pydatetime(),\
+	    #TSmod.index.values,\
             TSmod.values,\
             TSobs.index.to_pydatetime(),\
+	    #TSobs.index.values,\
             TSobs.values,\
             varname=varname,\
             long_name=attrs['long_name'], \
