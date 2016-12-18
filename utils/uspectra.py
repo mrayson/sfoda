@@ -59,6 +59,7 @@ class uspectra(object):
             self.t0 = (self.t - self.t[0])/np.timedelta64(1,'s')
             self.istime = True # unused
         else:
+
             # Convert to units since the start
             self.t0 = getT0(self.t)
             self.istime = False
@@ -289,11 +290,14 @@ class uspectra(object):
         phsbase can be datetime object or real
         """
         
-        amp = np.abs(self.C)
-        phs = np.angle(self.C)+np.pi # [0, 2*pi]
+        #amp = np.abs(self.C)
+        #phs = np.angle(self.C)#+np.pi # [0, 2*pi]
+	phs, amp = complex2phsamp(self.C)
         
         if not phsbase is None:
-            phs = np.mod(phs+phase_offset(self.frq,self.t[0],phsbase),2*np.pi)
+            phs = np.mod(phs+\
+		phase_offset(self.frq,self.t[0],phsbase),\
+		2*np.pi)
         
         return amp, phs
     
@@ -401,6 +405,39 @@ def phase_offset(frq,start,base):
             dx = start - base
         
         return np.mod(dx*np.array(frq),2*np.pi)
+
+def calc_fitted_complex(C, frq, t):
+    """
+    Calculate the fit time series from complex amp/phs
+    """
+    nt = t.shape
+    x = np.zeros(nt)
+    for ii, f in enumerate(frq):
+        x += np.real( C[ii]*np.exp(-1j*f*t) )
+    return x
+
+def calc_fitted_phsamp(amp, phs, frq, t):
+    """
+    Calculate the fit time series from amp/phs
+    """
+    nt = t.shape
+    x = np.zeros(nt)
+    for ii, f in enumerate(frq):
+        x += amp[ii]*np.cos(f*t - phs[ii])
+    return x
+
+def phsamp2complex(phs,amp):
+    """
+    Convert polar phase-amplitude to complex form
+    """
+    return amp*np.cos(phs) + 1j*amp*np.sin(phs)
+
+def complex2phsamp(C):
+    """
+    Convert complex amplitude to phase and amplitude
+    """
+    return np.angle(C), np.abs(C)
+ 
         
 def getTideFreq(Fin=None):
     """

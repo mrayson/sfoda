@@ -347,16 +347,26 @@ def readShpPoly(shpfile,FIELDNAME = None):
     shp=None
     return XY,field
 
-def maskShpPoly(X,Y,shpfile,FIELDNAME = None):
+def maskShpPoly(X,Y,shpfile,FIELDNAME = None, polyidx=0):
     """
     Return a mask array of size(X/Y) from polygon in shapefile
+    
+    Inputs:
+    ---
+    X,Y - arrays of values to find mask
+    shpfile - polygon shapefile
+    polyidx - polygon index in shapefile [default:0]
+
+    Returns:
+    ---
+    Boolean array of shape X/Y [True inside polygon]
     """
     # Read the polygon from the shape file
     XY,edge_id = readShpPoly(shpfile,FIELDNAME=FIELDNAME)
 
-    mask = maskPoly(X,Y,XY[0])
+    mask = maskPoly(X,Y,XY[polyidx])
     
-    return mask,XY[0]
+    return mask,XY[polyidx]
 
 def maskPoly(X,Y,XYpoly):
     """
@@ -370,9 +380,9 @@ def maskPoly(X,Y,XYpoly):
     #ind = nxutils.points_inside_poly(np.vstack((X,Y)).T,XYpoly)
     ind = inpolygon(np.vstack((X,Y)).T,XYpoly)
     
-    mask = np.zeros(sz,dtype=np.int)
+    mask = np.zeros(sz,dtype=np.bool)
     ind = ind.reshape(sz)
-    mask[ind]=1
+    mask[ind]=True
 
     return mask
     
