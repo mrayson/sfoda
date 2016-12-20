@@ -78,7 +78,7 @@ class interpXYZ(object):
             self._linear()
             
         elif self.method=='curvmin':
-            print 'Building using scipy CloughTocher interpolator ..'
+            #print 'Building using scipy CloughTocher interpolator ..'
             self._curvmin()
  
         else:

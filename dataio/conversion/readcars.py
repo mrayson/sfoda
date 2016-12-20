@@ -11,6 +11,9 @@ import xray
 from scipy.interpolate import interp2d, interp1d
 
 from soda.utils.othertime import datetime64todatetime, YearDay
+from soda.utils.interpXYZ import interpXYZ
+
+import pdb
 
 def load_cars_temp(carsfile, X, Y, Z, T):
     """
@@ -23,17 +26,21 @@ def load_cars_temp(carsfile, X, Y, Z, T):
         raise Exception, 'X/Y need to be numpy array objects'
 
     assert nx == ny, 'X and Y should be vectors of the same length'
+    xlims = slice(np.min(X)-2, np.max(X)+2)
+    ylims = slice(np.min(Y)-2, np.max(Y)+2)
+    #indices = dict(lon=xlims,lat=ylims)
 
     cars = xray.open_dataset(carsfile)
 
     # Load the CARS coordinates
-    Xcars = cars['mean'].lon.values
-    Ycars = cars['mean'].lat.values
+    xcars = cars['mean'].sel(lon=xlims,lat=ylims).lon.values.astype(np.float64)
+    ycars = cars['mean'].sel(lon=xlims,lat=ylims).lat.values.astype(np.float64)
+    Xcars,Ycars = np.meshgrid(xcars,ycars)
 
     # Convert to negative down
-    Zmean = -1*cars['depth'].values
-    Z_A = -1*cars['depth_ann'].values
-    Z_SA = -1*cars['depth_semiann'].values
+    Zmean = -1*cars['depth'].values.astype(np.float64)
+    Z_A = -1*cars['depth_ann'].values.astype(np.float64)
+    Z_SA = -1*cars['depth_semiann'].values.astype(np.float64)
 
     nzmean = Zmean.shape[0]
     nzA = Z_A.shape[0]
@@ -54,36 +61,90 @@ def load_cars_temp(carsfile, X, Y, Z, T):
     T_Ac_i = np.zeros((nzA, ny))
     T_As_i = np.zeros((nzA, ny))
 
+    XYout = np.array([X,Y]).T
+    #args = {'method':'kriging', 'NNear':8,'vrange':2.0}
+    args = {'method':'idw', 'NNear':4,'p':2.0}
+    #args = {'method':'curvmin'}
     # Mean
     for kk in range(nzmean):
-        cdata = cars['mean'][kk,...].values
-        cdata[np.isnan(cdata)] = 0.
-        Finterp = interp2d(Xcars, Ycars, cdata, kind='linear')
-        Tmean_i[kk,...] = Finterp(X,Y)
+        print '%d of %d...'%(kk,nzmean)
+        cmean = cars['mean'][kk,...]
+        cdata = cmean.sel(lon=xlims,lat=ylims).values.squeeze()
+        #cdata[np.isnan(cdata)] = 0.
+        #Finterp = interp2d(Xcars, Ycars, cdata, kind='cubic')
+        #Tmean_i[kk,...] = Finterp(X,Y)
+        idx = ~np.isnan(cdata)
+        if np.any(idx):
+            Finterp = interpXYZ(np.array([Xcars[idx],Ycars[idx]]).T, XYout, **args)
+            Tmean_i[kk,...] = Finterp(cdata[idx])
 
     # Annual
     for kk in range(nzA):
-        cdata = cars['an_cos'][kk,...].values
-        cdata[np.isnan(cdata)] = 0.
-        Finterp = interp2d(Xcars, Ycars, cdata, kind='linear')
-        T_Ac_i[kk,...] = Finterp(X,Y)
+        print '%d of %d...'%(kk,nzA)
+        cdatax = cars['an_cos'][kk,...]
+        cdata = cdatax.sel(lon=xlims,lat=ylims).values.squeeze()
 
-        cdata = cars['an_sin'][kk,...].values
-        cdata[np.isnan(cdata)] = 0.
-        Finterp = interp2d(Xcars, Ycars, cdata, kind='linear')
-        T_As_i[kk,...] = Finterp(X,Y)
+        #cdata[np.isnan(cdata)] = 0.
+        #Finterp = interp2d(Xcars, Ycars, cdata, kind='linear')
+        #T_Ac_i[kk,...] = Finterp(X,Y)
 
-    # Annual
+        idx = ~np.isnan(cdata)
+        if np.any(idx):
+            Finterp = interpXYZ(np.array([Xcars[idx],Ycars[idx]]).T, XYout, **args)
+            T_Ac_i[kk,...] = Finterp(cdata[idx])
+
+            cdatax = cars['an_sin'][kk,...]
+            cdata = cdatax.sel(lon=xlims,lat=ylims).values.squeeze()
+            T_As_i[kk,...] = Finterp(cdata[idx])
+
+        #cdata[np.isnan(cdata)] = 0.
+        #Finterp = interp2d(Xcars, Ycars, cdata, kind='linear')
+        #T_As_i[kk,...] = Finterp(X,Y)
+
+    # Semi-Annual
     for kk in range(nzSA):
-        cdata = cars['sa_cos'][kk,...].values
-        cdata[np.isnan(cdata)] = 0.
-        Finterp = interp2d(Xcars, Ycars, cdata, kind='linear')
-        T_SAc_i[kk,...] = Finterp(X,Y)
+        print '%d of %d...'%(kk,nzSA)
+        ##cdata = cars['sa_cos'][kk,...].values
+        ##cdata[np.isnan(cdata)] = 0.
+        ##Finterp = interp2d(Xcars, Ycars, cdata, kind='linear')
+        ##T_SAc_i[kk,...] = Finterp(X,Y)
 
-        cdata = cars['sa_sin'][kk,...].values
-        cdata[np.isnan(cdata)] = 0.
-        Finterp = interp2d(Xcars, Ycars, cdata, kind='linear')
-        T_SAs_i[kk,...] = Finterp(X,Y)
+        ##cdata = cars['sa_sin'][kk,...].values
+        ##cdata[np.isnan(cdata)] = 0.
+        ##Finterp = interp2d(Xcars, Ycars, cdata, kind='linear')
+        ##T_SAs_i[kk,...] = Finterp(X,Y)
+
+        #cdata = cars['sa_cos'][kk,...].values.squeeze()
+        ##cdata[np.isnan(cdata)] = 0.
+        ##Finterp = interp2d(Xcars, Ycars, cdata, kind='linear')
+        ##T_Ac_i[kk,...] = Finterp(X,Y)
+
+        #idx = ~np.isnan(cdata)
+        #Finterp = interpXYZ(np.array([Xcars[idx],Ycars[idx]]).T, XYout)
+        #T_SAc_i[kk,...] = Finterp(cdata[idx])
+
+        #cdata = cars['sa_sin'][kk,...].values.squeeze()
+        #T_SAs_i[kk,...] = Finterp(cdata[idx])
+        ##cdata[np.isnan(cdata)] = 0.
+        ##Finterp = interp2d(Xcars, Ycars, cdata, kind='linear')
+        ##T_As_i[kk,...] = Finterp(X,Y)
+
+        cdatax = cars['sa_cos'][kk,...]
+        cdata = cdatax.sel(lon=xlims,lat=ylims).values.squeeze()
+
+        #cdata[np.isnan(cdata)] = 0.
+        #Finterp = interp2d(Xcars, Ycars, cdata, kind='linear')
+        #T_Ac_i[kk,...] = Finterp(X,Y)
+
+        idx = ~np.isnan(cdata)
+        if np.any(idx):
+            Finterp = interpXYZ(np.array([Xcars[idx],Ycars[idx]]).T, XYout, **args)
+            T_SAc_i[kk,...] = Finterp(cdata[idx])
+
+            cdatax = cars['sa_sin'][kk,...]
+            cdata = cdatax.sel(lon=xlims,lat=ylims).values.squeeze()
+            T_SAs_i[kk,...] = Finterp(cdata[idx])
+
 
     ######
     # Interpolate vertically
