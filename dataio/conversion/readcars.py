@@ -67,7 +67,7 @@ def load_cars_temp(carsfile, X, Y, Z, T):
     #args = {'method':'curvmin'}
     # Mean
     for kk in range(nzmean):
-        print '%d of %d...'%(kk,nzmean)
+        #print '%d of %d...'%(kk,nzmean)
         cmean = cars['mean'][kk,...]
         cdata = cmean.sel(lon=xlims,lat=ylims).values.squeeze()
         #cdata[np.isnan(cdata)] = 0.
@@ -80,7 +80,7 @@ def load_cars_temp(carsfile, X, Y, Z, T):
 
     # Annual
     for kk in range(nzA):
-        print '%d of %d...'%(kk,nzA)
+        #print '%d of %d...'%(kk,nzA)
         cdatax = cars['an_cos'][kk,...]
         cdata = cdatax.sel(lon=xlims,lat=ylims).values.squeeze()
 
@@ -103,7 +103,7 @@ def load_cars_temp(carsfile, X, Y, Z, T):
 
     # Semi-Annual
     for kk in range(nzSA):
-        print '%d of %d...'%(kk,nzSA)
+        #print '%d of %d...'%(kk,nzSA)
         ##cdata = cars['sa_cos'][kk,...].values
         ##cdata[np.isnan(cdata)] = 0.
         ##Finterp = interp2d(Xcars, Ycars, cdata, kind='linear')
@@ -169,16 +169,16 @@ def load_cars_temp(carsfile, X, Y, Z, T):
     t_yday = YearDay(tdt)
     t_osc = 2*np.pi* t_yday / 366.
 
-
     # Example from: http://www.marine.csiro.au/~dunn/cars2009/
     #  Evaluate at day-of-year 45 (mid February)
     #  t = 2pi x 45/366 
     #  feb = mean + an_cos*cos(t) + an_sin*sin(t) + sa_cos*cos(2*t) + sa_sin*sin(2*t) 
 
-    Tcars = Tmean_iz + T_Ac_iz*np.cos(t_osc[np.newaxis,...]) + \
-        T_As_iz*np.sin(t_osc[np.newaxis,...]) + \
-        T_SAc_iz*np.cos(2*t_osc[np.newaxis,...]) + \
-        T_SAs_iz*np.sin(2*t_osc[np.newaxis,...])
+    Tcars = Tmean_iz[...,np.newaxis] + \
+        T_Ac_iz[...,np.newaxis]*np.cos(t_osc[np.newaxis,...]) + \
+        T_As_iz[...,np.newaxis]*np.sin(t_osc[np.newaxis,...]) + \
+        T_SAc_iz[...,np.newaxis]*np.cos(2*t_osc[np.newaxis,...]) + \
+        T_SAs_iz[...,np.newaxis]*np.sin(2*t_osc[np.newaxis,...])
 
     return Tcars
 

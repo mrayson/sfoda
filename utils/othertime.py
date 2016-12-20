@@ -44,7 +44,8 @@ def SecondsSince(timein, basetime = datetime(1990,1,1)):
     Useful for interpolation and storing in netcdf format
     """
     # Convert the time to seconds
-    if isinstance(timein, np.datetime64) or isinstance(timein, np.ndarray):
+    #if isinstance(timein, np.datetime64) or isinstance(timein, np.ndarray):
+    if isinstance(timein, np.datetime64):
         time0 = np.datetime64(basetime)
         tsec = ((timein - time0)*1e-9).astype(np.float64)
 
