@@ -6,11 +6,13 @@ import matplotlib.pyplot as plt
 from matplotlib.collections import LineCollection
 from matplotlib.lines import Line2D
 import matplotlib.dates as mdates
+from matplotlib import collections
+from matplotlib.ticker import Formatter
 
-from soda.utils import othertime
-
+from datetime import datetime, timedelta
 import numpy as np
 
+from soda.utils import othertime
 
 class StreakPlot(object):
     """
@@ -246,9 +248,7 @@ def ProfilePlot(t,y,z,scale=86400,\
     See this page on formatting:
         http://matplotlib.org/examples/pylab_examples/date_index_formatter.html
     """
-    from matplotlib import collections
-    from matplotlib.ticker import Formatter
-
+    
     class MyFormatter(Formatter):
         def __init__(self, dates, fmt='%b %d %Y'):
             self.fmt = fmt

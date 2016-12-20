@@ -48,7 +48,7 @@ def accum1d(xin, yin, xout, method='mean'):
     else:
         iout = idx.max()+1
 
-    yout = np.zeros_like(Z)
+    yout = np.zeros((nx,))
 
     yout[0:iout] = tmp
 
