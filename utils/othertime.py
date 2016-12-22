@@ -44,30 +44,61 @@ def SecondsSince(timein, basetime = datetime(1990,1,1)):
     Useful for interpolation and storing in netcdf format
     """
     # Convert the time to seconds
-    #if isinstance(timein, np.datetime64) or isinstance(timein, np.ndarray):
-    if isinstance(timein, np.datetime64):
+
+    # Workout the input type
+    isarray = False
+    isdatetime = False
+    isdatetime64 = False
+    if isinstance(timein, list) or isinstance(timein, np.ndarray):
+        isarray = True
+        if isinstance(timein[0], datetime):
+             isdatetime = True
+        elif isinstance(timein[0], np.datetime64):
+             isdatetime64 = True
+
+    if isarray and isdatetime64:
         time0 = np.datetime64(basetime)
         tsec = ((timein - time0)*1e-9).astype(np.float64)
 
-        return tsec
+    elif isarray and isdatetime:
+        tsec = [(t-basetime).total_seconds() for t in timein]
 
-    else: # datetime, etc
+    else: # Assume its a datetime object
+        if isinstance(timein, datetime):
+            tsec = [(timein-basetime).total_seconds()]
+        else:
+            time0 = np.datetime64(basetime)
+            tsec = ((timein - time0)*1e-9).astype(np.float64)
 
-        timeout=[]
-        try:
-            timein = timein.tolist()
-        except:
-            timein = timein
-        
-        try:
-            for t in timein:
-                dt = t - basetime
-                timeout.append(dt.total_seconds())
-        except:
-            dt = timein - basetime
-            timeout.append(dt.total_seconds()) 
-        
-        return np.asarray(timeout)
+
+    return tsec
+
+    #if isinstance(timein, np.datetime64):
+    #    time0 = np.datetime64(basetime)
+    #    tsec = ((timein - time0)*1e-9).astype(np.float64)
+
+    #    return tsec
+
+    #elif isinstance(timein, list) or isinstance(timein, np.ndarray):
+    #    pdb.set_trace()
+    #    timeout = [(t-basetime).total_seconds() for t in range(timein)]
+    #else: # Single datetime object
+
+    #    timeout=[]
+    #    #try:
+    #    #    timein = timein.tolist()
+    #    #except:
+    #    #    timein = timein
+    #    #
+    #    #try:
+    #    #    for t in timein:
+    #    #        dt = t - basetime
+    #    #        timeout.append(dt.total_seconds())
+    #    #except:
+    #    dt = timein - basetime
+    #    timeout.append(dt.total_seconds()) 
+    #    
+    #    return np.asarray(timeout)
     
 def MinutesSince(timein,basetime = datetime(1970,1,1)):
     """

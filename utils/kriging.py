@@ -53,33 +53,40 @@ class kriging(object):
         
         self.Nc = np.size(self.ind,axis=0)
         print '%d interpolation points.'%self.Nc
-        # Now loop through and get the weights for each point
-        self.W = np.zeros((self.NNear,self.Nc))
+
+        #get_weights = np.vectorize(self.get_weights)
+        W = [self.get_weights(dist[ii,:], self.XYin[self.ind[ii,:],0],\
+                self.XYin[self.ind[ii,:],1]) for ii in range(self.Nc)]
+        self.W = np.array(W).squeeze().T
 
         # Print percentages
-        p0=0
-        pstep=5
-        for ii in range(0,self.Nc):
-            
-            if self.verbose:
-                pfinish = float(ii)/float(self.Nc)*100.0
-                if  pfinish> p0:
-                    print '%3.1f %% complete...'%pfinish
-                    p0+=pstep
-                                
-            W = self.getWeights(dist[ii,:],\
-                self.XYin[self.ind[ii,:],0],\
-                self.XYin[self.ind[ii,:],1])
-            
-            self.W[:,ii] = W.T 
+
+        # Now loop through and get the weights for each point
+        #self.W = np.zeros((self.NNear,self.Nc))
+        #p0=0
+        #pstep=5
+        #for ii in range(0,self.Nc):
+        #    
+        #    if self.verbose:
+        #        pfinish = float(ii)/float(self.Nc)*100.0
+        #        if  pfinish> p0:
+        #            print '%3.1f %% complete...'%pfinish
+        #            p0+=pstep
+        #                        
+        #    W = self.get_weights(dist[ii,:],\
+        #        self.XYin[self.ind[ii,:],0],\
+        #        self.XYin[self.ind[ii,:],1])
+        #    
+        #    self.W[:,ii] = W.T 
                 
         
-    def getWeights(self,dist,xin,yin):
+    def get_weights(self,dist,xin,yin):
         
         """ Calculates the kriging weights point by point"""
         
         eps = 1e-10
         Ns = len(dist)
+        #Ns = dist.shape[0]
         
         # Construct the LHS matrix C
         C=np.ones((Ns+1,Ns+1))
