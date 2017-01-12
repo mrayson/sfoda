@@ -61,11 +61,11 @@ def SecondsSince(timein, basetime = datetime(1990,1,1)):
         tsec = ((timein - time0)*1e-9).astype(np.float64)
 
     elif isarray and isdatetime:
-        tsec = [(t-basetime).total_seconds() for t in timein]
+        tsec = np.array([(t-basetime).total_seconds() for t in timein])
 
     else: # Assume its a datetime object
         if isinstance(timein, datetime):
-            tsec = [(timein-basetime).total_seconds()]
+            tsec = (timein-basetime).total_seconds()
         else:
             time0 = np.datetime64(basetime)
             tsec = ((timein - time0)*1e-9).astype(np.float64)

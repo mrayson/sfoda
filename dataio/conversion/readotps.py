@@ -60,6 +60,7 @@ def tide_pred(modfile,lon,lat,time,z=None,conlist=None):
        
     # Calculate the time series
     tsec = othertime.SecondsSince(time,basetime=datetime(1992,1,1)) # Needs to be referenced to 1992
+
     h=np.zeros((nt,nx))
     u=np.zeros((nt,nx))
     v=np.zeros((nt,nx))
@@ -641,6 +642,7 @@ def nodal(time,con):
     rad = np.pi/180.0
     
     s,h,p,omega=astrol(time)
+
     #    
     #    omega = 
     #
@@ -669,7 +671,10 @@ def nodal(time,con):
             
     # Prepare the output data
     ncon = len(con)
-    nt = omega.shape[0]
+    try:
+        nt = omega.shape[0]
+    except:
+        nt = 1
     pu = np.zeros((ncon,nt))
     pf = np.ones((ncon,nt))
     v0u = np.zeros((ncon,nt))
