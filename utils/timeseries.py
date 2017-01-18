@@ -19,6 +19,7 @@ import xray
 import othertime
 from uspectra import uspectra, getTideFreq
 from otherplot import stackplot
+from harmonic_analysis import harmonic_fit, harmonic_signal
 from soda.dataio.netcdfio import queryNC
 
 import pdb
@@ -281,15 +282,16 @@ class timeseries(object):
             frq,frqnames = getTideFreq(Fin=frqnames)
             
         # Call the uspectra method
-        U = uspectra(self.t, self.y, frq=frq, method='lsqfast')
+        #U = uspectra(self.t, self.y, frq=frq, method='lsqfast',axis=axis)
+        #amp,phs = U.phsamp(phsbase=basetime)
+        #return amp, phs, frq, frqnames, U.invfft()
 
-        amp,phs = U.phsamp(phsbase=basetime)
+        amp, phs, mean = \
+            harmonic_fit(self.tsec,self.y,frq,phsbase=basetime,axis=axis)
 
-        return amp, phs, frq, frqnames, U.invfft()
-        #amp, phs, mean = \
-        #    harmonic_fit(self.tsec,self.y,frq,phsbase=basetime,axis=axis)
-        #
-        #return amp, phs, frq, frqnames,# U.invfft()   
+        yfit = harmonic_signal(self.t, amp, phs, mean, frq, phsbase=basetime, axis=axis)
+        
+        return amp, phs, frq, frqnames, yfit# U.invfft()   
         
     def running_harmonic(self,omega,windowlength=3*86400.0,overlap=12*3600.0, plot=True):
         """
@@ -957,117 +959,7 @@ class ModVsObs(object):
         
         return Pyy, frq
 
-def harmonic_fit(t,X,frq,mask=None,axis=0,phsbase=None):
-    """
-    Least-squares harmonic fit on an array, X, with frequencies, frq. 
-    
-    X - vector [Nt] or array [Nt, (size)]
-    t - vector [Nt]
-    frq - vector [Ncon]
-    mask - array [(size non-time X)]
-    phsbase - phase offset
-    
-    where, dimension with Nt should correspond to axis = axis.
-    """
 
-    t = np.asarray(t)
-    
-    # Reshape the array sizes
-    X = X.swapaxes(0, axis)
-    sz = X.shape
-    lenX = np.prod(sz[1:])
-    
-    if not len(t) == sz[0]:
-        raise 'length of t (%d) must equal dimension of X (%s)'%(len(t),sz[0])
-    
-    X = np.reshape(X,(sz[0],lenX))
-    
-    if not mask == None:
-        mask = np.reshape(mask,(lenX,))
-    else:
-        mask = np.ones((lenX,))
-    
-    frq = np.array(frq)
-    Nfrq = frq.shape[0]
-    
-
-    
-    def buildA(t,frq):
-        """
-        Construct matrix A
-        """
-        nt=t.shape[0]
-        nf=frq.shape[0]
-        nff=nf*2+1
-        A=np.ones((nt,nff))
-        for ff in range(0,nf):
-            A[:,ff*2+1]=np.cos(frq[ff]*t)
-            A[:,ff*2+2]=np.sin(frq[ff]*t)
-            
-        return A
-    
-    def lstsqnumpy(A,y):    
-        """    
-        Solve the least square problem
-        
-        Return:
-            the complex amplitude 
-            the mean
-        """
-        N=A.shape[1]
-        b = np.linalg.lstsq(A,y)
-        A = b[0][1::2]
-        B = b[0][2::2]
-        
-        return A+1j*B, b[0][0::N]
-    
-    def phsamp(C):
-        return np.abs(C), np.angle(C)
-        
-    # Least-squares matrix approach
-    A = buildA(t,frq)
-    C, C0 = lstsqnumpy(A,X) # This works on all columns of X!!
-    Amp, Phs= phsamp(C)
-
-    # Reference the phase to some time
-    if not phsbase is None:
-        base = othertime.SecondsSince(phsbase)
-	phsoff = phase_offset(frq,t[0],base)
-	phsoff = np.repeat(phsoff.reshape((phsoff.shape[0],1)),lenX,axis=1)
-	Phs = np.mod(Phs+phsoff,2*np.pi)
-    
-    # Non-vectorized method (~20x slower)
-#    Amp = np.zeros((Nfrq,lenX))
-#    Phs = np.zeros((Nfrq,lenX))
-#    for ii in range(0,lenX):    
-#        if mask[ii]==True: 
-#            C = lstsqnumpy(A,X[:,ii])
-#            # Calculate the phase and amplitude
-#            am, ph= phsamp(C)
-#            Amp[:,ii] = am; Phs[:,ii] = ph
-            
-    
-    # reshape the array
-    Amp = np.reshape(Amp,(Nfrq,)+sz[1:])
-    Phs = np.reshape(Phs,(Nfrq,)+sz[1:])
-    C0 = np.reshape(C0,sz[1:])
-    
-    # Output back along the original axis
-    return Amp.swapaxes(axis,0), Phs.swapaxes(axis,0), C0.swapaxes(axis,0)
-    
-def phase_offset(frq,start,base):
-        """
-        Compute a phase offset for a given fruequency
-        """
-        
-        if type(start)==datetime:
-            dx = start - base
-            dx = dx.total_seconds()
-        else:
-            dx = start -base
-        
-        return np.mod(dx*np.array(frq),2*np.pi)
- 
 def loadDBstation(dbfile, stationName, varname, timeinfo=None, \
      filttype=None,cutoff=3600.0,output_meta=False,method='linear'):
     """
