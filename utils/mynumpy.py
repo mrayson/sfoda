@@ -3,6 +3,7 @@ Numpy-like array operations
 """
 
 import numpy as np
+import pdb
 
 def accum1d(xin, yin, xout, method='mean'):
     """
@@ -54,3 +55,82 @@ def accum1d(xin, yin, xout, method='mean'):
 
     return yout
  
+def depthint(y, z, ztop=None, zbed=None, cumulative=False, axis=0):
+    """
+    Integrate the variable "y" along its first dimension
+
+    Inputs (optional):
+        
+        ztop : (scalar) set to top of water column if different from z[-1]
+        zbed : (scalar) set to bottom of water column if different from z[0]
+    """
+    Nz = z.shape[0]
+
+    # Reshape the y variable
+    y = y.swapaxes(0, axis)
+
+    assert y.shape[0] == Nz
+
+    # Calculate the vertical grid spacing
+    zmid = np.zeros((Nz+1,))
+    zmid[1:-1] = 0.5*(z[1:]+z[0:-1])
+    if ztop is None:
+        zmid[0] = z[0]
+    else:
+        zmid[0] = ztop
+
+    if zbed is None:
+        zmid[-1] = z[-1]
+    else:
+        zmid[-1] = zbed
+
+    dz = np.abs(zmid[1:] - zmid[0:-1])
+
+    # Perform the integration
+    if cumulative:
+        return np.cumsum(y*dz[:,np.newaxis], axis=0).swapaxes(axis,0), dz
+    else:
+        return np.sum(y*dz[:,np.newaxis], axis=0).swapaxes(axis,0), dz
+
+def depthavg(y, z, ztop=None, zbed=None, axis=0):
+    """
+    Depth average the variable along the first dimension
+
+    Inputs (optional):
+        ztop : (scalar) set to top of water column if different from z[-1]
+        zbed : (scalar) set to bottom of water column if different from z[0]
+    """
+
+    y_dz, dz = depthint(y, z, ztop=ztop, zbed=zbed, axis=axis)
+    H = dz.sum()
+
+    return y_dz/H
+
+def grad_z(y, z, axis=0):
+    """
+    Compute the vertical gradient
+    """
+    Nz = z.shape[0]
+    # Reshape the y variable
+    y = y.swapaxes(0, axis)
+    assert y.shape[0] == Nz
+
+    dy_dz = np.zeros_like(y)
+    
+    # Second-order accurate for mid-points
+    ymid = 0.5*(y[1:,...]+y[0:-1,...])
+
+    zmid = 0.5*(z[1:]+z[0:-1])
+
+    dzmid  = zmid[1:] - zmid[0:-1] 
+
+    dy_dz[1:-1, ...] = (ymid[1:,...] - ymid[0:-1,...])/\
+            dzmid[:]
+
+    # First-order accurate for top and bottom cells
+    dy_dz[0,...] = (y[1,...] - y[0,...])/dzmid[0]
+    dy_dz[-1,...] = (y[-1,...] - y[-2,...])/dzmid[-1]
+
+    return dy_dz.swapaxes(axis, 0)
+
+

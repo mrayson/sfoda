@@ -174,6 +174,18 @@ def harmonic_signal(time, amp, phs, cmean, omega, phsbase=None, axis=-1):
             
     return h
 
+def phsamp2complex(phs,amp):
+    """
+    Convert polar phase-amplitude to complex form
+    """
+    return amp*np.cos(phs) + 1j*amp*np.sin(phs)
+
+def complex2phsamp(C):
+    """
+    Convert complex amplitude to phase and amplitude
+    """
+    return np.angle(C), np.abs(C)
+ 
 
 #########
 # List of tidal frequencies
