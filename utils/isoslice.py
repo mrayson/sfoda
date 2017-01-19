@@ -53,8 +53,8 @@ def isoslice(var, prop, isoval=0, axis=0, masking=True):
     szc = np.where(szc==0., 1, szc)
     result = result.sum(axis=0)/szc
     if masking:
-        result = ma.masked_where(zc.sum(axis=0)==0, result)
-        if all(result.mask):
+        result = np.ma.masked_where(zc.sum(axis=0)==0, result)
+        if np.all(result.mask):
             raise Warning, 'property==%f out of range (%f, %f)' % \
                            (isoval, (prop+isoval).min(), (prop+isoval).max())
     result = result.reshape(sz[1:])

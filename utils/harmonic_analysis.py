@@ -38,10 +38,12 @@ def harmonic_fit(t,X,frq,mask=None,axis=0,phsbase=None):
     
     X = np.reshape(X,(sz[0],lenX))
     
-    if not mask == None:
-        mask = np.reshape(mask,(lenX,))
-    else:
-        mask = np.ones((lenX,))
+    if not mask is None and np.any(mask):
+         mask.swapaxes(0, axis)
+    #    mask = np.reshape(mask,(sz[0]*lenX,))
+    #    X = X.ravel()
+    #else:
+    #    mask = False
     
     frq = np.array(frq)
     Nfrq = frq.shape[0]
@@ -78,10 +80,26 @@ def harmonic_fit(t,X,frq,mask=None,axis=0,phsbase=None):
     def phsamp(C):
         return np.abs(C), np.angle(C)
         
-    # Least-squares matrix approach
-    A = buildA(t,frq)
-    C, C0 = lstsqnumpy(A,X) # This works on all columns of X!!
-    Amp, Phs= phsamp(C)
+   
+    # Non-vectorized method (~20x slower)
+    # Use this on a masked array
+    if np.any(mask):
+        Amp = np.zeros((Nfrq,lenX))
+        Phs = np.zeros((Nfrq,lenX))
+        C0 = np.zeros((lenX,))
+        for ii in range(0,lenX):    
+            idx = mask[ii,:]==False
+            A = buildA(t[idx],frq)
+            C, C0[ii] = lstsqnumpy(A,X[idx,ii])
+            # Calculate the phase and amplitude
+            am, ph= phsamp(C)
+            Amp[:,ii] = am
+            Phs[:,ii] = ph
+    else:
+        # Least-squares matrix approach
+        A = buildA(t,frq)
+        C, C0 = lstsqnumpy(A,X) # This works on all columns of X!!
+        Amp, Phs= phsamp(C)
 
     # Reference the phase to some time
     if not phsbase is None:
@@ -90,15 +108,6 @@ def harmonic_fit(t,X,frq,mask=None,axis=0,phsbase=None):
 	phsoff = np.repeat(phsoff.reshape((phsoff.shape[0],1)),lenX,axis=1)
 	Phs = np.mod(Phs+phsoff,2*np.pi)
     
-    # Non-vectorized method (~20x slower)
-#    Amp = np.zeros((Nfrq,lenX))
-#    Phs = np.zeros((Nfrq,lenX))
-#    for ii in range(0,lenX):    
-#        if mask[ii]==True: 
-#            C = lstsqnumpy(A,X[:,ii])
-#            # Calculate the phase and amplitude
-#            am, ph= phsamp(C)
-#            Amp[:,ii] = am; Phs[:,ii] = ph
             
     
     # reshape the array

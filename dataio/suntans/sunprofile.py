@@ -67,7 +67,7 @@ class Profile(object):
         ------
                 x, y, z: coordinates to extract. Set z=None to return all layers
                 varname: string of variable name
-                zinterp: vertical interpolation 'nearest'(default) or 'phip'
+                zinterp: vertical interpolation 'nearest'(default) or 'pchip'
                 nnearest: number of nearest neighbours (default=1)
 
         Returns:

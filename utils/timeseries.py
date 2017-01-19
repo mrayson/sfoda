@@ -275,8 +275,8 @@ class timeseries(object):
         """
         
         # Get the tidal fruequencies
-        if frqnames == None:
-			# This returns the default frequencies from the uspectra class
+        if frqnames is None:
+            # This returns the default frequencies from the uspectra class
             frq,frqnames = getTideFreq(Fin=None)
         else:
             frq,frqnames = getTideFreq(Fin=frqnames)
@@ -287,11 +287,14 @@ class timeseries(object):
         #return amp, phs, frq, frqnames, U.invfft()
 
         amp, phs, mean = \
-            harmonic_fit(self.tsec,self.y,frq,phsbase=basetime,axis=axis)
+            harmonic_fit(self.tsec, self.y, frq,\
+             mask=self.y.mask,\
+             phsbase=basetime, axis=axis)
 
         yfit = harmonic_signal(self.t, amp, phs, mean, frq, phsbase=basetime, axis=axis)
         
-        return amp, phs, frq, frqnames, yfit# U.invfft()   
+        return amp, phs, frq, mean, yfit
+        #return amp, phs, frq, frqnames, yfit
         
     def running_harmonic(self,omega,windowlength=3*86400.0,overlap=12*3600.0, plot=True):
         """
@@ -528,7 +531,33 @@ class timeseries(object):
 	#    t0 = 0
 
         return t0, t1
- 
+
+    def clip(self, t0, t1):
+        """
+        Clip the object between the time limits t1 - t2
+
+        Differs from subset as it returns a timeseries object
+
+        Inputs:
+                t1, t2 : datetime
+        Returns:
+                a NEW timeseries object
+        """
+        #t0 = datetime.strptime(t0, fmt)
+        #t1 = datetime.strptime(t1, fmt)
+
+        modt,mody = self.subset(t0,t1)
+
+        return timeseries(modt, mody,\
+            units=self.units,\
+            long_name=self.long_name,\
+            StationID = self.StationID,\
+            StationName = self.StationName,\
+            varname = self.varname,\
+            X= self.X,\
+            Y= self.Y,\
+            Z= self.Z,\
+        )
     def subset(self,time1,time2):
         """
         Returns a subset of the array between time1 and time2
