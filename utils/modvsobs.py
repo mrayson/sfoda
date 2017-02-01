@@ -94,6 +94,16 @@ class ModVsObs(object):
             self.TSobs = timeseries(tmod[t0m:t1m], yobs_i, **kwargs)
             self.TSmod = TSmod
 
+        ### Check the dimension sizes
+        #print self.TSmod.y.shape, self.TSobs.y.shape
+        #print self.TSmod.t.shape[0], self.TSobs.t.shape[0]
+        assert self.TSmod.t.shape[0] == self.TSobs.t.shape[0],\
+                'Number of time records not equal'
+
+        assert self.TSmod.y.shape == self.TSobs.y.shape,\
+                'Dimensions sizes not equal'
+
+
 
         self.N = self.TSmod.t.shape[0]
         if self.N==0:

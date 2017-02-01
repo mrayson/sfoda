@@ -653,20 +653,24 @@ class timeseries(object):
         # Put the data onto an evenly spaced, masked array
         tout = np.arange(t[0],t[-1]+dt,dt)
         
-        tind = np.searchsorted(tout,t)
+        tind = np.searchsorted(tout,t) - 1
         
         shape = self.y.shape[:-1] + tout.shape
         yout = np.ma.MaskedArray(np.zeros(shape),mask=True)
 
         yout[...,tind] = self.y
         
-        def updatetime(tsec):
-            try:
-                return np.timedelta64(int(tsec), 's') + self.t[0]
-            except:
-                return timedelta(seconds=tsec) + self.t[0]
-            
-        self.t = np.array(map(updatetime,tout))
+        ### Slow method
+        #def updatetime(tsec):
+        #    try:
+        #        return np.timedelta64(int(tsec), 's') + self.t[0]
+        #    except:
+        #        return timedelta(seconds=tsec) + self.t[0]
+        #    
+        #self.t = np.array(map(updatetime,tout))
+
+        self.t = tout.astype("timedelta64[s]") + self.t[0]
+
         self.y = yout
         
         self.tsec = tout+t0
