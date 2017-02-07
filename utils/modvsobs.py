@@ -54,45 +54,55 @@ class ModVsObs(object):
 
 
         # Set the range inclusive of both observation and model result
-        if isinstance(tmod,list):
-            time0 = max(tmod[0],tobs[0])
-            time1 = min(tmod[-1],tobs[-1])
-        elif isinstance(tmod[0], np.datetime64):
-            time0 = max(tmod[0],tobs[0])
-            time1 = min(tmod[-1],tobs[-1])
+        #if isinstance(tmod,list):
+        #    time0 = max(tmod[0],tobs[0])
+        #    time1 = min(tmod[-1],tobs[-1])
+        #elif isinstance(tmod[0], np.datetime64):
+        #    time0 = max(tmod[0],tobs[0])
+        #    time1 = min(tmod[-1],tobs[-1])
+	time0 = max(tmod[0],tobs[0])
+	time1 = min(tmod[-1],tobs[-1])
 
         if time1 < time0:
             print 'Error - the two datasets have no overlapping period.'
             return None
         
-        # Clip both the model and observation to this daterange
-        t0m = othertime.findNearest(time0,tmod)
-        t1m = othertime.findNearest(time1,tmod)
-        TSmod = timeseries(tmod[t0m:t1m],ymod[...,t0m:t1m], **kwargs)
+	if not (tmod.shape[0] == tobs.shape[0]) and\
+		not (tmod[0] == tobs[0]) and not (tmod[-1] == tobs[-1]) :
+	    # Clip both the model and observation to this daterange
+	    t0m = othertime.findNearest(time0,tmod)
+	    t1m = othertime.findNearest(time1,tmod)
+	    TSmod = timeseries(tmod[t0m:t1m],ymod[...,t0m:t1m], **kwargs)
 
-        t0 = othertime.findNearest(time0,tobs)
-        t1 = othertime.findNearest(time1,tobs)
-        TSobs = timeseries(tobs[t0:t1],yobs[...,t0:t1], **kwargs)
+	    t0 = othertime.findNearest(time0,tobs)
+	    t1 = othertime.findNearest(time1,tobs)
+	    TSobs = timeseries(tobs[t0:t1],yobs[...,t0:t1], **kwargs)
 
-        # Interpolate the observed value onto the model step
-        #tobs_i, yobs_i = TSobs.interp(tmod[t0:t1],axis=0)
-        #self.TSobs = timeseries(tobs_i, yobs_i)
+	    # Interpolate the observed value onto the model step
+	    #tobs_i, yobs_i = TSobs.interp(tmod[t0:t1],axis=0)
+	    #self.TSobs = timeseries(tobs_i, yobs_i)
 
-	## Don't interpolate if datasets are the same
-	#if np.all(tobs==tmod):
-	#   self.TSobs = TSobs
-	#   self.TSmod = TSmod
-        # Interpolate the modeled value onto the observation time step
-        if interpmodel:
-            tmod_i, ymod_i = TSmod.interp(tobs[t0:t1],axis=-1,method='nearestmask')
-            #self.TSmod = timeseries(tmod_i,ymod_i, **kwargs)
-            self.TSmod = timeseries(tobs[t0:t1], ymod_i, **kwargs)
-            self.TSobs = TSobs
-        else:
-            tobs_i, yobs_i = TSobs.interp(tmod[t0m:t1m],axis=-1,method='nearestmask')
-            #self.TSobs = timeseries(tobs_i,yobs_i, **kwargs)
-            self.TSobs = timeseries(tmod[t0m:t1m], yobs_i, **kwargs)
-            self.TSmod = TSmod
+	    ## Don't interpolate if datasets are the same
+	    #if np.all(tobs==tmod):
+	    #   self.TSobs = TSobs
+	    #   self.TSmod = TSmod
+	    # Interpolate the modeled value onto the observation time step
+	    if interpmodel:
+		tmod_i, ymod_i = TSmod.interp(tobs[t0:t1],axis=-1,method='nearestmask')
+		#self.TSmod = timeseries(tmod_i,ymod_i, **kwargs)
+		self.TSmod = timeseries(tobs[t0:t1], ymod_i, **kwargs)
+		self.TSobs = TSobs
+	    else:
+		tobs_i, yobs_i = TSobs.interp(tmod[t0m:t1m],axis=-1,method='nearestmask')
+		#self.TSobs = timeseries(tobs_i,yobs_i, **kwargs)
+		self.TSobs = timeseries(tmod[t0m:t1m], yobs_i, **kwargs)
+		self.TSmod = TSmod
+	else:
+
+	    self.TSmod = timeseries(tmod, ymod, **kwargs)
+	    self.TSobs = timeseries(tobs, yobs, **kwargs)
+
+
 
         ### Check the dimension sizes
         #print self.TSmod.y.shape, self.TSobs.y.shape

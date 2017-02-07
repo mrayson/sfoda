@@ -15,6 +15,7 @@ from scipy import signal, interpolate
 from datetime import datetime, timedelta
 import operator
 import xray
+import pandas as pd
 
 import othertime
 from uspectra import uspectra, getTideFreq
@@ -50,7 +51,7 @@ class timeseries(object):
     def __init__(self,t,y,**kwargs):
         
         self.__dict__.update(kwargs)        
-        self.t = t # independent variable (t,x, etc)
+        self.t = self._set_time(t) # independent variable (t,x, etc)
         self.y = y # dependent variable
         
         self.shape = self.y.shape
@@ -58,7 +59,7 @@ class timeseries(object):
         
 
         # Convert the time to seconds
-        self.tsec = self._get_tsec(t)
+        self.tsec = self._get_tsec(self.t)
         #if isinstance(self.t[0], np.datetime64):
         #    time = self.t
         #    self.tsec = ((time - time[0])*1e-9).astype(np.float64)
@@ -226,12 +227,11 @@ class timeseries(object):
             tnew = othertime.TimeVector(tstart,tend,dt,timeformat=timeformat)
             tsec = self._get_tsec(tnew)
         except:
-            tnew=timein
+            tnew = self._set_time(timein)
             tsec = self._get_tsec(tnew)
             dt = tsec[1] - tsec[0]
             #dt = (tnew[1]-tnew[0]).total_seconds()
-            
-        
+
         if method=='nearestmask':
             # Nearest neighbour doesn't use interp1d to preserve mask
             self._evenly_dist_data(dt)
@@ -250,6 +250,7 @@ class timeseries(object):
                 output = F(tsec)
 
             else:
+
                 #mask = np.isnan(self.y) == False
                 mask = ~self.y.mask
                 if np.all(self.y.mask):
@@ -263,7 +264,7 @@ class timeseries(object):
                         bounds_error=False, fill_value=0)
 
                     output = F(tsec)
-            
+
         return tnew, output
         
         
@@ -515,12 +516,14 @@ class timeseries(object):
         """
         Returns the time indices bounded by time1 and time2
         """
-        try:
-            t0 = othertime.findNearest(time1,self.t)
-            t1 = othertime.findNearest(time2,self.t)
-        except:
-            t0 = np.searchsorted(self.t, np.datetime64(time1))
-            t1 = np.searchsorted(self.t, np.datetime64(time2))
+	t0 = othertime.findNearest(time1,self.t)
+	t1 = othertime.findNearest(time2,self.t)
+        #try:
+        #    t0 = othertime.findNearest(time1,self.t)
+        #    t1 = othertime.findNearest(time2,self.t)
+        #except:
+        #    t0 = np.searchsorted(self.t, np.datetime64(time1))
+        #    t1 = np.searchsorted(self.t, np.datetime64(time2))
 
         #t1 = min( self.Nt, t1+1)
 	t1+=1
@@ -612,13 +615,29 @@ class timeseries(object):
     def _get_tsec(self, time):
 
         # Convert the time to seconds
-        if isinstance(time[0], np.datetime64):
-            tsec = ((time - time[0])*1e-9).astype(np.float64)
-        else:
-            tsec = othertime.SecondsSince(time,basetime=self.basetime)
+        #if isinstance(time[0], np.datetime64):
+        #    tsec = ((time - time[0])*1e-9).astype(np.float64)
+        #else:
+        #    tsec = othertime.SecondsSince(time,basetime=self.basetime)
+
+	# SecondsSince handle datetime64 objects
+	tsec = othertime.SecondsSince(time,basetime=self.basetime)
 
         return tsec
  
+    def _set_time(self, t):
+        """
+	Return the time variable as a datetime object
+	"""
+	if isinstance(t, pd.tseries.index.DatetimeIndex):
+	    return othertime.datetime64todatetime(t.values)
+	elif isinstance(t[0], datetime):
+	    return t
+	elif isinstance(t[0], np.datetime64):
+	    return othertime.datetime64todatetime(t) 
+	else:
+	    raise Exception, 'unknown time type: ', type(t)
+
     def _check_dt(self, tsec):
         """
         Check that the time series is equally spaced
@@ -669,7 +688,8 @@ class timeseries(object):
         #    
         #self.t = np.array(map(updatetime,tout))
 
-        self.t = tout.astype("timedelta64[s]") + self.t[0]
+        self.t = tout.astype("timedelta64[s]") + np.datetime64(self.t[0])
+
 
         self.y = yout
         
