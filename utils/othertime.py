@@ -58,8 +58,8 @@ def SecondsSince(timein, basetime = datetime(1990,1,1)):
 
     if isarray and isdatetime64:
         time0 = np.datetime64(basetime)
-        tsec = ((timein.astype('datetime64[us]') - time0)\
-		*1e-6).astype(np.float64)
+        tsec = ((timein.astype('<M8[ns]') - time0)\
+		*1e-9).astype(np.float64)
 
     elif isarray and isdatetime:
         tsec = np.array([(t-basetime).total_seconds() for t in timein])
@@ -152,13 +152,14 @@ def datetime64todatetime(t):
     """
     return np.array([\
     	datetime.utcfromtimestamp(\
-	ii.astype('datetime64[us]').astype(float)*1e-6) for ii in t])
+	ii.astype('<M8[ns]').astype(float)*1e-9) for ii in t])
 
 def datetimetodatetime64(t):
     """
     Convert a vector of datetime64 to datetime objects
     """
-    return np.array([np.datetime64(tt) for tt in t])
+    #return np.array([np.datetime64(tt) for tt in t]).astype('datetime64[us]')
+    return np.array([np.datetime64(tt) for tt in t]).astype('<M8[ns]') # = 'datetime64[ns]
  
     
 def YearDay(timein):

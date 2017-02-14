@@ -165,7 +165,11 @@ def load_cars_temp(carsfile, X, Y, Z, T):
 
     #######
     # Compute the temporal values from the amplitude
-    tdt = datetime64todatetime(T)
+    try:
+        tdt = datetime64todatetime(T)
+    except:
+        tdt = T # already datetime object
+
     t_yday = YearDay(tdt)
     t_osc = 2*np.pi* t_yday / 366.
 
