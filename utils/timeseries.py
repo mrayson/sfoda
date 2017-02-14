@@ -229,13 +229,15 @@ class timeseries(object):
         except:
             tnew = self._set_time(timein)
             tsec = self._get_tsec(tnew)
-            dt = tsec[1] - tsec[0]
+            #dt = tsec[1] - tsec[0]
+            dt,isequal = self._check_dt(tsec)
             #dt = (tnew[1]-tnew[0]).total_seconds()
 
         if method=='nearestmask':
             # Nearest neighbour doesn't use interp1d to preserve mask
-            self._evenly_dist_data(dt)
-            tnew, output = self.subset(tnew[0],tnew[-1])
+            #self._evenly_dist_data(dt)
+            #tnew, output = self.subset(tnew[0],tnew[-1])
+            output = self._interp_nearest(tsec)
 
         else:
 
@@ -658,6 +660,22 @@ class timeseries(object):
 
         return dt, isequal
             
+    def _interp_nearest(self, tout):
+        """
+        Nearest interpolation with preseverd mask
+        """
+        t0 = self.tsec[0]
+        t = self.tsec - t0
+
+        shape = self.y.shape[:-1] + tout.shape
+        yout = np.ma.MaskedArray(np.zeros(shape),mask=True)
+
+        tind = np.searchsorted(tout,t)
+
+        yout[...,tind] = self.y
+
+        return yout
+
     def _evenly_dist_data(self, dt):
         """
         Distribute the data onto an evenly spaced array
@@ -678,6 +696,7 @@ class timeseries(object):
         yout = np.ma.MaskedArray(np.zeros(shape),mask=True)
 
         yout[...,tind] = self.y
+
         
         ### Slow method
         #def updatetime(tsec):
