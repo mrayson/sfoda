@@ -667,12 +667,14 @@ class timeseries(object):
         t0 = self.tsec[0]
         t = self.tsec - t0
 
+        tout -= tout[0]
+
         shape = self.y.shape[:-1] + tout.shape
         yout = np.ma.MaskedArray(np.zeros(shape),mask=True)
 
-        tind = np.searchsorted(tout,t)
+        tind = np.searchsorted(tout,t) - 1
 
-        yout[...,tind] = self.y
+        yout[...,tind] = self.y[:]
 
         return yout
 

@@ -16,6 +16,16 @@ from soda.utils import othertime
 
 import pdb
 
+# Parallel modules
+import gevent
+from gevent.pool import Pool
+from gevent import monkey
+
+monkey.patch_all()
+
+
+
+
 ####
 # Utility functions
 ####
@@ -200,19 +210,58 @@ class GridDAP(object):
 
 
         ###
-        # Download time chunks of data
-        ###
+        # Download time chunks of data in parallel
+        ##
+
+        # Build a list of tuples with the record indices
+        recs = []
         p1 = 0
         for ff in tslice_dict.keys():
-            nc = Dataset(ff)
             t1,t2 = tslice_dict[ff]
             p2 = p1+t2-t1
-            print '\t Downloading from file:\n%s'%ff
-            data[p1:p2+1,...] = self.get_data_singlefile(varname,nc,t1,t2+1)
+            #print '\t Downloading from file:\n%s'%ff
+            #data[p1:p2+1,...] = self.get_data_singlefile(varname,nc,t1,t2+1)
 
             p1=p2+1
+            _nc = Dataset(ff)
+            recs.append((ff, p1,p2,t1,t2, _nc))
+
+
+        def get_data_parallel(rec):
+            ''' Parallel wrapper function'''
+            ff, p1, p2, t1, t2, nc = rec
+
+            #nc = Dataset(ff)
+            print '\t Downloading from file (parallel):\n%s'%ff
+            data_tmp = self.get_data_singlefile(varname,nc,t1,t2+1)
+            #nc.close()
+
+            return data_tmp
+
+        # Do the work on many threads...
+        pool = Pool(32)
+        datas = pool.map(get_data_parallel, recs)
+
+        # Insert the list of data chunks back into the array
+        for rec, data_i in zip(recs, datas):
+            ff, p1, p2, t1, t2, nc = rec
+            data[p1:p2+1,...] = data_i
             nc.close()
-        
+
+        ###
+        # Download time chunks of data
+        ###
+        #p1 = 0
+        #for ff in tslice_dict.keys():
+        #    nc = Dataset(ff)
+        #    t1,t2 = tslice_dict[ff]
+        #    p2 = p1+t2-t1
+        #    print '\t Downloading from file:\n%s'%ff
+        #    data[p1:p2+1,...] = self.get_data_singlefile(varname,nc,t1,t2+1)
+
+        #    p1=p2+1
+        #    nc.close()
+        #
         ####
         ## Download data step-by-step (slow)
         ####
@@ -237,6 +286,20 @@ class GridDAP(object):
         """
         Download the data from a single file
         """
+
+        def get_2d(data):
+            try:
+                # Do step-by-step (slower)
+                data = nc.variables[varname]\
+                    [self.y1:self.y2,self.x1:self.x2]
+
+            except:
+                print 'Ouch! Server says no... I''ll retry...'
+                time.sleep(0.1)
+                data = get_2d(data)
+
+            return data
+
 
         def get_3d_step(data,tstart):
             try:
@@ -272,7 +335,11 @@ class GridDAP(object):
             return data
 
         ndim = nc.variables[varname].ndim
-        if ndim==3:
+        if ndim==2:
+            data = np.zeros((1, self.ny, self.nx))
+            data = get_2d(data)
+
+        elif ndim==3:
             try:
                 if self.graball:
                     data = nc.variables[varname]\
@@ -478,10 +545,14 @@ class GetDAP(object):
         except:
             if ndims==4:
                 timecoord, zcoord, ycoord0 ,xcoord0 = dims
-            else:
+            elif ndims==3:
                  timecoord, ycoord0 ,xcoord0 = dims
-        if ndims==3:
-            zcoord=None
+                 zcoord=None
+            elif ndims==2:
+                 ycoord0 ,xcoord0 = dims
+                 zcoord=None
+                 timecoord=None # Used for writing
+
 
         # Do a hackish check to see if x and y are in the right order
         if 'lat' in xcoord0.lower() or 'lon' in ycoord0.lower():
@@ -532,7 +603,7 @@ class GetDAP(object):
         self._outnc.variables[ycoord][:]=dapobj.localY
 
         is3d = False
-        if not zcoord==None:
+        if not zcoord is None:
             self.create_ncvar_fromvarname(zcoord,dimsizes=dapobj.localZ.shape)
             self._outnc.variables[zcoord][:]=dapobj.localZ
             is3d = True
@@ -545,7 +616,13 @@ class GetDAP(object):
             dimsize = (None, dapobj.nz, dapobj.ny, dapobj.nx)
         else:
             dimsize = (None, dapobj.ny, dapobj.nx)
-        self.create_ncvar_fromvarname(remotevar,dimsizes=dimsize)
+
+        if timecoord is None:
+            create_time=True
+        else:
+            create_time=False
+
+        self.create_ncvar_fromvarname(remotevar,dimsizes=dimsize, create_time=create_time)
 
 
         # Write to the variable
@@ -585,8 +662,30 @@ class GetDAP(object):
 
         else:
             # Create the variable (note unlimited dimension size)
-            self.create_ncvar_fromvarname(timecoord,dimsizes=(None,))
+            if timecoord is not None:
+                self.create_ncvar_fromvarname(timecoord,dimsizes=(None,))
+            else:
+                # Create the time variable manually (necessary for 2D arrays)
+                print 'No time variable - creating one manually...'
+                varname='time'
+                if not hasdim(self._outnc,'time'):
+                    tdim = self._outnc.createDimension('time', None)
+                    dims = (tdim,)
+                else:
+                    tdim = self._outnc.dimensions['time']
+                    dims = (tdim,)
 
+                if not hasvar(self._outnc,'time'):
+                    tmp=self._outnc.createVariable(varname, 'f8', ('time',))
+
+                    # Copy the attributes
+                    tmp.setncattr('long_name','time')
+                    tmp.setncattr('units','seconds since 1970-01-01')
+
+            if timecoord is None:
+                timecoord='time'
+
+            print 'tout... ', tout
             # Write the data (converts to netcdf units)
             t = self._outnc.variables[timecoord]
             self._outnc.variables[timecoord][:] = \
@@ -633,11 +732,13 @@ class GetDAP(object):
         self._outnc.variables[ycoord][:] = self._nc.variables[ycoord][:]
         
 
-    def create_ncvar_fromvarname(self,varname,dimsizes=None):
+    def create_ncvar_fromvarname(self,varname,dimsizes=None, create_time=False):
         """
         Create a netcdf variable using a remote variable name
 
         dimsizes can be passed as a list which will override the native grid
+
+        'create_time': Adds a time dimensions to variables without one
 
         """
 
@@ -650,17 +751,21 @@ class GetDAP(object):
         for ii,dim in enumerate(dims):
             # Create the dimension if it doesn't exist
             if not hasdim(self._outnc,dim):
-                if dimsizes==None:
+                if dimsizes is None:
                     dimsize = self._nc.dimensions[dim].__len__()
                 else:
                     dimsize = dimsizes[ii]
 
                 self._outnc.createDimension(dim,dimsize)
 
-        # Create the variable
         print varname
         V = self._nc.variables[varname]
-        tmp= self._outnc.createVariable(varname, V.dtype, V.dimensions,
+        # Create the variable
+        dimensions = V.dimensions
+        if create_time:
+            dimensions = ('time',)+dimensions
+
+        tmp= self._outnc.createVariable(varname, V.dtype, dimensions,
                 zlib=True)
 
         # Copy the attributes
