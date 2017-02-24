@@ -209,59 +209,59 @@ class GridDAP(object):
         tindex,ncurl,tslice_dict = self.MF(self.localtime.tolist(), var=rawvar)
 
 
+        ####
+        ## Download time chunks of data in parallel
         ###
-        # Download time chunks of data in parallel
-        ##
 
-        # Build a list of tuples with the record indices
-        recs = []
-        p1 = 0
-        for ff in tslice_dict.keys():
-            t1,t2 = tslice_dict[ff]
-            p2 = p1+t2-t1
-            #print '\t Downloading from file:\n%s'%ff
-            #data[p1:p2+1,...] = self.get_data_singlefile(varname,nc,t1,t2+1)
+        ## Build a list of tuples with the record indices
+        #recs = []
+        #p1 = 0
+        #for ff in tslice_dict.keys():
+        #    t1,t2 = tslice_dict[ff]
+        #    p2 = p1+t2-t1
+        #    #print '\t Downloading from file:\n%s'%ff
+        #    #data[p1:p2+1,...] = self.get_data_singlefile(varname,nc,t1,t2+1)
 
-            p1=p2+1
-            _nc = Dataset(ff)
-            recs.append((ff, p1,p2,t1,t2, _nc))
+        #    p1=p2+1
+        #    _nc = Dataset(ff)
+        #    recs.append((ff, p1,p2,t1,t2, _nc))
 
 
-        def get_data_parallel(rec):
-            ''' Parallel wrapper function'''
-            ff, p1, p2, t1, t2, nc = rec
+        #def get_data_parallel(rec):
+        #    ''' Parallel wrapper function'''
+        #    ff, p1, p2, t1, t2, nc = rec
 
-            #nc = Dataset(ff)
-            print '\t Downloading from file (parallel):\n%s'%ff
-            data_tmp = self.get_data_singlefile(varname,nc,t1,t2+1)
-            #nc.close()
+        #    #nc = Dataset(ff)
+        #    print '\t Downloading from file (parallel):\n%s'%ff
+        #    data_tmp = self.get_data_singlefile(varname,nc,t1,t2+1)
+        #    #nc.close()
 
-            return data_tmp
+        #    return data_tmp
 
-        # Do the work on many threads...
-        pool = Pool(32)
-        datas = pool.map(get_data_parallel, recs)
+        ## Do the work on many threads...
+        #pool = Pool(32)
+        #datas = pool.map(get_data_parallel, recs)
 
-        # Insert the list of data chunks back into the array
-        for rec, data_i in zip(recs, datas):
-            ff, p1, p2, t1, t2, nc = rec
-            data[p1:p2+1,...] = data_i
-            nc.close()
+        ## Insert the list of data chunks back into the array
+        #for rec, data_i in zip(recs, datas):
+        #    ff, p1, p2, t1, t2, nc = rec
+        #    data[p1:p2+1,...] = data_i
+        #    nc.close()
 
         ###
         # Download time chunks of data
         ###
-        #p1 = 0
-        #for ff in tslice_dict.keys():
-        #    nc = Dataset(ff)
-        #    t1,t2 = tslice_dict[ff]
-        #    p2 = p1+t2-t1
-        #    print '\t Downloading from file:\n%s'%ff
-        #    data[p1:p2+1,...] = self.get_data_singlefile(varname,nc,t1,t2+1)
+        p1 = 0
+        for ff in tslice_dict.keys():
+            nc = Dataset(ff)
+            t1,t2 = tslice_dict[ff]
+            p2 = p1+t2-t1
+            print '\t Downloading from file:\n%s'%ff
+            data[p1:p2+1,...] = self.get_data_singlefile(varname,nc,t1,t2+1)
 
-        #    p1=p2+1
-        #    nc.close()
-        #
+            p1=p2+1
+            nc.close()
+        
         ####
         ## Download data step-by-step (slow)
         ####

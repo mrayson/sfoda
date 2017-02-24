@@ -14,12 +14,12 @@ import othertime
 
 import pdb
 
-def harmonic_fit(t,X,frq,mask=None,axis=0,phsbase=None):
+def harmonic_fit(dtime, X, frq, mask=None, axis=0, phsbase=None):
     """
     Least-squares harmonic fit on an array, X, with frequencies, frq. 
     
     X - vector [Nt] or array [Nt, (size)]
-    t - vector [Nt]
+    dtime - datetime-like vector [Nt]
     frq - vector [Ncon]
     mask - array [(size non-time X)]
     phsbase - phase offset
@@ -27,12 +27,15 @@ def harmonic_fit(t,X,frq,mask=None,axis=0,phsbase=None):
     where, dimension with Nt should correspond to axis = axis.
     """
 
-    t = np.asarray(t)
+    ###
+    # Convert the dtime to seconds since
+    t = othertime.SecondsSince(dtime, basetime=phsbase)
+    #t = np.asarray(t)
     
     # Reshape the array sizes
     X = X.swapaxes(0, axis)
     sz = X.shape
-    lenX = np.prod(sz[1:])
+    lenX = int(np.prod(sz[1:]))
     
     if not len(t) == sz[0]:
         raise 'length of t (%d) must equal dimension of X (%s)'%(len(t),sz[0])
@@ -102,12 +105,16 @@ def harmonic_fit(t,X,frq,mask=None,axis=0,phsbase=None):
         C, C0 = lstsqnumpy(A,X) # This works on all columns of X!!
         Amp, Phs= phsamp(C)
 
+    ###
+    # !! Do not need to do this as the time is now in units of seconds since phsbase
     # Reference the phase to some time
-    if not phsbase is None:
-        base = othertime.SecondsSince(phsbase)
-	phsoff = phase_offset(frq,t[0],base)
-	phsoff = np.repeat(phsoff.reshape((phsoff.shape[0],1)),lenX,axis=1)
-	Phs = np.mod(Phs+phsoff,2*np.pi)
+    #if not phsbase is None:
+    #    base = othertime.SecondsSince(phsbase)
+    #    phsoff = phase_offset(frq,t[0],base)
+    #    phsoff = np.repeat(phsoff.reshape((phsoff.shape[0],1)),lenX,axis=1)
+    #    Phs = np.mod(Phs+phsoff,2*np.pi)
+    #    pdb.set_trace()
+    # !!
     
             
     
@@ -118,7 +125,7 @@ def harmonic_fit(t,X,frq,mask=None,axis=0,phsbase=None):
     
     # Output back along the original axis
     # Amplitude, phase, mean
-    return Amp.swapaxes(axis,0), Phs.swapaxes(axis,0), C0.swapaxes(axis,0)
+    return Amp.swapaxes(axis,0), Phs.swapaxes(axis,0), C0#C0.swapaxes(axis,0)
     
 def phase_offset(frq,start,base):
         """
@@ -154,24 +161,30 @@ def harmonic_signal(time, amp, phs, cmean, omega, phsbase=None, axis=-1):
 
     (Assumes time is along the first axis for now)
     """
-
-    # Initialise the output arrays
-    sz = amp.shape[:1]
-    nx = np.prod(sz)
     nt = time.shape[0]
+    # Initialise the output arrays
+    if amp.ndim>1:
+        sz = amp.shape[:1]
+        h=np.ones((nt,)+sz)*cmean[np.newaxis,...]
+    else:
+        h=np.ones((nt,))*cmean[np.newaxis,...]
 
-
-    h=np.ones((nt,)+sz)*cmean[np.newaxis,...]
+    #nx = np.prod(sz)
     
     # Rebuild the time series
     #tsec=TS_harm.tsec - TS_harm.tsec[0]
     if phsbase is None:
         phsbase=time[0]
+
     tsec = othertime.SecondsSince(time,basetime=phsbase)
 
     for nn,om in enumerate(omega):
-        h[:] += amp[np.newaxis,...,nn] *\
+        if amp.ndim>1:
+            h[:] += amp[np.newaxis,...,nn] *\
                 np.cos(om*tsec[:,np.newaxis] - phs[np.newaxis,...,nn])
+        else:
+            h[:] += amp[nn] *\
+                np.cos(om*tsec[:] - phs[nn])
             
     return h
 

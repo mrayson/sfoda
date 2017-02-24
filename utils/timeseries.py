@@ -290,7 +290,7 @@ class timeseries(object):
         #return amp, phs, frq, frqnames, U.invfft()
 
         amp, phs, mean = \
-            harmonic_fit(self.tsec, self.y, frq,\
+            harmonic_fit(self.t, self.y, frq,\
              mask=self.y.mask,\
              phsbase=basetime, axis=axis)
 
@@ -1211,7 +1211,7 @@ def ap2ep(uamp,uphs,vamp,vphs):
                                
     return SEMA, SEMI, INC, PHA, ECC
     
-def rms(x,axis=None):
+def rms(x,axis=-1):
     """
     root mean squared
     """
