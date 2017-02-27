@@ -613,6 +613,12 @@ def load_netcdf(ncfile, group):
     # Load the attributes
     attrs = ds['%s_obs'%varname].attrs
 
+    # Get the depth
+    try:
+        Z = TSobs.columns.values
+    except:
+        Z = 0.
+
     # Convert to a ModVsObs object
     # Put the data into a ModVsObs object (model first then observed)
     return ModVsObs(\
@@ -626,5 +632,6 @@ def load_netcdf(ncfile, group):
             long_name=attrs['long_name'], \
             units=attrs['units'], \
             stationid=group,\
+            Z=Z,\
         )
  

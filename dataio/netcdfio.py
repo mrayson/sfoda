@@ -499,7 +499,7 @@ def netcdfObs2DB(ncfile, dbfile, nctype=1):
                 dbtuple = (ncfile, grp, vv, lon,\
                     lat, lon, lon,\
                     lat, lat, dates[0], dates[-1],\
-                    ele,ele,StationName,StationID,'Point')
+                    ele,ele,StationName,StationID,'POINT')
  
     
             if write:

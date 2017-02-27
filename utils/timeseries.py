@@ -589,9 +589,12 @@ class timeseries(object):
         coords = {'time':self.t.copy()}
         if self.y.ndim == 1:
             dims = ('time',)
+            y = self.y
         else:
             dims = ('time','depth')
+            #dims = ('depth','time')
             coords.update({'depth':self.Z})
+            y = self.y.T 
 
         # Define the attributes
         attrs = {\
@@ -600,7 +603,7 @@ class timeseries(object):
             'StationID':self.StationID,\
         }
 
-        return xray.DataArray( self.y.copy(), \
+        return xray.DataArray( y.copy(), \
                     dims=dims,\
                     name=self.varname,\
                     attrs = attrs,\
