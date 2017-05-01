@@ -34,7 +34,8 @@ import os
 
 from soda.dataio.datadownload.get_metocean_dap import get_metocean_local
 from soda.dataio.roms import romsio
-from soda.utils.maptools import readShpPoly,ll2utm,utm2ll
+from soda.utils.maptools import readShpPoly#,ll2utm,utm2ll
+from soda.utils.myproj import MyProj
 from soda.utils.interpXYZ import Interp4D
 from soda.utils.inpolygon import inpolygon
 from soda.dataio.conversion import readotps 
@@ -56,8 +57,10 @@ class Boundary(object):
             have format 'yyyymmdd.HHMM' and dt in seconds
     """
     
+    projstr = None
     utmzone = 15
     isnorth = True
+
     loadfromnc = False
 
     # Interpolation options dictionary
@@ -102,6 +105,9 @@ class Boundary(object):
             self._loadBoundaryNC()
 
             self.tsec = self.ncTime()
+
+        # Create a projection conversion object
+        self.Proj = MyProj(self.projstr, utmzone=self.utmzone, isnorth=self.isnorth)
         
 
     def __call__(self,tsec,varname,method='quadratic'):
@@ -609,7 +615,10 @@ class Boundary(object):
         # Convert to utm
         ll = np.vstack([X.ravel(),Y.ravel()]).T
         if convert2utm:
-            xy = ll2utm(ll,self.utmzone,north=self.isnorth)
+            #xy = ll2utm(ll,self.utmzone,north=self.isnorth)
+            Lo, La = self.Proj.to_xy(ll[:,0], ll[:,1])
+            xy = np.column_stack((Lo,La))
+
         else:
             xy = ll
 
@@ -692,8 +701,11 @@ class Boundary(object):
         
         if self.N3>0:
             print 'Interolating otis onto type 3 bc''s...'
-            xy = np.vstack((self.xv,self.yv)).T
-            ll = utm2ll(xy,self.utmzone,north=self.isnorth)
+            #xy = np.vstack((self.xv,self.yv)).T
+            #ll = utm2ll(xy, self.utmzone, north=self.isnorth)
+            Lo, La = self.Proj.to_ll(self.xv, self.yv)
+            ll = np.column_stack((Lo,La))
+
             
             if self.__dict__.has_key('dv'):
                 z=self.dv
@@ -702,7 +714,8 @@ class Boundary(object):
                 to set this.'
                 z=None
                 
-            h,U,V = readotps.tide_pred(otisfile,ll[:,0],ll[:,1],np.array(self.time),z=z,conlist=conlist)
+            h,U,V = readotps.tide_pred(otisfile, ll[:,0], ll[:,1],\
+                np.array(self.time),z=z,conlist=conlist)
             
             # Update the arrays - note that the values are added to the existing arrays
             self.h += h
@@ -713,8 +726,12 @@ class Boundary(object):
 
         if self.N2>0:
             print 'Interolating otis onto type 2 bc''s...'
-            xy = np.hstack((self.xe,self.ye))
-            ll = utm2ll(xy,self.utmzone,north=self.isnorth)
+            #xy = np.hstack((self.xe,self.ye))
+            #ll = utm2ll(xy,self.utmzone,north=self.isnorth)
+
+            Lo, La = self.Proj.to_ll(self.xe, self.ye)
+            ll = np.column_stack((Lo,La))
+
             
             if self.__dict__.has_key('de'):
                 z=self.de
@@ -743,8 +760,12 @@ class Boundary(object):
 	Also adds the residual (low-frequency) water level variability.
         """
         
-        xy = np.vstack((self.xv.ravel(),self.yv.ravel())).T
-        ll = utm2ll(xy,self.utmzone,north=self.isnorth)
+        #xy = np.vstack((self.xv.ravel(),self.yv.ravel())).T
+        #ll = utm2ll(xy,self.utmzone,north=self.isnorth)
+
+        Lo, La = self.Proj.to_ll(self.xv, self.yv)
+        ll = np.column_stack((Lo,La))
+
         
         if self.__dict__.has_key('dv'):
             z=self.dv
@@ -752,7 +773,8 @@ class Boundary(object):
             print 'Using OTIS depths to calculate velocity. Set self.dv to change this.'
             z=None
             
-        h,U,V,residual = readotps.tide_pred_correc(otisfile,ll[:,0],ll[:,1],np.array(self.time),dbfile,stationID,z=z,conlist=conlist)
+        h,U,V,residual = readotps.tide_pred_correc(otisfile, ll[:,0], ll[:,1],\\
+                np.array(self.time), dbfile, stationID, z=z, conlist=conlist)
 
         # Update the arrays - note that the values are added to the existing arrays
         self.h += h
@@ -776,6 +798,7 @@ class InitialCond(Grid):
     """
     SUNTANS initial condition class
     """
+    projstr = None
     utmzone = 15
     isnorth = True
 
@@ -804,6 +827,9 @@ class InitialCond(Grid):
         
         # Initialise the output array
         self.initArrays()
+
+        # Create a projection conversion object
+        self.Proj = MyProj(self.projstr, utmzone=self.utmzone, isnorth=self.isnorth)
         
     def initArrays(self):
         """
@@ -897,7 +923,10 @@ class InitialCond(Grid):
 
         ll = np.vstack([X.ravel(),Y.ravel()]).T
         if convert2utm:
-            xy = ll2utm(ll,self.utmzone,north=self.isnorth)
+            #xy = ll2utm(ll,self.utmzone,north=self.isnorth)
+            Lo, La = self.Proj.to_xy(ll[:,0], ll[:,1])
+            xy = np.column_stack((Lo,La))
+
         else:
             xy = ll
 

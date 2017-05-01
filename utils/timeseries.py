@@ -296,7 +296,10 @@ class timeseries(object):
 
         yfit = harmonic_signal(self.t, amp, phs, mean, frq, phsbase=basetime, axis=axis)
         
-        return amp, phs, frq, mean, yfit
+        # compute an error
+        yrms = rms(self.y - yfit.T)
+        
+        return amp, phs, frq, mean, yfit, yrms
         #return amp, phs, frq, frqnames, yfit
         
     def running_harmonic(self,omega,windowlength=3*86400.0,overlap=12*3600.0, plot=True):

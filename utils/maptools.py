@@ -17,9 +17,11 @@ import gdal
 from gdalconst import * 
 import numpy as np
 import matplotlib.pyplot as plt
-from inpolygon import inpolygon
+from matplotlib.collections import PolyCollection
 import os
 from shapely import geometry
+
+from inpolygon import inpolygon
    
 import pdb
 
@@ -429,7 +431,6 @@ def plotmap(shpfile,color='0.5',fieldname='FID',convert=None,zone=15,\
         zone = utm zone number
     """
     
-    from matplotlib.collections import PolyCollection
     
     # Read the shapefile
     xy,marker = readShpPoly(shpfile,FIELDNAME=fieldname)

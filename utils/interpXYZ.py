@@ -12,7 +12,8 @@
 import gzip
 from scipy import spatial
 import numpy as np
-from maptools import ll2utm, readShpBathy, readraster
+from maptools import readShpBathy, readraster #,ll2utm 
+from myproj import MyProj
 from kriging import kriging
 from netCDF4 import Dataset
 import othertime
@@ -330,6 +331,7 @@ class Inputs(object):
     """
     
     # Projection information
+    projstr = None
     convert2utm=True
     CS='NAD83'
     utmzone=15
@@ -366,7 +368,12 @@ class Inputs(object):
         if self.convert2utm:                     
             # Convert the coordinates
             print 'Transforming the coordinates to UTM...'
-            self.XY=ll2utm(LL,self.utmzone,self.CS,self.isnorth)
+            #self.XY=ll2utm(LL,self.utmzone,self.CS,self.isnorth)
+            # Define a projection
+            P = MyProj(self.projstr, utmzone=self.utmzone, isnorth=self.isnorth)
+            X, Y = P(LL[:,0], LL[:,1])
+            self.XY = np.column_stack((X, Y))
+
         else:
             self.XY=LL
    
