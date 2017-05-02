@@ -3,6 +3,7 @@ Wrapper for the pyproj library
 """
 
 from pyproj import Proj
+import pdb
 
 class MyProj(object):
    
@@ -29,7 +30,7 @@ class MyProj(object):
         self.P = Proj(projstr)
         
         # Create the inverse projection here
-        self.inverseProj = self.P.to_latlong()
+        #self.inverseProj = self.P.to_latlong()
 
     def __call__(self, lon, lat):
         return self.P(lon,lat)
@@ -38,7 +39,7 @@ class MyProj(object):
         return self.P(lon, lat)
 
     def to_ll(self, x, y):
-        return self.inverseProj(x, y)
+        return self.P(x, y, inverse=True)
 
     #def __new__(self, projstr, **kwargs):
     #    if projstr is None:

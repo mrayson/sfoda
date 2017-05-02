@@ -56,7 +56,7 @@ class interpXYZ(object):
 
         if self.clip:
             print 'Clipping points outside of range'
-            self.XY = self.clipPoints(XY)
+            self.XY, self.clipindex = clip_points(XY, self.bbox)
         else:
             self.XY = XY
 
@@ -143,19 +143,7 @@ class interpXYZ(object):
         self.Finterp = CurvMin(self.XY, self.XYout)
                 
     
-    def clipPoints(self,LL):
-        """ Clips points outside of the bounding box"""
-        X = LL[:,0]
-        Y = LL[:,1]
-        self.clipindex = np.all([X>=self.bbox[0],X<=self.bbox[1],Y>=self.bbox[2],Y<=self.bbox[3]],axis=0)                    
-
-        return LL[self.clipindex,:]
-        
-        #print 'Clipped %d points.'%(self.npt-sum(ind))
-        #self.Zin = self.Zin[ind]
-        #self.npt = len(self.Zin)
-        #return np.concatenate((np.reshape(X[ind],(self.npt,1)),np.reshape(Y[ind],(self.npt,1))),axis=1)
-        
+       
     def save(self,outfile='DEM.nc'):
         """ Saves the DEM to a netcdf file"""
         
@@ -241,7 +229,7 @@ class Interp4D(object):
 
         """
         self.is4D=True
-        if zin == None:
+        if zin is None:
             self.is4D=False
             self.nz=1
         else:
@@ -252,7 +240,7 @@ class Interp4D(object):
 
         # Create a 3D mask
         self.szxy = xin.shape
-        if mask==None:
+        if mask is None:
             self.mask = np.zeros((self.nz,)+self.szxy,np.bool)
         else:
             self.mask=mask
@@ -309,18 +297,29 @@ class Interp4D(object):
 
         # Now create a z-interpolation class
         if self.is4D:
-            _Fz = interpolate.interpolate.interp1d(self.zin,data_xy,axis=1,kind=self.zinterp_method,\
-                bounds_error=False,fill_value=0.)
+            _Fz = interpolate.interpolate.interp1d(self.zin,\
+                data_xy,\
+                axis=1,\
+                kind=self.zinterp_method,\
+                bounds_error=False,\
+                fill_value=0.)
 
             data_xyz = _Fz(self.zout)
         else:
             data_xyz = data_xy
 
         # Time interpolation
-        _Ft = interpolate.interp1d(self.tin,data_xyz,axis=0,kind=self.tinterp_method,\
-            bounds_error=False,fill_value=0.)
+        if data_xyz.shape[0] == 1:
+            return data_xyz
+        else:
+            _Ft = interpolate.interp1d(self.tin,\
+                data_xyz,\
+                axis=0,\
+                kind=self.tinterp_method,\
+                bounds_error=False,\
+                fill_value=0.)
          
-        return _Ft(self.tout)
+            return _Ft(self.tout)
 
 
 
@@ -329,7 +328,6 @@ class Inputs(object):
         Class for handling input data from different file formats
         
     """
-    
     # Projection information
     projstr = None
     convert2utm=True
@@ -365,8 +363,11 @@ class Inputs(object):
         
         self.npt = len(LL)
         
+        # Clip here...
+
+
+        # Convert the coordinates
         if self.convert2utm:                     
-            # Convert the coordinates
             print 'Transforming the coordinates to UTM...'
             #self.XY=ll2utm(LL,self.utmzone,self.CS,self.isnorth)
             # Define a projection
@@ -580,7 +581,21 @@ def tile_vector(count,chunks):
         pt2 = range(dx,count,dx)  
     return pt1,pt2
     
+def clip_points(LL, bbox):
+    """ Clips points outside of the bounding box"""
+    X = LL[:,0]
+    Y = LL[:,1]
+    clipindex = np.all([X>=bbox[0], X<=bbox[1],\
+        Y>=bbox[2], Y<=bbox[3]], \
+        axis=0)                    
 
+    return LL[clipindex,:], clipindex
+        
+        #print 'Clipped %d points.'%(self.npt-sum(ind))
+        #self.Zin = self.Zin[ind]
+        #self.npt = len(self.Zin)
+        #return np.concatenate((np.reshape(X[ind],(self.npt,1)),np.reshape(Y[ind],(self.npt,1))),axis=1)
+ 
     
 ################
 # Testing sections

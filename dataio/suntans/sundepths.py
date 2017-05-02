@@ -42,10 +42,12 @@ class DepthDriver(object):
     vrange = 250.0
     
     # Projection conversion info for input data
+    clip=False
     convert2utm=False
     CS='NAD83'
     utmzone=15
     isnorth=True
+    projstr=None
     vdatum = 'MSL'
     shapefieldname='contour'
     
@@ -67,9 +69,9 @@ class DepthDriver(object):
             self.indata = DEM(depthfile)
 
         else:
-            self.indata = Inputs(depthfile,convert2utm=self.convert2utm,\
-                CS=self.CS,utmzone=self.utmzone,\
-                isnorth=self.isnorth,vdatum=self.vdatum,\
+            self.indata = Inputs(depthfile, convert2utm=self.convert2utm,\
+                CS=self.CS, utmzone=self.utmzone, projstr=self.projstr,\
+                isnorth=self.isnorth, vdatum=self.vdatum,\
                 shapefieldname=self.shapefieldname)
 
 
@@ -127,8 +129,16 @@ class DepthDriver(object):
         # Initialise the Interpolation class
         if not self.isDEM:
             print 'Building interpolant class...'
-            self.F = interpXYZ(self.indata.XY,self.xy,method=self.interpmethod,NNear=self.NNear,\
-                    p=self.p,varmodel=self.varmodel,nugget=self.nugget,sill=self.sill,vrange=self.vrange)
+            self.F = interpXYZ(self.indata.XY,\
+                self.xy,\
+                clip=self.clip,\
+                method=self.interpmethod,\
+                NNear=self.NNear,\
+                p=self.p,\
+                varmodel=self.varmodel,\
+                nugget=self.nugget,\
+                sill=self.sill,\
+                vrange=self.vrange)
 
             # Interpolate the data
             print 'Interpolating data...'
@@ -157,8 +167,11 @@ class DepthDriver(object):
             Fsmooth = ufilter(self.xy, self.smoothrange)
 
         else:
-            Fsmooth =interpXYZ(self.xy,self.xy,\
-                method=self.smoothmethod,NNear=self.smoothnear,vrange=self.smoothrange)
+            Fsmooth =interpXYZ(self.xy,\
+                self.xy,\
+                method=self.smoothmethod,\
+                NNear=self.smoothnear,\
+                vrange=self.smoothrange)
 
         self.grd.dv = Fsmooth(self.grd.dv)
 

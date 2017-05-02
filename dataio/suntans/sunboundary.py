@@ -773,7 +773,7 @@ class Boundary(object):
             print 'Using OTIS depths to calculate velocity. Set self.dv to change this.'
             z=None
             
-        h,U,V,residual = readotps.tide_pred_correc(otisfile, ll[:,0], ll[:,1],\\
+        h,U,V,residual = readotps.tide_pred_correc(otisfile, ll[:,0], ll[:,1],\
                 np.array(self.time), dbfile, stationID, z=z, conlist=conlist)
 
         # Update the arrays - note that the values are added to the existing arrays
@@ -940,8 +940,16 @@ class InitialCond(Grid):
 
         # Construct the 4D interp class
         F4d =\
-            Interp4D(xy[:,0],xy[:,1],nc.Z, nc.localtime,\
-                self.xv,self.yv,self.z_r,self.time,mask=mask3d,**self.interpdict)
+            Interp4D(xy[:,0],\
+                xy[:,1],\
+                nc.Z,\
+                nc.localtime,\
+                self.xv,\
+                self.yv,\
+                self.z_r,\
+                self.time,\
+                mask=mask3d,\
+                **self.interpdict)
 
         tempnew = F4d(temp)
         self.T[:] = tempnew
