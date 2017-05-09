@@ -28,10 +28,9 @@ from soda.dataio.suntans.suntans_ugrid import ugrid
 from soda.utils.timeseries import timeseries
 from soda.utils.ufilter import ufilter
 from soda.utils.maptools import utm2ll
+from soda.utils.myproj import MyProj
 from soda.dataio.ugrid.hybridgrid import HybridGrid, circumcenter
 from soda.dataio.ugrid.gridsearch import GridSearch
-
-
 
 import pdb
 
@@ -48,6 +47,8 @@ suntans_gridvars = {'xp':'xp',\
                     'yv':'yv',\
                     'xe':'xe',\
                     'ye':'ye',\
+                    'lonv':'lonv',\
+                    'latv':'latv',\
                     'cells':'cells',\
                     'face':'face',\
                     'nfaces':'nfaces', \
@@ -103,6 +104,12 @@ class Grid(object):
 
     VERBOSE=True
 
+    ###
+    # Grid projection details
+    projstr = None
+    utmzone = None
+    isnorth = None
+
     def __init__(self,infile ,**kwargs):
                
         self.__dict__.update(kwargs)
@@ -133,6 +140,10 @@ class Grid(object):
         #self.grad[self.grad.mask]=0
         #self.face[self.face.mask]=0
         self.xy = self.cellxy()
+
+        ###
+        # Find the lat/lon of the cell-centres
+        self.lonv, self.latv = self.to_latlon(self.xv, self.yv)
 
         
     
@@ -470,6 +481,27 @@ class Grid(object):
         self.fig,self.ax,self.collection,self.cb=edgeplot(xylines,z,xlim=xlims,ylim=ylims,\
             clim=self.clim,**kwargs)
             
+    def to_latlon(self, x, y):
+        """
+        Convert x,y to lat/lon using the current grid projection
+
+        Need to set these attributes manually:
+            - projstr (leave as none for utm)
+            - utmzone (integer)
+            - isnorth (true/false)
+        """
+        if self.projstr is None and self.utmzone is None:
+            if self.VERBOSE:
+                print 'Warning - no cartographic projection specified'
+            lon = self._FillValue*np.ones_like(x)
+            lat = self._FillValue*np.ones_like(y)
+        else:
+            P = MyProj(self.projstr, utmzone=self.utmzone, isnorth=self.isnorth)
+            lon, lat = P.to_ll(x, y)
+
+
+        return lon, lat
+
     def to_wgs84(self, utmzone, isnorth):
         """
         Convert the node coordinates to WGS84 map projection
@@ -1097,14 +1129,14 @@ class Grid(object):
                 tmp.setncattr(aa,attdict[aa])
             nc.variables[name][:] = var
     
-        gridvars = ['suntans_mesh','cells','face','nfaces','edges','neigh','grad','xp','yp','xv','yv','xe','ye',\
-            'normal','n1','n2','df','dg','def','Ac','dv','dz','z_r','z_w','Nk','Nke','mark']
+        #gridvars = ['suntans_mesh','cells','face','nfaces','edges','neigh','grad','xp','yp','xv','yv','xe','ye',\
+        #    'normal','n1','n2','df','dg','def','Ac','dv','dz','z_r','z_w','Nk','Nke','mark']
         
         
         self.Nk += 1 # Set to one-base in the file (reset to zero-base after)
         self.suntans_mesh=[0]  
-        for vv in gridvars:
-            if self.__dict__.has_key(vv):
+        for vv in self.gridvars:
+            if self.__dict__.has_key(vv) and vv != 'time':
                 if self.VERBOSE:
                     print 'Writing variables: %s'%vv
                 write_nc_var(self[vv],vv,ugrid[vv]['dimensions'],ugrid[vv]['attributes'],dtype=ugrid[vv]['dtype'])
@@ -1211,6 +1243,11 @@ class Spatial(Grid):
             self.data = self.calc_divergence()
             self.long_name = 'Horizontal divergence'
             self.units = 's-1'
+            return
+        elif variable=='streamfunction':
+            self.data = self.calc_streamfunction()
+            self.long_name = 'Horizontal streamfunction'
+            self.units = 'm2 s-1'
             return
         elif variable=='PEanom':
             self.data = self.calc_PEanom()
@@ -1433,6 +1470,7 @@ class Spatial(Grid):
             vname.append('speed')
             vname.append('vorticity')
             vname.append('div_H') # Horizontal strain
+            vname.append('streamfunction') # Horizontal streamfunction
             vname.append('KE')
         if 'rho' in vname:
             vname.append('PE')
@@ -2012,6 +2050,7 @@ class Spatial(Grid):
                       'speed',\
                       'vorticity',\
                       'div_H',\
+                      'streamfunction',\
                       'KE',\
                       'PE',\
                       'buoyancy',\
@@ -2030,6 +2069,17 @@ class Spatial(Grid):
         #except:
         #    return False
      
+    def calc_streamfunction(self):
+        """
+        Calculate the horizontal streamfunction
+        """
+
+        self.klayer = [-99] # Make sure this is set
+        uc=self.loadDataRaw(variable='uc')
+        vc=self.loadDataRaw(variable='vc')
+
+        return self.depthint(uc) + self.depthint(vc)
+
     def calc_divergence(self):
         """
         Calculate the horizontal divergence
@@ -2310,7 +2360,10 @@ class Spatial(Grid):
         
         nz = np.size(self.dz)
                 
-        if ndim == 2:
+        if ndim == 1:
+            return data*self.dv
+
+        elif ndim == 2:
             nx = np.size(data,1)
             if dz is None:
                 dz2=np.reshape(self.dz,(nz,1))
@@ -2323,7 +2376,7 @@ class Spatial(Grid):
             else:
                 return np.sum(data*dz2,axis=0)
                 
-        if ndim == 3:
+        elif ndim == 3:
             nt = np.size(data,0)
             nx = np.size(data,2)
             if dz is None:

@@ -94,6 +94,20 @@ attributef = {'standard_name':'Northing',\
 dtype = 'f8'		
 ugrid.update({vname:{'dimensions':dimensions,'attributes':attributes,'dtype':dtype,'zlib':False}})
 
+vname = 'lonv'
+dimensions = ('Nc',)
+attributes = {'standard_name':'Longitude',\
+		'long_name':'Longitude of 2D mesh face'}
+dtype = 'f8'		
+ugrid.update({vname:{'dimensions':dimensions,'attributes':attributes,'dtype':dtype,'zlib':False}})
+
+vname = 'latv'
+dimensions = ('Nc',)
+attributes = {'standard_name':'Latitude',\
+		'long_name':'Latitude of 2D mesh face'}
+dtype = 'f8'		
+ugrid.update({vname:{'dimensions':dimensions,'attributes':attributes,'dtype':dtype,'zlib':False}})
+
 vname = 'xp'
 dimensions = ('Np',)
 attributes = {'standard_name':'Easting',\
