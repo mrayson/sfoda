@@ -75,7 +75,8 @@ class DepthDriver(object):
                 shapefieldname=self.shapefieldname)
 
 
-    def __call__(self,suntanspath,depthmax=0.0,scalefac=-1.0, interpnodes=True):
+    def __call__(self, suntanspath, depthmax=0.0, depthmin=1e4,\
+        scalefac=-1.0, interpnodes=True):
         
         self.suntanspath=suntanspath
         self.interpnodes = interpnodes
@@ -103,9 +104,13 @@ class DepthDriver(object):
         if self.smooth:
             self.smoothDepths()
         
-        # Cap the maximum depth
+        # Cap the maximum and minimum depth
         ind = self.grd.dv<=depthmax
         self.grd.dv[ind]=depthmax
+
+        ind = self.grd.dv>=depthmin
+        self.grd.dv[ind]=depthmin
+
         
         # Write the depths to file
         print 'Writing depths.dat...'
