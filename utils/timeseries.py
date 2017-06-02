@@ -556,7 +556,50 @@ class timeseries(object):
 
         modt,mody = self.subset(t0,t1)
 
-        return timeseries(modt, mody,\
+	return self.copy_like(modt, mody)
+
+        
+    def subset(self,time1,time2):
+        """
+        Returns a subset of the array between time1 and time2
+        """
+        t0, t1 = self.get_tslice(time1, time2)
+           
+        return self.t[t0:t1], self.y[..., t0:t1]
+    
+    def resample(self, dt):
+        """
+        Resamples the current timeseries object at the output interval
+	"dt"
+	"""
+
+	# Output time vector
+	timeout = othertime.TimeVector(self.t[0], self.t[-1], dt, 
+		istimestr=False)
+
+        # Use a running mean to filter data
+	if dt < self.dt:
+	    ymean = self.running_mean(windowlength=dt)
+	
+	else:
+	    ymean = self.y.copy()
+	
+	# Create a time series with the filtered data
+	tsmean = self.copy_like(self.t, ymean)
+
+	# Interpolate onto the output step
+	tnew, ynew = tsmean.interp(timeout)
+
+	return self.copy_like(tnew, ynew)
+	
+        
+    def copy_like(self, t, y):
+    	"""
+	Create a new time series "like" current one
+
+	Retains relevant attributes
+	"""
+	return timeseries(t, y,\
             units=self.units,\
             long_name=self.long_name,\
             StationID = self.StationID,\
@@ -566,14 +609,7 @@ class timeseries(object):
             Y= self.Y,\
             Z= self.Z,\
         )
-    def subset(self,time1,time2):
-        """
-        Returns a subset of the array between time1 and time2
-        """
-        t0, t1 = self.get_tslice(time1, time2)
-           
-        return self.t[t0:t1], self.y[..., t0:t1]
-        
+
     def savetxt(self,txtfile):
         f = open(txtfile,'w')
         
@@ -666,21 +702,24 @@ class timeseries(object):
 
         return dt, isequal
             
-    def _interp_nearest(self, tout):
+    def _interp_nearest(self, tout, y=None):
         """
         Nearest interpolation with preseverd mask
         """
+	if y is None:
+	    y = self.y
+
         t0 = self.tsec[0]
         t = self.tsec - t0
 
         tout -= tout[0]
 
-        shape = self.y.shape[:-1] + tout.shape
+        shape = y.shape[:-1] + tout.shape
         yout = np.ma.MaskedArray(np.zeros(shape),mask=True)
 
         tind = np.searchsorted(tout,t) - 1
 
-        yout[...,tind] = self.y[:]
+        yout[...,tind] = y[:]
 
         return yout
 

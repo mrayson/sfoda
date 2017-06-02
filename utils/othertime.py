@@ -24,6 +24,11 @@ def TimeVector(starttime,endtime,dt,istimestr=True,timeformat='%Y%m%d.%H%M%S'):
         t1 = starttime
         t2 = endtime
     
+    # Convert t1,t2 into datetime
+    if isinstance(t1, np.datetime64):
+	tnew = datetime64todatetime([t1,t2])
+	t1,t2 = tnew
+
     time = []
     t0=t1
     while t0 <= t2:

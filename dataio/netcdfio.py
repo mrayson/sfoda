@@ -100,6 +100,8 @@ def load_sql_ncstation(dbfile, station_name, varname, otherquery=None):
         #    %(varname, station_name, otherquery)
         condition = 'LOWER(Variable_Name) LIKE LOWER("%s") and StationName LIKE "%%%s%%" and %s'\
             %(varname, station_name, otherquery)
+	
+	print condition
 
     else:
         #condition = 'Variable_Name = "%s" and StationName LIKE "%%%s%%"'\
