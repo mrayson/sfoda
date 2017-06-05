@@ -578,21 +578,25 @@ class timeseries(object):
 		istimestr=False)
 
         # Use a running mean to filter data
-	if dt < self.dt:
+	if dt > self.dt:
 	    ymean = self.running_mean(windowlength=dt)
+	    # Create a time series with the filtered data
+	    tsmean = self.copy_like(self.t, ymean)
+
+	    # Interpolate onto the output step
+	    tnew, ynew = tsmean.interp(timeout, method='nearestmask')
+
+	    return self.copy_like(tnew, ynew)
 	
 	else:
-	    ymean = self.y.copy()
-	
-	# Create a time series with the filtered data
-	tsmean = self.copy_like(self.t, ymean)
+	    # Do not filter if dt < self.dt
+	    # Interpolate onto the output step
+	    tnew, ynew = self.interp(timeout, method='linear')
 
-	# Interpolate onto the output step
-	tnew, ynew = tsmean.interp(timeout)
+	    return self.copy_like(tnew, ynew)
 
-	return self.copy_like(tnew, ynew)
 	
-        
+	        
     def copy_like(self, t, y):
     	"""
 	Create a new time series "like" current one
