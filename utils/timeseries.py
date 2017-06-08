@@ -567,10 +567,12 @@ class timeseries(object):
            
         return self.t[t0:t1], self.y[..., t0:t1]
     
-    def resample(self, dt):
+    def resample(self, dt, ndt=2.):
         """
         Resamples the current timeseries object at the output interval
 	"dt"
+
+        Applies a running mean (window=dt) if dt > ndt*self.dt
 	"""
 
 	# Output time vector
@@ -578,7 +580,7 @@ class timeseries(object):
 		istimestr=False)
 
         # Use a running mean to filter data
-	if dt > self.dt:
+	if dt > ndt*self.dt:
 	    ymean = self.running_mean(windowlength=dt)
 	    # Create a time series with the filtered data
 	    tsmean = self.copy_like(self.t, ymean)
