@@ -73,7 +73,8 @@ class suntides(Spatial):
         else:
             self.tstep=self.getTstep(tstart,tend)
         
-        time = othertime.SecondsSince(self.time[self.tstep])
+        #time = othertime.SecondsSince(self.time[self.tstep])
+        time = self.time[self.tstep] # harmonic_fit wants datetime-like object
         
         self.varnames=varnames
         self._prepDict(varnames)
