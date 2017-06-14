@@ -66,8 +66,9 @@ class DepthDriver(object):
         
         # Parse the depth data into an object
         if self.isDEM:
-            self.indata = DEM(depthfile)
-
+            self.indata = DEM(depthfile, convert2utm=self.convert2utm,\
+                utmzone=self.utmzone, projstr=self.projstr,\
+            )
         else:
             self.indata = Inputs(depthfile, convert2utm=self.convert2utm,\
                 CS=self.CS, utmzone=self.utmzone, projstr=self.projstr,\

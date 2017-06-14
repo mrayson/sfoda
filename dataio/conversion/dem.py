@@ -17,6 +17,7 @@ import gdal
 from gdalconst import * 
 
 from soda.utils.interpXYZ import tile_vector
+from soda.utils.myproj import MyProj
 
 import pdb
 
@@ -27,7 +28,12 @@ class DEM(object):
     
     W = 1.0 # Weight
     maxdist = 250.0
-    
+
+    convert2utm=False
+    utmzone=15
+    isnorth=True
+    projstr=None
+ 
     def __init__(self,infile,**kwargs):
         self.infile=infile
         self.__dict__.update(kwargs)
@@ -35,6 +41,8 @@ class DEM(object):
             xgrd,ygrd,self.Z = self.loadnc()
         elif self.infile[-3:] in ['dem','asc']:
             xgrd,ygrd,self.Z = self.readraster()
+
+
         
         # Generate the grid
         self.x0 = xgrd.min()
@@ -52,6 +60,16 @@ class DEM(object):
         self.X,self.Y = np.meshgrid(xgrd,ygrd)
 
         self.x, self.y = xgrd, ygrd
+
+        if self.convert2utm:                     
+            print 'Transforming the DEM coordinates...'
+            # Define a projection
+            P = MyProj(self.projstr, utmzone=self.utmzone, isnorth=self.isnorth)
+            self.X, self.Y = P(self.X, self.Y)
+            self.x = self.X[0,:]
+            self.y = self.Y[:,0]
+
+ 
         
     def loadnc(self):
         """ Load the DEM data from a netcdf file"""        

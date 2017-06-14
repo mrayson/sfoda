@@ -342,7 +342,7 @@ class suntides(Spatial):
         
         ax.add_collection(collection)
         # Add a decent looking colorbar
-        if not cbarpos==None:
+        if not cbarpos is None:
             cbaxes = fig.add_axes(cbarpos) 
             cb = fig.colorbar(collection,cax = cbaxes,orientation='vertical')  
             cb.ax.set_title('[m s$^{-1}$]')
@@ -403,7 +403,7 @@ class suntides(Spatial):
         #cphs = plt.tricontour(t, self.cell2node(zP), Vphs,colors='k',linewidths=2.0)
         cphs = self.contourf(z=zP,clevs=Vphs,filled=False,\
             colorbar=None,titlestr='',
-            colors='k',linewidths=2.0)
+            colors='k',linewidths=0.5)
                 
         ax.set_aspect('equal')
         ax.set_xlim(xlims)
@@ -422,6 +422,8 @@ class suntides(Spatial):
         #titlestr='%s Amplitude\n%s [%s]\nPhase contours interval: %3.1f hr'%(self.frqnames[ii],self.long_name,self.units,phsint/3600.)
         titlestr='%s Amplitude\nPhase contour interval: %3.1f hr'%(self.frqnames[ii],phsint/3600.)
         plt.title(titlestr)
+
+        return camp
     
     def ustokes(self,barotropic=False,k=0,con='M2'):
         """

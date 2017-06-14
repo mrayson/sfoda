@@ -40,12 +40,13 @@ from datetime import datetime
 import numpy as np
 
 # Use cmocean colormaps (these are awesome!!)
-try:
-    from cmocean import cm
-    USECMOCEAN=True
-except:
-    print 'No cmocean'
-    USECMOCEAN=False
+#try:
+#    from cmocean import cm
+#    USECMOCEAN=True
+#except:
+#    print 'No cmocean'
+#    USECMOCEAN=False
+USECMOCEAN=False
 
 import pdb
 
