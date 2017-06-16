@@ -275,10 +275,12 @@ def extract_HC(modfile,lon,lat,z=None,conlist=None):
     F= interpXYZ(np.vstack((X[mask],Y[mask])).T,np.vstack((lon,lat)).T,method='idw',NNear=3,p=1.0)
     
     # Interpolate the model depths onto the points if z is none
-    if z == None:
-        z = F(depth[mask])
+    if z is None:
+        scalefac = 1.
     else:
         z = np.abs(z) # make sure they are positive
+        z_otps = F(depth[mask])
+        scalefac = z/z_otps
         
     ###
     # Check that the constituents are in the file
@@ -317,10 +319,18 @@ def extract_HC(modfile,lon,lat,z=None,conlist=None):
                 
         # Read and interpolate u and v - Note the conversion from transport to velocity
         X ,Y, tmp_u_re, tmp_u_im, tmp_v_re, tmp_v_im = read_OTPS_UV(uvfile,idx)
-        u_re[ii,:] = F(tmp_u_re[mask]) / z
-        u_im[ii,:] = F(tmp_u_im[mask]) / z
-        v_re[ii,:] = F(tmp_v_re[mask]) / z
-        v_im[ii,:] = F(tmp_v_im[mask]) / z
+
+
+        # Scale the fluxes by the depth
+        tmp_u_re /= depth
+        tmp_u_im /= depth
+        tmp_v_re /= depth
+        tmp_v_im /= depth
+
+        u_re[ii,:] = F(tmp_u_re[mask]) * scalefac
+        u_im[ii,:] = F(tmp_u_im[mask]) * scalefac
+        v_re[ii,:] = F(tmp_v_re[mask]) * scalefac
+        v_im[ii,:] = F(tmp_v_im[mask]) * scalefac
         
         
     # Return the arrays in their original shape
