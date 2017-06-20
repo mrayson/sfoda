@@ -27,6 +27,8 @@ def harmonic_fit(dtime, X, frq, mask=None, axis=0, phsbase=None):
     where, dimension with Nt should correspond to axis = axis.
     """
 
+    if phsbase is None:
+        phsbase = datetime(1900,1,1)
     ###
     # Convert the dtime to seconds since
     t = othertime.SecondsSince(dtime, basetime=phsbase)
@@ -44,7 +46,7 @@ def harmonic_fit(dtime, X, frq, mask=None, axis=0, phsbase=None):
     
     if not mask is None and np.any(mask):
          mask.swapaxes(0, axis)
-    #    mask = np.reshape(mask,(sz[0]*lenX,))
+         mask = np.reshape(mask,(sz[0],lenX))
     #    X = X.ravel()
     #else:
     #    mask = False
@@ -92,7 +94,8 @@ def harmonic_fit(dtime, X, frq, mask=None, axis=0, phsbase=None):
         Phs = np.zeros((Nfrq,lenX))
         C0 = np.zeros((lenX,))
         for ii in range(0,lenX):    
-            idx = mask[ii,:]==False
+            #idx = mask[ii,:]==False
+            idx = mask[:,ii]==False
             A = buildA(t[idx],frq)
             C, C0[ii] = lstsqnumpy(A,X[idx,ii])
             # Calculate the phase and amplitude
