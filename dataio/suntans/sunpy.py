@@ -139,7 +139,7 @@ class Grid(object):
         #self.cells[self.cells.mask]=0
         #self.grad[self.grad.mask]=0
         #self.face[self.face.mask]=0
-        self.xy = self.cellxy()
+        self.xy = self.cellxy(self.xp, self.yp)
 
         ###
         # Find the lat/lon of the cell-centres
@@ -521,9 +521,9 @@ class Grid(object):
 
 
         # Update the plot coordinates
-        self.xy = self.cellxy()
+        self.xy = self.cellxy(self.xp, self.yp)
 
-    def cellxy(self):
+    def cellxy(self, xpin, ypin):
         """ 
         Returns a list of Nx2 vectors containing the grid cell node coordinates
             
@@ -535,10 +535,10 @@ class Grid(object):
         cells=self.cells.copy()
         cells[self.cells.mask]=0
 
-        xp[:,:self.maxfaces]=self.xp[cells]
-        xp[range(self.Nc),self.nfaces]=self.xp[cells[:,0]]
-        yp[:,:self.maxfaces]=self.yp[cells]
-        yp[range(self.Nc),self.nfaces]=self.yp[cells[:,0]]
+        xp[:,:self.maxfaces]=xpin[cells]
+        xp[range(self.Nc),self.nfaces]=xpin[cells[:,0]]
+        yp[:,:self.maxfaces]=ypin[cells]
+        yp[range(self.Nc),self.nfaces]=ypin[cells[:,0]]
 
         xp[self.cells.mask]==0
         yp[self.cells.mask]==0

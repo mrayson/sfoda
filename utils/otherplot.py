@@ -188,6 +188,48 @@ def stackplot(t,y,scale=None,gap=0.2,ax=None,fig=None,units='',labels=None,**kwa
     plt.ylabel('Scale = $\pm$%2.1f  [%s]'%(scale,units))
     
     return fig,ax,ll
+
+def polar_pdf( u, v,\
+        speedmax=1.0, ndirbins=90, nspeedbins=25, cmap='RdYlBu_r',\
+        ax=None):
+        """
+        Polar plot of speed-direction joint frequency distribution
+        """
+        # Convert cartesian polar coordinates
+        u_hat_mod = u + 1j*v
+        speed_mod = np.abs(u_hat_mod)
+        theta_mod = np.angle(u_hat_mod)
+ 
+        # Create a 2d histogram of speed direction
+        abins = np.linspace(-np.pi, np.pi, ndirbins)      # 0 to 360 in steps of 360/N.
+        sbins = np.linspace(0.0, speedmax, nspeedbins) 
+
+        Hmod, xedges, yedges = np.histogram2d(theta_mod, speed_mod,\
+                bins=(abins,sbins), normed=True)
+
+        #Grid to plot your data on using pcolormesh
+        theta = 0.5*abins[1:]+0.5*abins[0:-1]
+        r = 0.5*sbins[1:]+0.5*sbins[0:-1]
+
+        # Make sure plot covers the whole circle
+        theta[0] = -np.pi
+        theta[-1] = np.pi
+        #theta, r = np.mgrid[0:2*np.pi:360j, 1:100:50j]
+
+        # Contour levels precentages
+        clevs = [0.001, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0]
+        xlabels = ['E','ENE','N','WNW','W','WSW','S','ESE']
+
+        #fig = plt.figure( figsize = (14,6))
+
+        if ax is None:
+            ax = plt.subplot(111, projection='polar')
+
+        ax.set_xticklabels(xlabels)
+        C = ax.contourf(theta, r, Hmod.T, clevs, cmap = cmap)
+
+        return C, ax
+
     
 def SpeedDirPlot(t,u,v,convention='current',units='m s^{-1}',color1='b',color2='r'):
     """

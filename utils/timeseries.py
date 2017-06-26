@@ -180,6 +180,7 @@ class timeseries(object):
         # filtfilt only likes to operate along the last axis
         ytmp = np.swapaxes(self.y,-1,axis)
         ytmp = signal.filtfilt(b, a, ytmp, axis=-1)
+
         return np.swapaxes(ytmp,axis,-1)
         #return signal.filtfilt(b, a, self.y, axis=axis)
 
@@ -193,16 +194,20 @@ class timeseries(object):
         """
         
         if self.isequal==False or self.dt != 3600.:
-            # Puts the data onto an hourly matrix
-            self._evenly_dist_data(3600.)
+            # Puts the data onto an hourly matrix 
+            print 'Warning -- downsampling data to use Godin filter...'
+            y, t = self._evenly_dist_data(self.y, self.tsec, 3600.)
+        else:
+            y, t = self.y, self.t
             
-        ymean = self.running_mean(windowlength=filtwidths[0]*3600.)
-        self.y = ymean
-        ymean = self.running_mean(windowlength=filtwidths[1]*3600.)
-        self.y = ymean
-        ymean = self.running_mean(windowlength=filtwidths[0]*3600.)
-        self.y = ymean
-        
+        ymean = self.running_mean(y, 3600., windowlength=filtwidths[0]*3600.)
+        ymean = self.running_mean(ymean, 3600., windowlength=filtwidths[1]*3600.)
+        ymean = self.running_mean(ymean, 3600., windowlength=filtwidths[0]*3600.)
+
+        # Ensure the output is on the same time grid
+        tout, yout = self.copy_like(t, ymean).interp(self.t, method='cubic', axis=-1)
+        return self.copy_like(tout, yout)
+        #self.y = ymean
             
            
     def interp(self,timein,method='linear',timeformat='%Y%m%d.%H%M%S',axis=-1):
@@ -359,18 +364,18 @@ class timeseries(object):
             
         return tmid, amp, phs
             
-    def running_mean(self,windowlength=3*86400.0):
+    def running_mean(self, y, dt, windowlength=3*86400.0):
         """
         Running mean of the time series
         
         windowlength - length of each time window [seconds]
         """
-        mask = self.y.mask.copy()
-        self.y[self.y.mask]=0.
-        self.y.mask=mask
+        mask = y.mask.copy()
+        y[y.mask]=0.
+        y.mask=mask
         
-        windowsize = np.floor(windowlength/self.dt)
-        ytmp = self.y.copy()
+        windowsize = np.floor(windowlength/dt)
+        ytmp = y.copy()
         ytmp = self._window_matrix(ytmp,windowsize)
         
         weights = 1./windowsize * np.ones((windowsize,))
@@ -378,7 +383,7 @@ class timeseries(object):
         
         # This result needs to be normalized to account for missing data,
         # this is the same as calculating different weights for each section
-        ntmp= np.ones_like(self.y)
+        ntmp= np.ones_like(y)
         ntmp[mask] = 0.
         norm = self._window_matrix(ntmp,windowsize)
         #norm*= weights
@@ -387,20 +392,20 @@ class timeseries(object):
         
         ytmp2/=norm
                 
-        return self._update_windowed_data(ytmp2,windowsize)
+        return self._update_windowed_data(y, ytmp2,windowsize)
 
-    def running_rms(self,windowlength=3*86400.0):
+    def running_rms(self, y, windowlength=3*86400.0):
         """
         Running RMS of the time series
 
         windowlength - length of each time window [seconds]
         """
-        mask = self.y.mask.copy()
-        self.y[self.y.mask]=0.
-        self.y.mask=mask
+        mask = y.mask.copy()
+        y[y.mask]=0.
+        y.mask=mask
         
         windowsize = np.floor(windowlength/self.dt)
-        ytmp = self.y.copy()
+        ytmp = y.copy()
         ytmp = self._window_matrix(ytmp,windowsize)
         ytmp2 = np.sum(ytmp*ytmp,axis=-1)
 
@@ -409,7 +414,7 @@ class timeseries(object):
         N = self._window_matrix(ntmp,windowsize)
         N = N.sum(axis=-1)
 
-        return self._update_windowed_data(np.sqrt( 1./N * ytmp2),windowsize)
+        return self._update_windowed_data(y, np.sqrt( 1./N * ytmp2),windowsize)
 
     def despike(self,nstd=4.,windowlength=3*86400.0,overlap=12*3600.0,\
         upper=np.inf,lower=-np.inf,maxdiff=np.inf,fillval=0.):
@@ -455,11 +460,11 @@ class timeseries(object):
         ytmp = self._window_matrix(ytmp,windowsize)
         
         ytmp2 = np.mean(ytmp,axis=-1)
-        ymean = self._update_windowed_data(ytmp2,windowsize)
+        ymean = self._update_windowed_data(self.y, ytmp2,windowsize)
         
         #ytmp2= np.std(ytmp,axis=-1)
         ytmp2 = np.apply_along_axis(np.std,-1,ytmp2)
-        ystd = self._update_windowed_data(ytmp2,windowsize)
+        ystd = self._update_windowed_data(self.y, ytmp2,windowsize)
         
         # Mask values outsize of the
         ind = operator.or_(self.y >= ymean + nstd*ystd,\
@@ -581,7 +586,7 @@ class timeseries(object):
 
         # Use a running mean to filter data
 	if dt > ndt*self.dt:
-	    ymean = self.running_mean(windowlength=dt)
+	    ymean = self.running_mean(self.y, windowlength=dt)
 	    # Create a time series with the filtered data
 	    tsmean = self.copy_like(self.t, ymean)
 
@@ -729,7 +734,7 @@ class timeseries(object):
 
         return yout
 
-    def _evenly_dist_data(self, dt):
+    def _evenly_dist_data(self, y, tsec, dt):
         """
         Distribute the data onto an evenly spaced array
         
@@ -738,19 +743,18 @@ class timeseries(object):
         if self.VERBOSE:
             print 'inserting the data into an equally-spaced time vector (dt = %f s).'%self.dt
     
-        t0 = self.tsec[0]
-        t = self.tsec - t0
+        t0 = tsec[0]
+        t = tsec - t0
         # Put the data onto an evenly spaced, masked array
         tout = np.arange(t[0],t[-1]+dt,dt)
         
         tind = np.searchsorted(tout,t) - 1
         
-        shape = self.y.shape[:-1] + tout.shape
+        shape = y.shape[:-1] + tout.shape
         yout = np.ma.MaskedArray(np.zeros(shape),mask=True)
 
-        yout[...,tind] = self.y
+        yout[...,tind] = y
 
-        
         ### Slow method
         #def updatetime(tsec):
         #    try:
@@ -760,18 +764,19 @@ class timeseries(object):
         #    
         #self.t = np.array(map(updatetime,tout))
 
-        self.t = tout.astype("timedelta64[s]") + np.datetime64(self.t[0])
+        t = tout.astype("timedelta64[s]") + np.datetime64(self.t[0])
 
+        #self.y = yout
+        
+        #self.tsec = tout+t0
+        #
+        #self.ny = np.size(y)
+        #
+        #self.isequal = True
+        #
+        #self.dt = dt
 
-        self.y = yout
-        
-        self.tsec = tout+t0
-        
-        self.ny = np.size(self.y)
-        
-        self.isequal = True
-        
-        self.dt = dt
+        return yout, t
         
     def _window_matrix(self,y,windowsize):
         """
@@ -785,24 +790,24 @@ class timeseries(object):
         # The masked values get 
         return np.lib.stride_tricks.as_strided(y, shape=shape, strides=strides)
     
-    def _update_windowed_data(self,ytmp,windowsize):
+    def _update_windowed_data(self, y, ytmp,windowsize):
         """
         Re-inserts data that has been windowed into an array
         that is the same size as the original time series
         """
-        y = np.zeros_like(self.y)
+        y0 = np.zeros_like(y)
         indent = (windowsize-np.mod(windowsize,2))/2
         
         if np.mod(windowsize,2)==1:
-            y[...,indent:-indent]=ytmp
+            y0[...,indent:-indent]=ytmp
         else:
-            y[...,indent-1:-indent]=ytmp
+            y0[...,indent-1:-indent]=ytmp
         
-        y = np.ma.MaskedArray(y,mask=self.y.mask)
-        y.mask[...,0:indent]=True
-        y.mask[...,-indent:]=True
+        y0 = np.ma.MaskedArray(y0,mask=y.mask)
+        y0.mask[...,0:indent]=True
+        y0.mask[...,-indent:]=True
         
-        return y
+        return y0
 
 class ModVsObs(object):
     """
