@@ -529,8 +529,10 @@ class SliceEdge(Slice):
             nc2[ind2]=nc1[ind2]
 
         klayer,Nkmax = self.get_klayer()
-        if self.hasDim(variable,'Nkw'): # vertical velocity
-            Nkmax +=1
+
+        # This crashes if the variable doesn't exist like area
+        #if self.hasDim(variable,'Nkw'): # vertical velocity
+        #    Nkmax +=1
 
         def ncload(nc,variable,tt):
             if variable=='agemean':

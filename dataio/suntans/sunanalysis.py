@@ -866,10 +866,14 @@ def calc_isopycnal_discharge(ncfile,xpt,ypt,saltbins,tstart,tend,scalarvar='salt
     #return output,SE,(Sbar,Qbar,z)
 
 def calc_salt_flux(ncfile,xpt,ypt,tstart,tend):
+    return calc_scalar_flux(ncfile,xpt,ypt,tstart,tend)
+
+def calc_scalar_flux(ncfile,xpt,ypt,tstart,tend, \
+        scalarvar='salt', fluxvar='s_F', edgemethod=0):
     """
-    Calculate the salt and discharge flux through the sections in xpt,ypt
+    Calculate the scalar and discharge flux through the sections in xpt,ypt
     """
-    SE = MultiSliceEdge(ncfile,xpt=xpt,ypt=ypt)
+    SE = MultiSliceEdge(ncfile,xpt=xpt,ypt=ypt, edgemethod=edgemethod)
 
     #SE = SliceEdge(ncfile,xpt=xpt,ypt=ypt)
 
@@ -880,10 +884,10 @@ def calc_salt_flux(ncfile,xpt,ypt,tstart,tend):
 
     print 'Loading the area data...'
     A_all= SE.loadData(variable='area')
-    #print 'Loading the salt data...'
-    #S_all= SE.loadData(variable='salt') # psu 
-    #print 'Loading the salt flux data...'
-    #F_all= SE.loadData(variable='s_F') # psu m3 s-1
+    print 'Loading the salt data...'
+    S_all= SE.loadData(variable=scalarvar) # psu 
+    print 'Loading the salt flux data...'
+    F_all= SE.loadData(variable=fluxvar) # psu m3 s-1
     print 'Loading the flux data...'
     Q_all = SE.loadData(variable='U_F')
 
@@ -944,15 +948,15 @@ def calc_salt_flux(ncfile,xpt,ypt,tstart,tend):
 
     data = []
     for ii in range(len(Q_all)):
-        #Q,Qin,Qout,F,Fin,Fout,S,A =\
-        #    calc_flux(Q_all[ii],F_all[ii],S_all[ii],A_all[ii],SE.slices[ii]['normal'])
-        Q, Qin, Qout, A =\
-            calc_flux_light(Q_all[ii], A_all[ii], SE.slices[ii]['normal'])
+        Q,Qin,Qout,F,Fin,Fout,S,A =\
+            calc_flux(Q_all[ii],F_all[ii],S_all[ii],A_all[ii],SE.slices[ii]['normal'])
+        #Q, Qin, Qout, A =\
+        #    calc_flux_light(Q_all[ii], A_all[ii], SE.slices[ii]['normal'])
 
         data.append({'time':SE.time[SE.tstep],\
                 'Q':Q,'Qin':Qin,'Qout':Qout,\
-                #'F':F,'Fin':Fin,'Fout':Fout,\
-                #'S':S,\
+                'F':F,'Fin':Fin,'Fout':Fout,\
+                'S':S,\
                 'area':A})
 
     return data, SE

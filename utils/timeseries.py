@@ -586,7 +586,7 @@ class timeseries(object):
 
         # Use a running mean to filter data
 	if dt > ndt*self.dt:
-	    ymean = self.running_mean(self.y, windowlength=dt)
+	    ymean = self.running_mean(self.y, self.dt, windowlength=dt)
 	    # Create a time series with the filtered data
 	    tsmean = self.copy_like(self.t, ymean)
 
