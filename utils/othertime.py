@@ -62,9 +62,10 @@ def SecondsSince(timein, basetime = datetime(1990,1,1)):
 	     isdatetime64 = True
 
     if isarray and isdatetime64:
-        time0 = np.datetime64(basetime)
-        tsec = ((timein.astype('<M8[ns]') - time0)\
-		*1e-9).astype(np.float64)
+        # Use milliseconds (lose too much precision otherwise)
+        time0 = np.datetime64(basetime).astype('<M8[us]')
+        tsec = ((timein.astype('<M8[us]') - time0)).astype(np.float64)*1e-6
+
 
     elif isarray and isdatetime:
         tsec = np.array([(t-basetime).total_seconds() for t in timein])
@@ -77,9 +78,11 @@ def SecondsSince(timein, basetime = datetime(1990,1,1)):
 	    #time0 = np.datetime64(timein)
 	    #tsec = (timein-time0).item().total_seconds() # TimeDelta object
         else:
-            time0 = np.datetime64(basetime)
+            time0 = np.datetime64(basetime).astype('<M8[us]')
 	    try:
-		tsec = ((timein - time0)*1e-9).astype(np.float64)
+                #raise Exception, 'Time conversion error'
+                # This case shouldn't arise
+		tsec = ((timein.astype('<M8[us]') - time0)).astype(np.float64)*1e-6
 	    except:
 		
 	    	tsec = (timein-time0).total_seconds() # TimeDelta object

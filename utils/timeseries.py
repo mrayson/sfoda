@@ -682,16 +682,28 @@ class timeseries(object):
  
     def _set_time(self, t):
         """
-	Return the time variable as a datetime object
+	Return the time variable as a datetime64 object
+	~~Return the time variable as a datetime object~~
 	"""
 	if isinstance(t, pd.tseries.index.DatetimeIndex):
-	    return othertime.datetime64todatetime(t.values)
+	    #return othertime.datetime64todatetime(t.values)
+            return t.values
 	elif isinstance(t[0], datetime):
-	    return t
+	    return othertime.datetimetodatetime64(t) 
 	elif isinstance(t[0], np.datetime64):
-	    return othertime.datetime64todatetime(t) 
+            return t
+	    #return othertime.datetime64todatetime(t) 
 	else:
 	    raise Exception, 'unknown time type: ', type(t)
+
+	#if isinstance(t, pd.tseries.index.DatetimeIndex):
+	#    return othertime.datetime64todatetime(t.values)
+	#elif isinstance(t[0], datetime):
+	#    return t
+	#elif isinstance(t[0], np.datetime64):
+	#    return othertime.datetime64todatetime(t) 
+	#else:
+	#    raise Exception, 'unknown time type: ', type(t)
 
     def _check_dt(self, tsec):
         """
