@@ -43,7 +43,7 @@ class suntides(Spatial):
         
         Spatial.__init__(self,ncfile,**kwargs)
         
-        if self.hasVar('uc_amp'): # This check needs to be made more robust...
+        if self.hasVar('eta_amp') or self.hasVar('uc_amp'): # This check needs to be made more robust...
             print 'Loading existing harmonic data...'
             self._loadVars()
             

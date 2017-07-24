@@ -426,6 +426,7 @@ def read_OTPS_UV(uvfile,ic):
     
     # Read the actual data
     nskip = (ic-1)*(nm[0]*nm[1]*16+8) + 8 + ll - 28
+    nskip = nskip[0]
     f.seek(nskip,1)
     
     htemp = np.fromfile(f,dtype=np.float32,count=4*n*m)
@@ -487,6 +488,8 @@ def read_OTPS_grd(grdfile):
     hz.byteswap(True)
     mask.byteswap(True)
     
+    m = m[0]
+    n = n[0]
     hz = np.reshape(hz,(m,n))
     mask = np.reshape(mask,(m,n))
     
@@ -531,6 +534,7 @@ def read_OTPS_h(hfile,ic):
     
     # Read the actual data
     nskip = (ic-1)*(nm[0]*nm[1]*8+8) + 8 + ll - 28
+    nskip = nskip[0]
     f.seek(nskip,1)
     
     htemp = np.fromfile(f,dtype=np.float32,count=2*n*m)

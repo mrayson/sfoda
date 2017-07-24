@@ -441,11 +441,21 @@ def convertUV2SpeedDirn(u,v,convention='current'):
     
     theta = theta_comp;
     """
+    
+    thetarad,rho = cart2pol(u,v)
+
+    theta = pol2compass(thetarad, convention=convention)
+       
+    return theta, rho    
+    
+def pol2compass(theta_rad, convention=None):
+    """
+    Convert polar angle (radians CCW from east)
+    to compass angle (degrees CW from north)
+    """
+
     pi=np.pi
-    
-    theta,rho = cart2pol(u,v)
-    
-    theta = theta*180.0/pi
+    theta = theta_rad*180.0/pi
         
     #idx = np.argwhere(theta<0.0)
     idx = np.where(theta<0.0)
@@ -466,9 +476,9 @@ def convertUV2SpeedDirn(u,v,convention='current'):
     # flip the direction    
     if convention=='wind':
         theta = np.mod(theta+180.0, 360.0)
-        
-    return theta, rho    
-    
+
+    return theta
+ 
 def pol2cart(th,rho):
     """Convert polar coordinates to cartesian"""
     x = rho * np.cos(th)

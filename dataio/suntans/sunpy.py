@@ -540,8 +540,8 @@ class Grid(object):
         yp[:,:self.maxfaces]=ypin[cells]
         yp[range(self.Nc),self.nfaces]=ypin[cells[:,0]]
 
-        xp[self.cells.mask]==0
-        yp[self.cells.mask]==0
+        #xp[self.cells.mask]==0
+        #yp[self.cells.mask]==0
 
         xy = np.zeros((self.maxfaces+1,2))
         def _closepoly(ii):

@@ -204,6 +204,9 @@ class timeseries(object):
         ymean = self.running_mean(ymean, 3600., windowlength=filtwidths[1]*3600.)
         ymean = self.running_mean(ymean, 3600., windowlength=filtwidths[0]*3600.)
 
+        # Zero out masks
+        ymean[ymean.mask] = 0
+
         # Ensure the output is on the same time grid
         tout, yout = self.copy_like(t, ymean).interp(self.t, method='cubic', axis=-1)
         return self.copy_like(tout, yout)
@@ -374,7 +377,7 @@ class timeseries(object):
         y[y.mask]=0.
         y.mask=mask
         
-        windowsize = np.floor(windowlength/dt)
+        windowsize = int(np.floor(windowlength/dt))
         ytmp = y.copy()
         ytmp = self._window_matrix(ytmp,windowsize)
         
@@ -685,7 +688,7 @@ class timeseries(object):
 	Return the time variable as a datetime64 object
 	~~Return the time variable as a datetime object~~
 	"""
-	if isinstance(t, pd.tseries.index.DatetimeIndex):
+	if isinstance(t, pd.DatetimeIndex):
 	    #return othertime.datetime64todatetime(t.values)
             return t.values
 	elif isinstance(t[0], datetime):

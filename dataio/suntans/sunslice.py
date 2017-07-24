@@ -436,7 +436,7 @@ class SliceEdge(Slice):
         """
         Updates the x and y coordinate info in the object
         """
-        if xpt == None or ypt == None:
+        if xpt is None or ypt is None:
             self._getXYgraphically()
         else:
             self.xpt=xpt

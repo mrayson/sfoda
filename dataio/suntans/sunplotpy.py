@@ -701,9 +701,11 @@ class SunPlotPy(wx.Frame, Spatial, Grid ):
             elif ext=='.mp4':
                 print 'Saving html5 video...'
                 # Ensures html5 compatibility
-                self.anim.save(outfile,writer='mencoder',fps=6,\
-                    bitrate=3600,extra_args=['-ovc','x264']) # mencoder options
-                    #bitrate=3600,extra_args=['-vcodec','libx264'])
+                self.anim.save(outfile,fps=6,\
+                    writer='ffmpeg',\
+                    bitrate=3600,extra_args=['-vcodec','libx264'])
+                    #writer='mencoder',
+                    #bitrate=3600,extra_args=['-ovc','x264']) # mencoder options
             else:
                 self.anim.save(outfile,writer='mencoder',fps=6,bitrate=3600)
 
