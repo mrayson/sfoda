@@ -3,7 +3,7 @@ Extensions to the wonderful Pandas module
 """
 
 import pandas as pd
-from pandas import TimeSeries
+from pandas import Series as TimeSeries
 from scipy import signal
 import numpy as np
 
