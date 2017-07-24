@@ -113,7 +113,16 @@ class suntides(Spatial):
                         phsbase=self.reftime,\
                         #phsbase=None,
                         )
-        
+
+                    # Preserve the mask
+                    if isinstance(data, np.ma.MaskedArray):
+                        #mask = data[0,:] == self._FillValue
+                        mask = data.mask[0,:]
+                        self.Mean[vv][k,mask] = self._FillValue
+                        for ff in range(len(self.frq)):
+                            self.Amp[vv][ff,k,mask] = self._FillValue
+                            self.Phs[vv][ff,k,mask] = self._FillValue
+                    
     def _prepDict(self,varnames):
         """
         Prepare the output dictionary

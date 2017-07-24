@@ -1386,7 +1386,10 @@ class Spatial(Grid):
 #        except:
         
         self.mask = self.data==self._FillValue
-        self.data[self.mask]=0.
+        if isinstance(self.data, np.ma.MaskedArray):
+            self.data.mask[self.mask] = True
+        else:
+            self.data[self.mask]=0.
         self.data = self.data.squeeze()
         
         return self.data
