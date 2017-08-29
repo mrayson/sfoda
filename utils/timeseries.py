@@ -262,11 +262,15 @@ class timeseries(object):
             else:
 
                 #mask = np.isnan(self.y) == False
-                mask = ~self.y.mask
                 if np.all(self.y.mask):
                     output = np.zeros(t.shape)
                     output[:] = np.nan
                 else:
+
+                    if np.all(self.y.mask == False) :
+                        mask = np.isfinite(self.y).data
+                    else:
+                        mask = ~self.y.mask
 
                     F = interpolate.interp1d(\
 		    	self.tsec[mask], self.y[mask],\

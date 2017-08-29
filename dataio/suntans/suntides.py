@@ -101,7 +101,9 @@ class suntides(Spatial):
                         phsbase=self.reftime,\
                         #phsbase=None,\
                         )
-                
+                # Compute the variance of the original signal
+                self.Var[vv] = np.var(data, axis=0)
+
             elif ndim == 3:
                 for k in range(self.Nkmax):
                     self.klayer=[k]
@@ -114,6 +116,7 @@ class suntides(Spatial):
                         #phsbase=None,
                         )
 
+
                     # Preserve the mask
                     if isinstance(data, np.ma.MaskedArray):
                         #mask = data[0,:] == self._FillValue
@@ -122,6 +125,9 @@ class suntides(Spatial):
                         for ff in range(len(self.frq)):
                             self.Amp[vv][ff,k,mask] = self._FillValue
                             self.Phs[vv][ff,k,mask] = self._FillValue
+
+                    # Compute the variance of the original signal
+                    self.Var[vv][k,:] = np.var(data, axis=0)
                     
     def _prepDict(self,varnames):
         """
@@ -130,6 +136,7 @@ class suntides(Spatial):
         self.Amp = {}
         self.Phs = {}
         self.Mean = {}
+        self.Var = {}
         for vv in varnames:
             if vv in ['ubar','vbar']:
                 ndim=2
@@ -140,10 +147,12 @@ class suntides(Spatial):
                 self.Amp.update({vv:np.zeros((self.Ntide,self.Nc))})
                 self.Phs.update({vv:np.zeros((self.Ntide,self.Nc))})
                 self.Mean.update({vv:np.zeros((self.Nc,))})
+                self.Var.update({vv:np.zeros((self.Nc,))})
             elif ndim == 3:
                 self.Amp.update({vv:np.zeros((self.Ntide,self.Nkmax,self.Nc))})
                 self.Phs.update({vv:np.zeros((self.Ntide,self.Nkmax,self.Nc))})
                 self.Mean.update({vv:np.zeros((self.Nkmax,self.Nc))})
+                self.Var.update({vv:np.zeros((self.Nkmax,self.Nc))})
     
     def _returnDim(self,varname):
         
@@ -163,6 +172,7 @@ class suntides(Spatial):
         self.Amp={}
         self.Phs={}
         self.Mean={}
+        self.Var={}
         for vv in varlist:
             name = vv+'_amp'
             if self.hasVar(name):
@@ -176,6 +186,10 @@ class suntides(Spatial):
             name = vv+'_Mean'
             if self.hasVar(name):
                 self.Mean.update({vv:self.nc.variables[name][:]})
+
+            name = vv+'_Var'
+            if self.hasVar(name):
+                self.Var.update({vv:self.nc.variables[name][:]})
                 
         
     def plotAmp(self,vname='eta',k=0,con='M2',xlims=None,ylims=None,\
@@ -525,8 +539,16 @@ class suntides(Spatial):
             self.create_nc_var(outfile, name, dims,\
                 {'long_name':longname,'units':units,'coordinates':coords},\
                 dtype='f8',zlib=1,complevel=1,fill_value=999999.0)
+
+            name = vv+'_Var'
+            longname = '%s - Signal Variance'%vv
+            unitsvar = '(%s)**2'%units
+            self.create_nc_var(outfile, name, dims,\
+                {'long_name':longname, 'units':unitsvar, 'coordinates':coords},\
+                dtype='f8',zlib=1,complevel=1,fill_value=999999.0)
         
-        self.create_nc_var(outfile,'omega', ('Ntide',), {'long_name':'frequency','units':'rad s-1'})
+        self.create_nc_var(outfile,'omega', ('Ntide',),\
+                {'long_name':'frequency','units':'rad s-1'})
         
         nc = Dataset(outfile,'a')
         nc.variables['omega'][:]=self.frq
@@ -538,6 +560,8 @@ class suntides(Spatial):
             nc.variables[name][:]=self.Phs[vv]
             name = vv+'_Mean'
             nc.variables[name][:]=self.Mean[vv]
+            name = vv+'_Var'
+            nc.variables[name][:]=self.Var[vv]
         nc.close()        
         
         print 'Completed writing harmonic output to:\n   %s'%outfile
