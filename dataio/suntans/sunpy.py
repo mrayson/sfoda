@@ -966,12 +966,12 @@ class Grid(object):
 
         # Find the row and column indices of the sparse matrix
         rowindex = self.cells[i,:] 
-        colindex = np.repeat(i.reshape((Nc,1)),3,axis=1)
+        colindex = np.repeat(i.reshape((Nc,1)), self.maxfaces,axis=1)
 
-        mask = k <= self.Nk[colindex]
+        mask = (k <= self.Nk[colindex]) & (self.cells.mask==False)
         
-        cell_scalar3d = np.repeat(cell_scalar[i].reshape((Nc,1)),3,axis=1)
-        area = np.repeat(self.Ac[i].reshape((Nc,1)),3,axis=1)
+        cell_scalar3d = np.repeat(cell_scalar[i].reshape((Nc,1)), self.maxfaces,axis=1)
+        area = np.repeat(self.Ac[i].reshape((Nc,1)), self.maxfaces,axis=1)
         
         #Build the sparse matrices
         Asparse = sparse.coo_matrix((area[mask],(rowindex[mask],colindex[mask])),shape=(self.Np,self.Nc),dtype=np.double)
@@ -1652,8 +1652,10 @@ class Spatial(Grid):
             ax = fig.gca()
         
         # Calculate the nodal data and mask if necessary
-        #zdata = self.cell2node(z)
-        if cellind == None:
+        #if k==0:
+        #    zdata = self.cell2node(z)
+        #else:
+        if cellind is None:
             cellind = np.arange(self.Nc)
             
         zdata = self.cell2nodekind(z,cellind=cellind,k=k)
