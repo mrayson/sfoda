@@ -74,7 +74,7 @@ def power_spectra(tsec, u_r, K=3, power=2., axis=-1):
     
     M = tsec.shape[0]
     dt = tsec[1]-tsec[0]
-    M_2 = np.floor(M/2)
+    M_2 = int(np.floor(M/2))
     
     h_tk = window_sinetaper(M,K=K)
    

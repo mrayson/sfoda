@@ -418,6 +418,8 @@ class SliceEdge(Slice):
     """
 
     edgemethod=1
+    abortedge=False
+
     def __init__(self,ncfile,xpt=None,ypt=None,Npt=100,klayer=[-99],**kwargs):
         
         self.Npt=Npt
@@ -445,7 +447,8 @@ class SliceEdge(Slice):
         self._getSliceCoords(kind='linear')
         # List of the edge indices
         self.j,self.nodelist =\
-            self.get_edgeindices(self.xslice,self.yslice,method=self.edgemethod)
+            self.get_edgeindices(self.xslice,self.yslice,\
+                method=self.edgemethod, abortedge=self.abortedge)
 
         self.nslice = len(self.j)
 
@@ -550,7 +553,9 @@ class SliceEdge(Slice):
                 return self.df*dzf
 
             else:
-                if self.hasDim(variable,self.griddims['Nk']): # 3D
+                if nc.variables[variable].ndim==1:
+                    return nc.variables[variable][:]
+                elif self.hasDim(variable,self.griddims['Nk']): # 3D
                     return nc.variables[variable][tt,klayer,:]
                 else:
                     return nc.variables[variable][tt,:]
@@ -680,12 +685,13 @@ class SliceEdge(Slice):
         area = dzf * self.df[self.j]
 
         area[self.maskslice]=0
-        
+
         return area
 
     def getdzf(self,eta):
         """ Get the cell thickness along each edge of the slice"""
-        dzf = Spatial.getdzf(self,eta,j=self.j)
+        #dzf = Spatial.getdzf(self,eta,j=self.j)
+        dzf = np.repeat(self.dz[:,np.newaxis],len(self.j), axis=1)
         dzf[self.maskslice]=0
         return dzf
 
@@ -709,9 +715,10 @@ class SliceEdge(Slice):
             for ii,j in enumerate(self.j):
                 if kk >= self.Nke[j]:
                     self.maskslice[k,ii]=True
+
  
 
-    def get_edgeindices(self,xpt,ypt,method=1, abortedge=False):
+    def get_edgeindices(self,xpt,ypt,method=1, abortedge=True):
         """
         Return the indices of the edges (in order) along the line
 
@@ -818,7 +825,10 @@ class SliceEdge(Slice):
                 if np.abs(angdiff[rank[nn]]) <= np.pi/2:
                     return nodes[rank[nn]] 
             # if they all u-turn return the min dist
-            return nodes[rank[0]]
+            if rank.size==0:
+                return None
+            else:
+                return nodes[rank[0]]
 
         # Loop through and find all of the closest points to the line
         MAXITER=10000
@@ -878,7 +888,8 @@ class MultiSliceEdge(SliceEdge):
             self.ypt=ypt
             self._getSliceCoords(kind='linear')
             # List of the edge indices
-            j,nodelist = self.get_edgeindices(self.xslice,self.yslice,method=self.edgemethod)
+            j,nodelist = self.get_edgeindices(self.xslice,self.yslice,\
+                method=self.edgemethod, abortedge=self.abortedge)
             self.j = j # Need this to calculate other quantities
             self.nslice = len(self.j)
 
@@ -886,7 +897,6 @@ class MultiSliceEdge(SliceEdge):
             self.xslice=self.xp[nodelist]
             self.yslice=self.yp[nodelist]
             
-
             self._getDistCoords()
 
             # Get the mask
@@ -894,6 +904,7 @@ class MultiSliceEdge(SliceEdge):
 
             # Get the area and the normal
             area = self.calc_area()
+
             ne1, ne2, enormal = self.calc_normal(nodelist,j)
             dx = self.df[j]
 
