@@ -618,11 +618,11 @@ class timeseries(object):
 	Retains relevant attributes
 	"""
 	return timeseries(t, y,\
-            units=self.units,\
-            long_name=self.long_name,\
-            StationID = self.StationID,\
-            StationName = self.StationName,\
-            varname = self.varname,\
+            units=u'%s'%self.units,\
+            long_name=u'%s'%self.long_name,\
+            StationID = u'%s'%self.StationID,\
+            StationName = u'%s'%self.StationName,\
+            varname = u'%s'%self.varname,\
             X= self.X,\
             Y= self.Y,\
             Z= self.Z,\
@@ -655,9 +655,10 @@ class timeseries(object):
 
         # Define the attributes
         attrs = {\
-            'units':self.units,\
-            'long_name':self.long_name,\
-            'StationID':self.StationID,\
+            'units':u'%s'%self.units,\
+            'long_name':u'%s'%self.long_name,\
+            'StationID':u'%s'%self.StationID,\
+            'StationName':u'%s'%self.StationName,\
         }
 
         return xray.DataArray( y.copy(), \
