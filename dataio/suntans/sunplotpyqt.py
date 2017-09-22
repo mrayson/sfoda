@@ -621,12 +621,19 @@ class SunPlotPy(Spatial, QMainWindow):
        
 
     def on_climlow(self,event):
-        self.clim[0] = float(event)
+        try:
+            self.clim[0] = float(event)
+        except:
+            return # do nothing
+
     #    self.clim[0] = event.GetString()
     #    #self.update_figure()
 
     def on_climhigh(self,event):
-        self.clim[1] = float(event)
+        try:
+            self.clim[1] = float(event)
+        except:
+            return # do nothing
     #    print event
     #    self.clim[1] = event.GetString()
     #    #self.update_figure()

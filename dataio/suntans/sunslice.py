@@ -420,9 +420,11 @@ class SliceEdge(Slice):
     edgemethod=1
     abortedge=False
 
-    def __init__(self,ncfile,xpt=None,ypt=None,Npt=100,klayer=[-99],**kwargs):
+    def __init__(self,ncfile,xpt=None,ypt=None,klayer=[-99],\
+        MAXITER=10000, Npt=100, **kwargs):
         
         self.Npt=Npt
+        self.MAXITER=MAXITER
 
         Spatial.__init__(self,ncfile,klayer=klayer,**kwargs)
 
@@ -831,7 +833,7 @@ class SliceEdge(Slice):
                 return nodes[rank[0]]
 
         # Loop through and find all of the closest points to the line
-        MAXITER=10000
+        MAXITER=self.MAXITER
         for ii in range(MAXITER):
             cnodes = connecting_nodes(nodelist[-1],nodelist)
             #if method==0:
