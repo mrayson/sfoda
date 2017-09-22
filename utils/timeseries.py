@@ -209,6 +209,7 @@ class timeseries(object):
 
         # Ensure the output is on the same time grid
         tout, yout = self.copy_like(t, ymean).interp(self.t, method='cubic', axis=-1)
+        yout = np.ma.MaskedArray(yout, self.y.mask)
         return self.copy_like(tout, yout)
         #self.y = ymean
             
