@@ -49,6 +49,8 @@ suntans_gridvars = {'xp':'xp',\
                     'ye':'ye',\
                     'lonv':'lonv',\
                     'latv':'latv',\
+                    'lonp':'lonp',\
+                    'latp':'latp',\
                     'cells':'cells',\
                     'face':'face',\
                     'nfaces':'nfaces', \
@@ -144,6 +146,7 @@ class Grid(object):
         ###
         # Find the lat/lon of the cell-centres
         self.lonv, self.latv = self.to_latlon(self.xv, self.yv)
+        self.lonp, self.latp = self.to_latlon(self.xp, self.yp)
 
         
     

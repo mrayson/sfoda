@@ -62,7 +62,8 @@ class Slice(Spatial):
         return self.data.squeeze()
         
         
-    def pcolorslice(self, z, t=0,xaxis='xslice',titlestr=None,bathyoverlay=True,**kwargs):
+    def pcolorslice(self, z, t=0,xaxis='xslice',\
+        titlestr=None, bathyoverlay=True, colorbar=True,**kwargs):
         """
         Pcolor plot of the slice
         
@@ -99,7 +100,10 @@ class Slice(Spatial):
         plt.xlim([self[xaxis].min(),self[xaxis].max()])
         plt.ylim([self.hslice.min(),0])
         
-        axcb = plt.colorbar(h1)
+        if colorbar:
+            axcb = plt.colorbar(h1)
+        else:
+            axcb = None
         
         
         if titlestr is None:
