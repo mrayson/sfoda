@@ -29,6 +29,7 @@ def harmonic_fit(dtime, X, frq, mask=None, axis=0, phsbase=None):
 
     if phsbase is None:
         phsbase = datetime(1900,1,1)
+
     ###
     # Convert the dtime to seconds since
     t = othertime.SecondsSince(dtime, basetime=phsbase)
@@ -179,7 +180,8 @@ def harmonic_signal(time, amp, phs, cmean, omega, phsbase=None, axis=-1):
     # Rebuild the time series
     #tsec=TS_harm.tsec - TS_harm.tsec[0]
     if phsbase is None:
-        phsbase=time[0]
+        phsbase=datetime(1900,1,1)
+        #phsbase=time[0]
 
     tsec = othertime.SecondsSince(time,basetime=phsbase)
 
