@@ -836,10 +836,10 @@ class HybridGrid(object):
 
         pt1 = 0
         for i in range(self.Nc):
-            nf = self.nfaces[i] 
+            nf = self.nfaces[i]
             pt2 = pt1+nf
             eind[pt1:pt2] = self.cells[i,0:nf]
-            pt1 = pt2+0.
+            pt1 = pt2+0
 
         return eptr.astype(np.int32), eind.astype(np.int32)
 

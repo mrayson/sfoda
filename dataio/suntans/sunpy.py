@@ -919,7 +919,7 @@ class Grid(object):
           duv_over_dxj[0] = -mx/mz;
           duv_over_dxj[1] = -my/mz;
         """
-        if cellind == None:
+        if cellind is None:
             cellind = np.arange(self.Nc,dtype=np.int)
             
         node_scalar = self.cell2nodekind(cell_scalar,cellind,k=k)
@@ -971,7 +971,8 @@ class Grid(object):
         rowindex = self.cells[i,:] 
         colindex = np.repeat(i.reshape((Nc,1)), self.maxfaces,axis=1)
 
-        mask = (k <= self.Nk[colindex]) & (self.cells.mask==False)
+        #mask = (k <= self.Nk[colindex]) & (self.cells.mask==False)
+        mask = (k <= self.Nk[colindex])
         
         cell_scalar3d = np.repeat(cell_scalar[i].reshape((Nc,1)), self.maxfaces,axis=1)
         area = np.repeat(self.Ac[i].reshape((Nc,1)), self.maxfaces,axis=1)
@@ -2709,7 +2710,7 @@ class TimeSeries(timeseries, Spatial):
         if self.y.ndim == 1:
             dims = ('time',)
         else:
-            dims = ('time','depth')
+            dims = ('depth','time')
             coords.update({'depth':self.Z})
 
         return xray.DataArray( self.y.copy(), \

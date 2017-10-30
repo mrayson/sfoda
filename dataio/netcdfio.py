@@ -15,7 +15,8 @@ August 2012
 from netCDF4 import Dataset, num2date
 #import shapefile
 import numpy as np
-import sqlite3
+#import sqlite3 as db
+from pyspatialite import dbapi2 as db
 
 from datetime import datetime
 import matplotlib.pyplot as plt
@@ -264,7 +265,7 @@ def db2shp(dbfile,shpfile):
     w.field('end_time')
     
     # Connect to the database
-    conn = sqlite3.connect(dbfile)
+    conn = db.connect(dbfile)
     c = conn.cursor()
 
     c.execute('select "X","Y","Variable_Name", "StationName","StationID","time_start","time_end" from observations')
@@ -288,7 +289,7 @@ def db2shp(dbfile,shpfile):
 def createObsDB(dbfile):
     """ Create a database for storing observational netcdf metadata"""
     
-    conn = sqlite3.connect(dbfile)
+    conn = db.connect(dbfile)
     c = conn.cursor()
     # Create table
 #    tablefields = {'NetCDF_Filename':'text','NetCDF_GroupID':'text','Variable_Name':'text',\
@@ -296,14 +297,43 @@ def createObsDB(dbfile):
 #    'lon_end':'real','lat_start':'real','lat_end':'real',\
 #    'time_start':'text','time_end':'text','height_start':'real',\
 #    'height_end':'real','StationName':'text','StationID':'text'}
-    tablefields = ['NetCDF_Filename','NetCDF_GroupID','Variable_Name','X','Y'\
-    ,'lon_start','lon_end','lat_start','lat_end','time_start','time_end','height_start',\
-    'height_end','StationName','StationID','GEOMETRY']
-    fieldtype = ['text','text','text','real','real','real','real','real','real',\
-    'text','text','real','real','text','text','text']
+    tablefields = [\
+     # 'id',\
+     'NetCDF_Filename','NetCDF_GroupID','Variable_Name',\
+     'X','Y',\
+    'lon_start','lon_end','lat_start','lat_end','time_start','time_end','height_start',\
+    'height_end','StationName','StationID',\
+        #'GEOMETRY',\
+    ]
+    fieldtype = [
+    #'INTEGER NOT NULL PRIMARY KEY',\
+    'text','text','text',\
+    'real','real',\
+    'real','real','real','real',\
+    'text','text','real','real','text','text',\
+        #'text',\
+    ]
+
+    tablename = 'observations'
 
     
-    tablename = 'observations'
+    ######
+    # PySpatialite specific info
+    ######
+    # initializing Spatial MetaData
+    # using v.2.4.0 this will automatically create
+    # GEOMETRY_COLUMNS and SPATIAL_REF_SYS
+    sql = 'SELECT InitSpatialMetadata()'
+    c.execute(sql)
+
+    # creating a POINT table
+    #sql = 'CREATE TABLE test_pt ('
+    #sql += 'id INTEGER NOT NULL PRIMARY KEY,'
+    #sql += 'name TEXT NOT NULL)'
+    #c.execute(sql)
+    ###########
+    # Original info
+    ###########
     
     # Create a string to create the table
     tablestr='('
@@ -314,7 +344,11 @@ def createObsDB(dbfile):
     print tablestr
     createstr = 'CREATE TABLE %s %s' % (tablename,tablestr)
     c.execute(createstr)
-        
+
+    # creating a POINT Geometry column
+    sql = "SELECT AddGeometryColumn('%s',"%tablename
+    sql += "'GEOMETRY', 4326, 'POINT', 'XY')"
+    c.execute(sql)
     
     c.close()
     return  
@@ -367,8 +401,12 @@ def netcdfObs2DB(ncfile, dbfile, nctype=1):
             return None, None, None, None, None, None, None
 
         # Use this variable
-        lon = nc.groups[grp].variables['Longitude'][:]
-        lat = nc.groups[grp].variables['Latitude'][:]
+        try:
+            lon = nc.groups[grp].variables['Longitude'][:]
+            lat = nc.groups[grp].variables['Latitude'][:]
+        except:
+            lon = 0.
+            lat = 0.
         try:
             long_name = nc.groups[grp].variables[vv].long_name
         except:
@@ -400,8 +438,13 @@ def netcdfObs2DB(ncfile, dbfile, nctype=1):
             return None, None, None, None, None, None, None
 
         # Use this variable
-        lon = nc.groups[grp].getncattr('Longitude')
-        lat = nc.groups[grp].getncattr('Latitude')
+        try:
+            lon = nc.groups[grp].getncattr('Longitude')
+            lat = nc.groups[grp].getncattr('Latitude')
+        except:
+            lon = 0.
+            lat = 0.
+
         try:
             long_name = nc.groups[grp].variables[vv].long_name
         except:
@@ -457,7 +500,7 @@ def netcdfObs2DB(ncfile, dbfile, nctype=1):
     # Write metadata to the sql database
     
     # Open the database
-    conn = sqlite3.connect(dbfile)
+    conn = db.connect(dbfile)
     c = conn.cursor()
     tablename = 'observations'
     
@@ -498,15 +541,29 @@ def netcdfObs2DB(ncfile, dbfile, nctype=1):
                 write = False
 
             else:
-                dbtuple = (ncfile, grp, vv, lon,\
-                    lat, lon, lon,\
+                geom = "GeomFromText('POINT("
+                geom += "%f " % (lon)
+                geom += "%f" % (lat)
+                geom += ")', 4326)"
+
+                dbtuple = (ncfile, grp, vv,\
+                    lon, lat,\
+                    lon, lon,\
                     lat, lat, dates[0], dates[-1],\
-                    ele,ele,StationName,StationID,'POINT')
+                    ele,ele,StationName,StationID,\
+                    geom,\
+                    #'POINT',\
+                    )
  
     
             if write:
                 # Create the tuple to insert into the database
-                dbstr = '("%s", "%s", "%s", %4.6f, %4.6f, %4.6f, %4.6f, %4.6f, %4.6f, "%s", "%s", %4.6f, %4.6f, "%s", "%s","%s")'%dbtuple
+                dbstr = '("%s", "%s", "%s",'
+                dbstr += '%4.6f, %4.6f,'
+                dbstr += '%4.6f, %4.6f, %4.6f, %4.6f, "%s", "%s",'
+                dbstr += '%4.6f, %4.6f, "%s", "%s", %s)'
+                dbstr=dbstr%dbtuple
+
                 # Insert into the db
                 #execstr = 'INSERT INTO %s VALUES %s'%(tablename,dbstr)
                 #print execstr
@@ -574,7 +631,7 @@ def returnQuery(dbfile,outvar,tablename,condition):
     """    
     
     # Open the database
-    conn = sqlite3.connect(dbfile)
+    conn = db.connect(dbfile)
     c = conn.cursor()
     
     querystr = 'SELECT %s FROM %s WHERE %s'%(', '.join(outvar),tablename,condition)

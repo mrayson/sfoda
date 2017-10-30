@@ -35,7 +35,9 @@ class Slice(Spatial):
         
         # Calculate the horizontal coordinates of the slice
         self.Npt = Npt
-        if xpt == None or ypt == None:
+        self.nslice = Npt # For compatibility with other slice classes
+
+        if xpt is None or ypt is None:
             self._getXYgraphically()
         else:
             self.xpt=xpt
@@ -56,8 +58,7 @@ class Slice(Spatial):
             tstep=[tstep]
             self.Ntslice = 1
             
-        
-        self.data = self.interpSlice(variable,method=method)
+        self.data = self.loadData(variable,method=method)
         
         return self.data.squeeze()
         
@@ -81,12 +82,12 @@ class Slice(Spatial):
             self.clim.append(np.max(am))
         
         #h1 = plt.pcolor(self[xaxis],self.zslice,am,vmin=self.clim[0],vmax=self.clim[1],**kwargs)
-        #X,Z = np.meshgrid(self[xaxis], self.zslice)
-        #h1 = plt.pcolormesh(X, Z, am,vmin=self.clim[0],vmax=self.clim[1],**kwargs)
-        h1 = plt.imshow(am,vmin=self.clim[0],vmax=self.clim[1],\
-                extent=[self[xaxis].min(), self[xaxis].max(),\
-                -self.z_w[-1], -self.z_w[0]], aspect='auto',\
-                 **kwargs)
+        X,Z = np.meshgrid(self[xaxis], self.zslice)
+        h1 = plt.pcolormesh(X, Z, am,vmin=self.clim[0],vmax=self.clim[1],**kwargs)
+        #h1 = plt.imshow(am,vmin=self.clim[0],vmax=self.clim[1],\
+        #        extent=[self[xaxis].min(), self[xaxis].max(),\
+        #        -self.z_w[-1], -self.z_w[0]], aspect='auto',\
+        #         **kwargs)
         
         #Overlay the bed
         if bathyoverlay:
@@ -141,10 +142,10 @@ class Slice(Spatial):
             V = clevs
          
         if filled:
-            h1 = plt.contourf(self[xaxis],-self.z_r[klayer],am,V,vmin=self.clim[0],vmax=self.clim[1],**kwargs)
+            h1 = plt.contourf(self[xaxis],self.zslice,am,V,vmin=self.clim[0],vmax=self.clim[1],**kwargs)
         
         if outline:
-            h2 = plt.contour(self[xaxis],-self.z_r[klayer],am,V,**kwargs)
+            h2 = plt.contour(self[xaxis],self.zslice,am,V,**kwargs)
             
         #Overlay the bed
         if bathyoverlay:
@@ -250,11 +251,12 @@ class Slice(Spatial):
             
         self.anim = animation.FuncAnimation(fig, updateScalar, frames=len(self.tstep), interval=50, blit=True)
                 
-    def interpSlice(self,variable,method='linear'):
+    def loadData(self, variable, method='linear'):
         """
         Interpolates the data in raw data onto the slice array
         """
         tstep = self.tstep
+        self.Ntslice = len(tstep)
         slicedata = np.zeros((self.Ntslice,self.Nkmax,self.Npt))
 
         #if method=='linear':
@@ -267,7 +269,7 @@ class Slice(Spatial):
                 print 'Slicing data at time-step: %d of %d...'%(tt,self.Ntslice)
             
             self.tstep=[tstep[tt]]
-            rawdata = self.loadData(variable=variable)
+            rawdata = Spatial.loadData(self, variable=variable)
             for kk in range(self.Nkmax):
                 if method == 'nearest':
                     slicedata[tt,kk,:] = rawdata[kk,self.cellind]
@@ -283,7 +285,7 @@ class Slice(Spatial):
         
         self.tstep=tstep
         
-        return slicedata
+        return slicedata.squeeze()
         
         
     def get_klayer(self):
@@ -870,8 +872,10 @@ class MultiSliceEdge(SliceEdge):
     Used for e.g. flux calculations along a profile
     """
 
-    def __init__(self,ncfile,xpt=None,ypt=None,Npt=100,klayer=[-99],**kwargs):
+    def __init__(self,ncfile,xpt=None,ypt=None,Npt=100,klayer=[-99],\
+        MAXITER=10000, **kwargs):
         
+        self.MAXITER=MAXITER
         self.Npt=Npt
 
         Spatial.__init__(self,ncfile,klayer=klayer,**kwargs)
