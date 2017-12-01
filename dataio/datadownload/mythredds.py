@@ -251,9 +251,19 @@ class GridDAP(object):
         ###
         # Download time chunks of data
         ###
+        def openfile(ff):
+            try:
+                nc = Dataset(ff)
+            except:
+                print 'Ouch! Server says no... I''ll retry...'
+                time.sleep(1.1)
+                nc = openfile(ff)
+
+            return nc
+
         p1 = 0
         for ff in tslice_dict.keys():
-            nc = Dataset(ff)
+            nc = openfile(ff)
             t1,t2 = tslice_dict[ff]
             p2 = p1+t2-t1
             print '\t Downloading from file:\n%s'%ff
@@ -765,12 +775,18 @@ class GetDAP(object):
         if create_time:
             dimensions = ('time',)+dimensions
 
+        # Try and find the fillvalue
+        fill_value = None
+        if '_FillValue' in V.ncattrs():
+            fill_value = getattr(V,'_FillValue')
+
         tmp= self._outnc.createVariable(varname, V.dtype, dimensions,
-                zlib=True)
+                zlib=True, fill_value=fill_value)
 
         # Copy the attributes
         for aa in V.ncattrs():
-            tmp.setncattr(aa,getattr(V,aa))
+            if aa != '_FillValue':
+                tmp.setncattr(aa,getattr(V,aa))
 
     def create_ncfile(self,ncfile):
         nc = Dataset(ncfile, mode='w',\

@@ -120,17 +120,42 @@ class SunPlotPy(Spatial, QMainWindow):
                 shortcut="ctrl-o", slot=self.on_open_file,
                 tip="open netcdf file")
 
+        load_grid_action = self.create_action("&Open grid",\
+                shortcut="ctrl-g", slot=self.on_load_grid,
+                tip="open suntans grid")
+
+
+
         quit_action = self.create_action("&Exit",\
                 shortcut="ctrl-x", slot=self.close,
                 tip="Close the application")
 
 
         self.add_actions(self.file_menu,
-                (load_file_action, None, quit_action))
+                (load_file_action, load_grid_action, None, quit_action))
 
 
 
         #    self.Bind(wx.EVT_MENU, self.on_open_file, m_expt)
+        ###
+        # Tools menu
+        ###
+        self.tools_menu = self.menuBar().addMenu("&Tools")
+        
+        ###
+        # File Menu
+        ###
+        # Load a hydro output file
+        load_stat_action = self.create_action("&Plot grid size statistics",\
+                slot=self.on_plot_gridstat,
+                tip="grid stats")
+
+        self.add_actions(self.tools_menu,
+                (load_stat_action,))
+
+
+
+
 
     #    # Load a grid file
     #    m_grid = menu_file.Append(-1, "&Load grid\tCtrl-G", "Load SUNTANS grid from folder")
@@ -509,6 +534,9 @@ class SunPlotPy(Spatial, QMainWindow):
 
         path = dlg[0]
 
+        if len(path) == 0:
+            return
+
         self.statusBar().showMessage("Opening SUNTANS file: %s" % path)
     	try:
     	    Spatial.__init__(self, path, _FillValue=self._FillValue)
@@ -538,29 +566,27 @@ class SunPlotPy(Spatial, QMainWindow):
             self.loadData()
             self.create_figure()
 
-    #def on_load_grid(self, event):
-    #    
-    #    dlg = wx.DirDialog(
-    #        self, 
-    #        message="Open SUNTANS grid from folder...",
-    #        defaultPath=os.getcwd(),
-    #        style= wx.DD_DEFAULT_STYLE)
-    #    
-    #    if dlg.ShowModal() == wx.ID_OK:
-    #        path = dlg.GetPath()
+    def on_load_grid(self, event):
+        
+        dir_ = QFileDialog.getExistingDirectory(None, 'Select a SUNTANS grid folder:',\
+                '~/', QFileDialog.ShowDirsOnly)
+        print dir_
+        
+        if dir_ is not None:
+            path = dir_
 
-    #        # Initialise the class
-    #        self.flash_status_message("Opening SUNTANS grid from folder: %s" % path)
-    #        Grid.__init__(self,path)
+            # Initialise the class
+            #self.flash_status_message("Opening SUNTANS grid from folder: %s" % path)
+            Grid.__init__(self,path)
 
-    #        # Plot the Grid
-    #        if self.__dict__.has_key('collection'):
-    #            self.axes.collections.remove(self.collection)
+            # Plot the Grid
+            if self.__dict__.has_key('collection'):
+                self.axes.collections.remove(self.collection)
 
-    #        self.axes,self.collection = self.plotmesh(ax=self.axes,edgecolors='y')
+            self.axes,self.collection = self.plotmesh(ax=self.axes,edgecolors='y')
 
-    #        # redraw the figure
-    #        self.canvas.draw()
+            # redraw the figure
+            self.canvas.draw()
 
     #def on_load_ptm(self, event):
     #    file_choices = "PTM NetCDF (*.nc)|*.nc|PTM Binary (*_bin.out)|*_bin.out|All Files (*.*)|*.*"
@@ -779,13 +805,13 @@ class SunPlotPy(Spatial, QMainWindow):
     #        filled=False, colors='0.5', linewidths=0.5, zorder=1e6)
     #    print 'Done'
    
-    #def on_plot_gridstat(self, event):
-    #    """
-    #    Plot the grid size histogram in a new figure
-    #    """
-    #    matplotlib.pyplot.figure()
-    #    self.plothist()
-    #    matplotlib.pyplot.show()
+    def on_plot_gridstat(self, event):
+        """
+        Plot the grid size histogram in a new figure
+        """
+        matplotlib.pyplot.figure()
+        self.plothist()
+        matplotlib.pyplot.show()
 
 
     #def create_status_bar(self):

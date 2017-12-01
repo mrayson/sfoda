@@ -8,6 +8,7 @@ Stanford University
 """
 
 import numpy as np
+import numexpr as ne
 import matplotlib.pyplot as plt
 from matplotlib import mlab
 from matplotlib.lines import Line2D
@@ -387,6 +388,10 @@ class timeseries(object):
         ytmp = self._window_matrix(ytmp,windowsize)
         
         weights = 1./windowsize * np.ones((windowsize,))
+        #ypt = ne.evaluate("ytmp * weights")
+        #ypr = ytmp*weights[np.newaxis,...]
+        #ypr = ytmp.__mul__(weights)
+        #ytmp2 = ypr.sum(axis=-1)
         ytmp2 = np.sum(ytmp*weights,axis=-1)
         
         # This result needs to be normalized to account for missing data,

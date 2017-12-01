@@ -971,8 +971,11 @@ class Grid(object):
         rowindex = self.cells[i,:] 
         colindex = np.repeat(i.reshape((Nc,1)), self.maxfaces,axis=1)
 
-        #mask = (k <= self.Nk[colindex]) & (self.cells.mask==False)
-        mask = (k <= self.Nk[colindex])
+        # This is a bit of a hack for when cells is not a MaskedArray object
+        try:
+            mask = (k <= self.Nk[colindex]) & (self.cells.mask==False)
+        except:
+            mask = (k <= self.Nk[colindex])
         
         cell_scalar3d = np.repeat(cell_scalar[i].reshape((Nc,1)), self.maxfaces,axis=1)
         area = np.repeat(self.Ac[i].reshape((Nc,1)), self.maxfaces,axis=1)

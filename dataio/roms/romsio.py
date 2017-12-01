@@ -615,17 +615,17 @@ class ROMS(ROMSGrid):
         Pcolor plot of the data in variable
         """
         
-        if data==None:
+        if data is None:
             data=self.loadData()
             
-        if self.clim==None:
+        if self.clim is None:
             clim=[data.min(),data.max()]
         else:
             clim=self.clim
             
-        if fig==None:
+        if fig is None:
             fig = plt.gcf()
-        if ax==None:
+        if ax is None:
             ax = fig.gca()
         
         p1 = ax.pcolormesh(self.X,self.Y,data,vmin=clim[0],vmax=clim[1],**kwargs)
@@ -634,7 +634,7 @@ class ROMS(ROMSGrid):
         if colorbar:
             plt.colorbar(p1)
         
-        if titlestr==None:
+        if titlestr is None:
             plt.title(self._genTitle(self.tstep[0]))
         else:
             plt.title(titlestr)
@@ -1745,7 +1745,7 @@ def get_depth(S,C,hc,h,zeta=None, Vtransform=1):
     """
     Calculates the sigma coordinate depth
     """
-    if zeta == None:
+    if zeta is None:
         zeta = 0.0*h
         
     N = len(S)
