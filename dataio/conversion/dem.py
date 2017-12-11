@@ -16,9 +16,12 @@ import shutil
 import gdal
 from gdalconst import * 
 
+from scipy.ndimage import gaussian_filter
+
 from soda.utils.interpXYZ import tile_vector
 from soda.utils.myproj import MyProj
 
+import matplotlib.pyplot as plt
 import pdb
 
 class DEM(object):
@@ -33,6 +36,8 @@ class DEM(object):
     utmzone=15
     isnorth=True
     projstr=None
+
+    meshgrid=True
  
     def __init__(self,infile,**kwargs):
         self.infile=infile
@@ -43,7 +48,9 @@ class DEM(object):
             xgrd,ygrd,self.Z = self.readraster()
 
 
-        
+        self.update_grid(xgrd, ygrd)
+
+    def update_grid(self, xgrd, ygrd):
         # Generate the grid
         self.x0 = xgrd.min()
         self.y0 = ygrd.min()
@@ -57,7 +64,8 @@ class DEM(object):
         self.ny = len(ygrd)
         self.npts = self.nx*self.ny
 #        
-        self.X,self.Y = np.meshgrid(xgrd,ygrd)
+        if self.meshgrid:
+            self.X,self.Y = np.meshgrid(xgrd,ygrd)
 
         self.x, self.y = xgrd, ygrd
 
@@ -68,42 +76,96 @@ class DEM(object):
             self.X, self.Y = P(self.X, self.Y)
             self.x = self.X[0,:]
             self.y = self.Y[:,0]
-
- 
         
     def loadnc(self):
         """ Load the DEM data from a netcdf file"""        
         nc = Dataset(self.infile, 'r')
+
+        xopts = ['x','X','lon','longitude']
+        yopts = ['y','Y','lat','latitude']
+        zopts = ['z','Z','depth','topo','elevation']
+
+        for xx in xopts:
+            if xx in nc.variables.keys():
+                xvar = xx
+
+        for yy in yopts:
+            if yy in nc.variables.keys():
+                yvar = yy
+
+        for zz in zopts:
+            if zz in nc.variables.keys():
+                zvar = zz
+
+        X = nc.variables[xvar][:]
+        Y = nc.variables[yvar][:]
+        Z = nc.variables[zvar][:]
+
+
         #print nc.variables.keys()
-        try:
-            X = nc.variables['X'][:]
-            Y = nc.variables['Y'][:]
-            Z = nc.variables['topo'][:]
-        except:
-            try:
-                X = nc.variables['x'][:]
-                Y = nc.variables['x'][:]
-                Z = nc.variables['z'][:]
-            except:
-                X = nc.variables['lon'][:]
-                Y = nc.variables['lat'][:]
-                Z = nc.variables['topo'][:]
+        #try:
+        #    X = nc.variables['X'][:]
+        #    Y = nc.variables['Y'][:]
+        #    Z = nc.variables['topo'][:]
+        #except:
+        #    try:
+        #        X = nc.variables['x'][:]
+        #        Y = nc.variables['x'][:]
+        #        Z = nc.variables['z'][:]
+        #    except:
+        #        X = nc.variables['lon'][:]
+        #        Y = nc.variables['lat'][:]
+        #        Z = nc.variables['topo'][:]
                 
                 
         nc.close()
         return X,Y,Z
         
-    def interp(self, x, y):
+    def interp(self, x, y, method='spline'):
         """
         Interpolate DEM data onto scattered data points using
         scipy.interpolate.RectBivariateSpline
         """
         if not self.__dict__.has_key('_Finterp'):
-            self._Finterp = interpolate.RectBivariateSpline(self.y, self.x, self.Z)
-            #self._Finterp = interpolate.RegularGridInterpolator((self.y, self.x), self.Z)
+            if method == 'spline':
+                self._Finterp = interpolate.RectBivariateSpline(self.y, self.x, self.Z)
+                return self._Finterp(y, x, grid=False)
+            elif method == 'linear':
+                self._Finterp = interpolate.RegularGridInterpolator((self.y, self.x), self.Z)
+                return self._Finterp((y, x))
 
-        #return self._Finterp((y, x))
-        return self._Finterp(y, x, grid=False)
+    def regrid(self, x, y):
+        """
+        Regrid the data onto a different constant grid
+
+        Uses interp1d (linear)
+        """
+
+        Fy = interpolate.interp1d(self.y, self.Z, axis=0, \
+                bounds_error=False, fill_value=np.nan)
+        Zytmp = Fy(y)
+
+        Fx = interpolate.interp1d(self.x, Zytmp, axis=1,\
+                bounds_error=False, fill_value=np.nan)
+        self.Z =  Fx(x)
+        self.update_grid(x, y)
+
+    def clip(self, x0, x1, y0 , y1):
+        """
+        Clips the domain
+        """
+        #
+        xidx = np.argwhere( (self.x > x0) & (self.x < x1))
+        i1 = xidx[0][0]
+        i2 = xidx[-1][0]
+
+        yidx = np.argwhere( (self.y > y0) & (self.y < y1))
+        j1 = yidx[0][0]
+        j2 = yidx[-1][0]
+
+        self.Z = self.Z[j1:j2,i1:i2]
+        self.update_grid(self.x[i1:i2], self.y[j1:j2])
+
 
     def readraster(self):
         """ Loads the data from a DEM raster file"""
@@ -147,13 +209,15 @@ class DEM(object):
         ind = np.isnan(self.Z)
         nc = np.sum(ind)
         xy = np.zeros((nc,2)) 
-        n = -1
-        for jj in range(0,self.ny):  
-            for ii in range(0,self.nx):  
-                if ind[jj,ii]:
-                    n+=1
-                    xy[n,0]=self.X[jj,ii]
-                    xy[n,1]=self.Y[jj,ii]
+        xy[:,0] = self.X[ind]
+        xy[:,1] = self.Y[ind]
+        #n = -1
+        #for jj in range(0,self.ny):  
+        #    for ii in range(0,self.nx):  
+        #        if ind[jj,ii]:
+        #            n+=1
+        #            xy[n,0]=self.X[jj,ii]
+        #            xy[n,1]=self.Y[jj,ii]
         
         return xy
         
@@ -174,13 +238,16 @@ class DEM(object):
         ind = ind==False
         nc = np.sum(ind)
         xy = np.zeros((nc,2)) 
-        n = -1
-        for jj in range(0,self.ny):  
-            for ii in range(0,self.nx):  
-                if ind[jj,ii]:
-                    n+=1
-                    xy[n,0]=self.X[jj,ii]
-                    xy[n,1]=self.Y[jj,ii]
+        xy[:,0] = self.X[ind]
+        xy[:,1] = self.Y[ind]
+        
+        #n = -1
+        #for jj in range(0,self.ny):  
+        #    for ii in range(0,self.nx):  
+        #        if ind[jj,ii]:
+        #            n+=1
+        #            xy[n,0]=self.X[jj,ii]
+        #            xy[n,1]=self.Y[jj,ii]
         
         return xy
         
@@ -217,7 +284,23 @@ class DEM(object):
         
         return J,I
         
-    def calcWeight(self):
+    def calc_weight_convolve(self):
+        """
+
+        """
+        weight = self.W*np.ones((self.ny,self.nx))
+        weight[np.isnan(self.Z)] = 0.
+
+
+        sigma = self.maxdist/self.dx
+        weightf = gaussian_filter(weight, sigma)
+        weightf[np.isnan(self.Z)] = 0.
+
+        #plt.imshow(weightf[::4,::4])
+        #plt.show()
+        return weightf
+
+    def calc_weight(self):
         
         """ Calculate the weight at each point """
         MAXPOINTS=20e6
@@ -233,13 +316,14 @@ class DEM(object):
             return weight
 
         # Compute the spatial tree
+        print 'Building KD-tree...'
         kd = spatial.cKDTree(xynan)
         
         nxy = len(xy)
         
         if nxy <= MAXPOINTS:
             # Perform query on all of the points in the grid
-            dist,ind=kd.query(xy)
+            dist,ind=kd.query(xy, distance_upper_bound=1.1*self.maxdist, n_jobs=-1)
             
             # Compute the actual weight
             w = dist/self.maxdist
@@ -314,8 +398,10 @@ class DEM(object):
         # Create the lat lon variables
         tmpvarx=nc.createVariable('X','f8',(dimnamex,))
         tmpvary=nc.createVariable('Y','f8',(dimnamey,))
-        tmpvarx[:] = self.X[0,:]
-        tmpvary[:] = self.Y[:,0]
+        #tmpvarx[:] = self.X[0,:]
+        #tmpvary[:] = self.Y[:,0]
+        tmpvarx[:] = self.x
+        tmpvary[:] = self.y
         # Create the attributes
         tmpvarx.setncattr('long_name','Easting')
         tmpvarx.setncattr('units','metres')
@@ -360,7 +446,10 @@ def blendDEMs(ncfile,outfile,W,maxdist):
         d = DEM(infile=nc,W=W[ii],maxdist=maxdist[ii])
         print 'Calculating weights for %s...'%nc
         print 'Weight = %6.3f, maxdist = %f'%(W[ii],maxdist[ii])
-        w=d.calcWeight()
+        #w=d.calc_weight()
+
+        w=d.calc_weight_convolve()
+
         ny = d.ny
         nx = d.nx
         

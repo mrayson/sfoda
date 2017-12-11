@@ -13,7 +13,10 @@ class RegGrid(object):
     """
     Class for a regularly spaced cartesian grid
     """
-    def __init__(self,xlims,ylims,dx,dy):
+    meshgrid=True
+    def __init__(self,xlims,ylims,dx,dy, **kwargs):
+        self.__dict__.update(**kwargs)
+
         self.ox = xlims[0]
         self.oy = ylims[0]
         self.dx = dx
@@ -22,14 +25,15 @@ class RegGrid(object):
         self.ylims=ylims
 
         #  Construct a 2D mesh of particles
-        x = np.arange(xlims[0],xlims[1],dx)
-        y = np.arange(ylims[0],ylims[1],dy)
+        self.x = np.arange(xlims[0],xlims[1],dx)
+        self.y = np.arange(ylims[0],ylims[1],dy)
 
-        self.X, self.Y = np.meshgrid(x,y)
+        if self.meshgrid:
+            self.X, self.Y = np.meshgrid(self.x,self.y)
 
-        shp = self.X.shape
-        self.ny = shp[0]
-        self.nx = shp[1]
+        #shp = self.X.shape
+        self.ny = self.y.size
+        self.nx = self.x.size
 	
     def returnij(self,x,y):
         """
