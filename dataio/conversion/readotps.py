@@ -478,7 +478,7 @@ def read_OTPS_grd(grdfile):
        f.seek(8,1)
        iob = np.fromfile(f,dtype=np.int32,count=2*nob)
        iob.byteswap(True)
-       iob = np.reshape(iob,(2,nob))
+       iob = np.reshape(iob,(2,int(nob)))
        f.seek(8,1)
     
     hz = np.fromfile(f,dtype=np.float32,count=n*m)
