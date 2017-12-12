@@ -12,6 +12,8 @@ import urllib2
 from xml.dom import minidom
 from collections import OrderedDict
 
+import pdb
+
 
 ###
 # Dictionary containing opendap server specific
@@ -80,16 +82,22 @@ metoceandict = {\
         'ncurl':[],\
         'type':'atmosphere',\
         'multifile':True,\
-        'uwind':'U-component_of_wind',\
-        'vwind':'V-component_of_wind',\
-        'tair':'Temperature',\
-        'pair':'Pressure_reduced_to_MSL',\
+        #'uwind':'U-component_of_wind',\
+        #'vwind':'V-component_of_wind',\
+        'uwind':'u-component_of_wind_height_above_ground',\
+        'vwind':'v-component_of_wind_height_above_ground',\
+        #'tair':'Temperature',\
+        #'pair':'Pressure_reduced_to_MSL',\
+        'tair':'Temperature_height_above_ground',\
+        'pair':'Pressure_reduced_to_MSL_msl',\
         'rh':None,\
         'cloud':None,\
         'rain':'Precipitation_rate',\
+        'rain':'Precipitation_rate_surface_Mixed_intervals_Average',\
         'dlwr':'Downward_Long-Wave_Rad_Flux',\
         'dswr':'Downward_Short-Wave_Rad_Flux',\
-        'sh':'Specific_humidity',\
+        'sh':'Specific_humidity_height_above_ground',\
+        #'sh':'Specific_humidity',\
         'uwind_file':'wnd10m',\
         'vwind_file':'wnd10m',\
         'tair_file':'tmp2m',\
@@ -210,12 +218,19 @@ class CFSR_1hr(object):
     range and variable list
     """
 
-    baseurl = 'http://nomads.ncdc.noaa.gov/thredds/dodsC/cfsr1hr/'
+    #baseurl = 'http://nomads.ncdc.noaa.gov/thredds/dodsC/cfsr1hr/'
+    #baseurl = 'https://www.ncei.noaa.gov/thredds/dodsC/cfs_reanl_ts/'
+    baseurl = 'https://www.ncei.noaa.gov/thredds/dodsC/cfs_v2_anl_ts/'
     dt = 1.
     dt_units = 'H'
 
-    time_min = '1979-01-01'
-    time_max = '2009-12-31'
+    #time_min = '1979-01-01'
+    #time_max = '2009-12-31'
+
+    # v2
+    time_min = '2011-01-01'
+    time_max = '2017-12-31'
+
 
     def __init__(self, trange, tdsdict, **kwargs):
         self.__dict__.update(**kwargs)
@@ -269,14 +284,16 @@ class CFSR_1hr(object):
         Create the url string
         """
         timestr = pd.datetime.strftime(time,'%Y%m')
-        return '%s%s/%s.gdas.%s.grb2'%(baseurl,timestr,varname,timestr)
+        yearstr = pd.datetime.strftime(time,'%Y')
+        #return '%s%s/%s.gdas.%s.grb2'%(baseurl,timestr,varname,timestr)
+        return '%s%s/%s/%s.gdas.%s.grib2'%(baseurl,yearstr,timestr,varname,timestr)
 
     def get_filename_only(self, var=None):
         """
         Returns the first file only
         """
         fname =  self.ncfilelist[0]
-        if not var == None:
+        if not var is None:
             fstr = self.tdsdict['%s_file'%'uwind']
             fstrnew = self.tdsdict['%s_file'%var]
             fnamenew = fname.replace(fstr, fstrnew)
@@ -499,8 +516,8 @@ def get_cfsr_tds(xrange, yrange, trange, outfile, outfile_pair):
         'tair',\
         #'pair',\
         'rain',\
-        'dlwr',\
-        'dswr',\
+        #'dlwr',\
+        #'dswr',\
         'sh',\
         ]
 
@@ -508,12 +525,12 @@ def get_cfsr_tds(xrange, yrange, trange, outfile, outfile_pair):
     cfsr = CFSR_1hr(trange, mydict)
 
     # Create the thredds object
-    TDS = GetDAP(vars = vars, MF = cfsr, **mydict)
+    TDS = GetDAP(variables = vars, MF = cfsr, **mydict)
     # Call the object
     TDS(xrange,yrange,trange,outfile=outfile)
 
     # Note that pressure is on a separate grid so we will store it separately
-    TDS = GetDAP(vars = ['pair'], MF = cfsr, **mydict)
+    TDS = GetDAP(variables = ['pair'], MF = cfsr, **mydict)
     # Call the object
     TDS(xrange,yrange,trange,outfile=outfile_pair)
 

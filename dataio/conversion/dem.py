@@ -469,9 +469,6 @@ def blendDEMs(ncfile,outfile,W,maxdist):
     for ii in range(0,nfiles):
         Wall[:,:,ii] = np.squeeze(Wall[:,:,ii]) / Wsum
         
-        
-        
-        
     # Re-load in the depths from each file and sum
     print 'Writing to an output file...'
     Zout = np.zeros((ny,nx))
@@ -487,6 +484,12 @@ def blendDEMs(ncfile,outfile,W,maxdist):
         Zout +=  np.squeeze(Wall[:,:,ii]) * Zin 
         filestr +='%s, '%infile
     
+    # Check for NaNs
+    idx = np.isnan(Zout)
+    if np.any(idx):
+        print 'Warning NaNs found. Zeroing...'
+        Zout[idx] = 0.
+
     # Copy the data to a new netcdf file
     shutil.copyfile(ncfile[-1],outfile)
     nc = Dataset(outfile, 'r+')

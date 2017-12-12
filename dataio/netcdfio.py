@@ -15,8 +15,10 @@ August 2012
 from netCDF4 import Dataset, num2date
 #import shapefile
 import numpy as np
-#import sqlite3 as db
-from pyspatialite import dbapi2 as db
+try:
+    from pyspatialite import dbapi2 as db
+except:
+    import sqlite3 as db
 
 from datetime import datetime
 import matplotlib.pyplot as plt

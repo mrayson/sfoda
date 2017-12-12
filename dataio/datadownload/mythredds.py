@@ -825,7 +825,7 @@ class MFncdap(object):
             print f
             nc = Dataset(f)
             t = nc.variables[self.timevar]
-            time = num2date(t[:],t.units).tolist()
+            time = num2date(t[:].ravel(),t.units).tolist()
             nc.close()
             
             #self.timelookup.update({f:time})
