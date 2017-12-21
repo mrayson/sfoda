@@ -689,14 +689,14 @@ class SunTvtk(Spatial):
             zscale = self.zscale
             
         depth = -self.dv
-        if clims==None:
+        if clims is None:
             clims = [depth.min(), depth.max()]
             
         #  Create an unstructured grid object to interpolate cells onto points
         points = np.column_stack((self.xp,self.yp,0.0*self.xp))
         tri_type = tvtk.Polygon().cell_type
         
-        cells = self.cells
+        cells = self.cells*1
         for ii in range(self.Nc):
             nf = self.nfaces[ii]
             cells[ii,nf::] = cells[ii,0]

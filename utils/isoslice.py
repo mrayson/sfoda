@@ -42,7 +42,7 @@ def isoslice(var, prop, isoval=0, axis=0, masking=True):
     var = var.reshape(sz[0],-1)
     prop = prop.reshape(sz[0],-1)
     #find zero-crossings (zc == 1)
-    zc =  np.where( (prop[:-1,:]*prop[1:,:])<0.0 ,1.0, 0.0)
+    zc =  np.where( (prop[:-1,:]*prop[1:,:])<=0.0 ,1.0, 0.0)
     varl = var[:-1,:]*zc
     varh = var[1:,:]*zc
     propl = prop[:-1,:]*zc

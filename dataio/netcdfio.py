@@ -417,11 +417,19 @@ def netcdfObs2DB(ncfile, dbfile, nctype=1):
         StationID='none'
         StationName = nc.groups[grp].stationname
             
-        try:
-            ele = nc.groups[grp].variables[vv].height + \
-                nc.groups[grp].variables['DepthHeight']
-        except:
-            ele = 0.0
+        ele = 0.
+        if 'DepthHeight' in nc.groups[grp].variables.keys():
+             ele += nc.groups[grp].variables['DepthHeight'][:]
+
+        if hasattr(nc.groups[grp].variables[vv], 'height'):
+             ele += nc.groups[grp].variables[vv].height
+
+        #try:
+        #    ele = nc.groups[grp].variables[vv].height + \
+        #        nc.groups[grp].variables['DepthHeight']
+        #except:
+        #    pdb.set_trace()
+        #    ele = 0.0
             
         times = nc.groups[grp].variables['time']
         dates = num2date([times[0],times[-1]],units=times.units)
