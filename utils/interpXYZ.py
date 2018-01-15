@@ -347,7 +347,7 @@ class Inputs(object):
         print 'Reading data from: %s...'%self.infile
         if self.infile[-3:]=='.gz':
             LL,self.Zin = read_xyz_gz(self.infile)
-        elif self.infile[-3:] in ['txt','dat']:
+        elif self.infile[-3:] in ['txt','dat','xyz']:
             LL,self.Zin = read_xyz(self.infile)
             self.Zin = np.ravel(self.Zin)
         elif self.infile[-3:]=='shp':
