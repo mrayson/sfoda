@@ -13,6 +13,7 @@ Usage:
 
 from soda.dataio.netcdfio import dict_toxray
 from soda.dataio.suntans.sunpy import calc_z
+from soda.utils.othertime import datetimetodatetime64
 
 import xray
 from netCDF4 import num2date
@@ -235,7 +236,8 @@ class ReadProf(ProfData):
 
         self.tunits = 'seconds since %s'%(datetime.strftime(t0, '%Y-%m-%d:%H%M%S'))
 
-        self.time = num2date( self.tsec, self.tunits)
+        time = num2date( self.tsec, self.tunits)
+        self.time = datetimetodatetime64(time)
 
     def __call__(self, tstep=-1):
 

@@ -417,7 +417,7 @@ class timeseries(object):
         y[y.mask]=0.
         y.mask=mask
         
-        windowsize = np.floor(windowlength/self.dt)
+        windowsize = int(np.floor(windowlength/self.dt))
         ytmp = y.copy()
         ytmp = self._window_matrix(ytmp,windowsize)
         ytmp2 = np.sum(ytmp*ytmp,axis=-1)
