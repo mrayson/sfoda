@@ -280,10 +280,11 @@ class JoinSuntans(Grid):
         nc.variables['xp'][:]=self.xp
         
         # Initialise all of the other variables
-        nowritevars = ['time','xp','yp','xv','yv','cells']
+        nowritevars = ['time','xp','yp','xv','yv','cells','suntans_mesh']
         for vv in variables:
             vname = vv['Name']
             if not vv['isCell'] and not vv['isEdge'] and not vv['Name'] in nowritevars:
+                print vname
                 nc.variables[vname][:]=ncin.variables[vname][:]
         
         nc.close()
@@ -361,7 +362,8 @@ def init_nc(outfile,variables,dims,globalatts):
     
         # Create the attributes
         for aa in vv['Attributes'].keys():
-            tmpvar.setncattr(aa,vv['Attributes'][aa]) 
+            if aa not in ['_FillValue']:
+                tmpvar.setncattr(aa,vv['Attributes'][aa]) 
                    
     nc.close()    
 
