@@ -129,10 +129,13 @@ class DEM(object):
         if not self.__dict__.has_key('_Finterp'):
             if method == 'spline':
                 self._Finterp = interpolate.RectBivariateSpline(self.y, self.x, self.Z)
-                return self._Finterp(y, x, grid=False)
             elif method == 'linear':
                 self._Finterp = interpolate.RegularGridInterpolator((self.y, self.x), self.Z)
-                return self._Finterp((y, x))
+
+        if method == 'spline':
+            return self._Finterp(y, x, grid=False)
+        elif method == 'linear':
+            return self._Finterp((y, x))
 
     def regrid(self, x, y):
         """
