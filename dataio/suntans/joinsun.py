@@ -48,7 +48,6 @@ class JoinSuntans(Grid):
         # If outvars have been set only write those variables and the grid variables
         if outvars is not None:
             self.outvars=gridvars+outvars
-            self.outvars=outvars
             newvariables = [vv for vv in self.variables if vv['Name'] in self.outvars]
             self.variables = newvariables
             print 'Writing variables: ', newvariables
@@ -413,7 +412,7 @@ if __name__ == '__main__':
 	elif opt == '-v':
 	     outvars=val.split(' ')
 
-    sun = JoinSuntans(suntanspath,basename,numprocs)
+    sun = JoinSuntans(suntanspath,basename,numprocs, outvars=outvars)
     sun(nstep=nsteps)     
 
 #	# Testing only	

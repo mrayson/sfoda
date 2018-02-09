@@ -20,6 +20,7 @@ class ufilter(object):
     c = 4. # uses point c x p for filter
     filtertype = 'gaussian' # 'gaussian' or 'lanczos'
     kmax = 50 # Maximum number of points to use in filter matrix
+    vectorized=True
     
     def __init__(self,X,delta_f,**kwargs):
         
@@ -37,7 +38,10 @@ class ufilter(object):
         
         self.GetP()
         
-        self.BuildFilterMatrix2()
+        if self.vectorized:
+            self.BuildFilterMatrix2()
+        else:
+            self.BuildFilterMatrix()
         
     def __call__(self,y):
         """
@@ -53,9 +57,11 @@ class ufilter(object):
             
         """
         # Compute the spatial tree
+        print 'Building KD-Tree...'
         kd = spatial.cKDTree(self.X)
         eps=1e-6
         # Initialise the sparse matrix
+        print 'Creating an %d x %d sparse matrix...'%(self.n, self.n)
         self.G = sparse.lil_matrix((self.n,self.n))
         
         printstep = 5 
@@ -88,14 +94,17 @@ class ufilter(object):
         Vectorized version of the above
         """
         # Compute the spatial tree
+        print 'Building KD-Tree...'
         kd = spatial.cKDTree(self.X)
         eps=1e-6
 
         # Initialise the sparse matrix
+        print 'Creating an %d x %d sparse matrix...'%(self.n, self.n)
         self.G = sparse.lil_matrix((self.n,self.n))
         
         # Find all of the points within c * p distance from point
 
+        print 'Querying matrix...'
         dx, i = kd.query(self.X+eps,k=self.kmax,distance_upper_bound=self.c*self.p)
         
         ind = np.isinf(dx)
