@@ -46,11 +46,12 @@ class JoinSuntans(Grid):
         self.variables, self.dims, self.globalatts = nc_info(self.ncfile)
 
         # If outvars have been set only write those variables and the grid variables
-        if not outvars==None:
+        if outvars is not None:
             self.outvars=gridvars+outvars
             self.outvars=outvars
             newvariables = [vv for vv in self.variables if vv['Name'] in self.outvars]
             self.variables = newvariables
+            print 'Writing variables: ', newvariables
 
         # Step 3) Set the dimension sizes based on the original grid
         self.dims['Nc']=self.Nc
