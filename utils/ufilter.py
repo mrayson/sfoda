@@ -9,6 +9,7 @@ Created on Tue Dec 18 13:19:39 2012
 
 import numpy as np
 from scipy import spatial, sparse
+#from numba import jit
 
 import pdb
 
@@ -38,18 +39,74 @@ class ufilter(object):
         
         self.GetP()
         
-        if self.vectorized:
-            self.BuildFilterMatrix2()
-        else:
-            self.BuildFilterMatrix()
+        #if self.vectorized:
+        #    self.BuildFilterMatrix2()
+        #else:
+        #    self.BuildFilterMatrix()
+        self.build_filter_matrix()
         
     def __call__(self,y):
         """
         Performs the filtering operation on data in vector y
         """
         #print np.argwhere(self.G.sum(axis=1) == 0.0)
-        return self.G*y
+        return self.G.dot(y)
         
+    #@jit
+    def build_filter_matrix(self):
+        """
+        Builds a sparse matrix, G, used to filter data in vector, y, via:
+            y_filt = G x y
+            
+        """
+        # Compute the spatial tree
+        print 'Building KD-Tree...'
+        kd = spatial.cKDTree(self.X)
+        eps=1e-6
+
+        # Initialise the sparse matrix
+        print 'Creating an %d x %d sparse matrix...'%(self.n, self.n)
+        #self.G = sparse.lil_matrix((self.n,self.n))
+        weights = np.zeros((self.n, self.kmax))
+        rows = np.zeros((self.n, self.kmax), dtype=np.int)
+        cols = np.zeros((self.n, self.kmax), dtype=np.int)
+        mask = np.zeros((self.n, self.kmax), dtype=np.bool)
+        
+        printstep = 5 
+        printstep0 = 0
+        ii=0
+        for nn in range(self.n):
+            ii+=1
+            perccomplete = float(nn)/float(self.n)*100.0
+            if perccomplete > printstep0:
+                print '%d %% complete...'%(int(perccomplete))
+                printstep0+=printstep
+            #print nn
+            # Find all of the points within c * p distance from point
+            #dx, i = kd.query(self.X[nn,:]+eps,k=self.n+1,distance_upper_bound=self.c*self.p)
+            dx, i = kd.query(self.X[nn,:]+eps, k=self.kmax, distance_upper_bound=self.c*self.p)
+            
+            # Calculate the filter weights on these points
+            ind = dx != np.inf
+            Gtmp = self.gaussian(dx[ind])
+            
+            # Insert the points into the sparse matrix
+            I = i[ind]
+            #self.G[nn,I] = Gtmp
+
+            nnear = ind.sum()
+            weights[nn,0:nnear] = Gtmp
+            cols[nn,0:nnear] = I
+            rows[nn,0:nnear] = nn
+            mask[nn,0:nnear] = True
+
+        # build a sparse matrix here
+        print 'Building the CSR matrix...'
+        self.G = sparse.csr_matrix((weights[mask], (rows[mask],cols[mask])),\
+                shape=(self.n, self.n))
+        print 'Done'
+
+
     def BuildFilterMatrix(self):
         """
         Builds a sparse matrix, G, used to filter data in vector, y, via:
@@ -79,7 +136,7 @@ class ufilter(object):
             
             # Calculate the filter weights on these points
             ind = dx != np.inf
-            Gtmp = self.Gaussian(dx[ind])
+            Gtmp = self.gaussian(dx[ind])
             
             # Insert the points into the sparse matrix
             I = i[ind]
@@ -110,7 +167,7 @@ class ufilter(object):
         ind = np.isinf(dx)
         # Calculate the filter weights
         if self.filtertype=='gaussian':
-            Gtmp = self.Gaussian(dx)
+            Gtmp = self.gaussian(dx)
         elif self.filtertype=='lanczos':
             Gtmp = self.Lanczos(dx)
         
@@ -164,7 +221,8 @@ class ufilter(object):
     #    """        
     #    return np.round(self.c*self.p/self.dxmin)
         
-    def Gaussian(self,dx):
+    #@jit
+    def gaussian(self,dx):
         """
         Calculate the Gaussian filter weights
         """      

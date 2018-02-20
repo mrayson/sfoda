@@ -297,6 +297,8 @@ class SunTvtk(Spatial):
         # Add a title if there isn't one
         if not self.__dict__.has_key('title'):
             self.title=mlab.title(Spatial.genTitle(self),height=0.95,size=0.15)
+
+        return src
         
     def contour(self,vv=[10],clim=None,**kwargs):
         """
@@ -323,7 +325,7 @@ class SunTvtk(Spatial):
             
         # Add a title if there isn't one
         if not self.__dict__.has_key('title'):
-            self.title=mlab.title(self._SpatialgenTitle(),height=0.95,size=0.15)
+            self.title=mlab.title(Spatial.genTitle(self),height=0.95,size=0.15)
     
     def isosurface(self,vv=[4.0],clim=None,**kwargs):
         """
