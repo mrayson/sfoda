@@ -124,16 +124,17 @@ class SunPlotPy(Spatial, QMainWindow):
                 shortcut="ctrl-g", slot=self.on_load_grid,
                 tip="open suntans grid")
 
-
+        save_anim_action = self.create_action("&Save animation",\
+                shortcut="ctrl-a", slot=self.on_save_anim,
+                tip="animate current scene")
 
         quit_action = self.create_action("&Exit",\
                 shortcut="ctrl-x", slot=self.close,
                 tip="Close the application")
 
-
         self.add_actions(self.file_menu,
-                (load_file_action, load_grid_action, None, quit_action))
-
+                (load_file_action, load_grid_action,\
+                save_anim_action, None, quit_action))
 
 
         #    self.Bind(wx.EVT_MENU, self.on_open_file, m_expt)
@@ -701,81 +702,90 @@ class SunPlotPy(Spatial, QMainWindow):
     #        
 
 
-    #def on_save_anim(self,event):
-    #    """
-    #    Save an animation of the current scene to a file
-    #    """
-    #    file_choices = "Quicktime (*.mov)|*.mov| (*.gif)|*.gif| (*.avi)|*.avi |(*.mp4)|*.mp4 "
-    #    filters=['.mov','.gif','.avi','.mp4']
+    def on_save_anim(self,event):
+        """
+        Save an animation of the current scene to a file
+        """
+        #file_choices = "Quicktime (*.mov)|*.mov| (*.gif)|*.gif| (*.avi)|*.avi |(*.mp4)|*.mp4 "
+        #filters=['.mov','.gif','.avi','.mp4']
+        filters = "Movie formats (*.mp4 *.avi *.gif);;All files (*.*)"
 
-    #    
-    #    dlg = wx.FileDialog(
-    #        self, 
-    #        message="Output animation file...",
-    #        defaultDir=os.getcwd(),
-    #        defaultFile="",
-    #        wildcard=file_choices,
-    #        style= wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT)
+        
+        dir_ = QFileDialog.getSaveFileName(None, 'Save animation to file:',\
+                '~/', filters)
+        print dir_
+        
+        #dlg = wx.FileDialog(
+        #    self, 
+        #    message="Output animation file...",
+        #    defaultDir=os.getcwd(),
+        #    defaultFile="",
+        #    wildcard=file_choices,
+        #    style= wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT)
 
-    #    if dlg.ShowModal() == wx.ID_OK:
+        if dir_ is not None:
 
-    #        path = dlg.GetPath()
-    #        ext = filters[dlg.GetFilterIndex()]
-    #        if ext in path:
-    #            outfile=path
-    #        else:
-    #            outfile = path+ext
-    #        self.flash_status_message("Saving figure to file: %s" %outfile)
-    #        self.flash_status_message("Saving animation to file: %s" %outfile)
+            outfile = dir_[0]
+            ext = outfile[-4::]
+            # Create the animation
+            #self.tstep = range(self.Nt) # Use all time steps for animation
+            #self.animate(cbar=self.cbar,cmap=self.cmap,\
+            #    xlims=self.axes.get_xlim(),ylims=self.axes.get_ylim())
+            def initanim():
+                return (self.title, self.collection)
+                #if not self.plot_type=='particles':
+                #    return (self.title, self.collection)
+                #else:
+                #    return (self.PTM.title,self.PTM.p_handle)
 
-    #        # Create the animation
-    #        #self.tstep = range(self.Nt) # Use all time steps for animation
-    #        #self.animate(cbar=self.cbar,cmap=self.cmap,\
-    #        #    xlims=self.axes.get_xlim(),ylims=self.axes.get_ylim())
-    #        def initanim():
-    #            if not self.plot_type=='particles':
-    #                return (self.title, self.collection)
-    #            else:
-    #                return (self.PTM.title,self.PTM.p_handle)
+            def updateScalar(i):
+                self.tstep=[i]
+                self.loadData()
+                self.update_figure()
+                return (self.title,self.collection)
 
-    #        def updateScalar(i):
-    #            if not self.plot_type=='particles':
-    #                self.tstep=[i]
-    #                self.loadData()
-    #                self.update_figure()
-    #                return (self.title,self.collection)
-    #            elif self.plot_type=='particles':
-    #                self.PTM.plot(i,ax=self.axes,\
-    #                    xlims=self.axes.get_xlim(),ylims=self.axes.get_ylim())
-    #                return (self.PTM.title,self.PTM.p_handle)
+                #if not self.plot_type=='particles':
+                #    self.tstep=[i]
+                #    self.loadData()
+                #    self.update_figure()
+                #    return (self.title,self.collection)
+                #elif self.plot_type=='particles':
+                #    self.PTM.plot(i,ax=self.axes,\
+                #        xlims=self.axes.get_xlim(),ylims=self.axes.get_ylim())
+                #    return (self.PTM.title,self.PTM.p_handle)
 
-    #        self.anim = animation.FuncAnimation(self.fig, \
-    #            updateScalar, init_func = initanim, frames=self.Nt, interval=50, blit=True)
+            self.anim = animation.FuncAnimation(self.fig, \
+                updateScalar, init_func = initanim, frames=self.Nt, interval=50, blit=True)
 
-    #        if ext=='.gif':
-    #            self.anim.save(outfile,writer='imagemagick',fps=6)
-    #        elif ext=='.mp4':
-    #            print 'Saving html5 video...'
-    #            # Ensures html5 compatibility
-    #            self.anim.save(outfile,fps=6,\
-    #                writer='ffmpeg',\
-    #                bitrate=3600,extra_args=['-vcodec','libx264'])
-    #                #writer='mencoder',
-    #                #bitrate=3600,extra_args=['-ovc','x264']) # mencoder options
-    #        else:
-    #            self.anim.save(outfile,writer='mencoder',fps=6,bitrate=3600)
+            if ext=='.gif':
+                self.anim.save(outfile,writer='imagemagick',fps=6)
+            elif ext=='.mp4':
+                print 'Saving html5 video...'
+                # Ensures html5 compatibility
+                self.anim.save(outfile,fps=6,\
+                    writer='ffmpeg',\
+                    bitrate=3600,extra_args=['-vcodec','libx264'])
+                    #writer='mencoder',
+                    #bitrate=3600,extra_args=['-ovc','x264']) # mencoder options
+            else:
+                self.anim.save(outfile,writer='mencoder',fps=6,bitrate=3600)
 
-    #        # Return the figure back to its status
-    #        del self.anim
-    #        self.tstep=self.tindex
-    #        if not self.plot_type=='particles':
-    #            self.loadData()
-    #            self.update_figure()
+            # Return the figure back to its status
+            del self.anim
+            self.tstep=self.tindex
+            self.loadData()
+            self.update_figure()
+            print 'Finished saving animation to %s'%outfile
+            print 72*'#'
 
-    #        # Bring up a dialog box
-    #        dlg2= wx.MessageDialog(self, 'Animation complete.', "Done", wx.OK)
-    #        dlg2.ShowModal()
-    #        dlg2.Destroy()
+            #if not self.plot_type=='particles':
+            #    self.loadData()
+            #    self.update_figure()
+
+            # Bring up a dialog box
+            #dlg2= wx.MessageDialog(self, 'Animation complete.', "Done", wx.OK)
+            #dlg2.ShowModal()
+            #dlg2.Destroy()
 
     #def on_exit(self, event):
     #    self.Destroy()

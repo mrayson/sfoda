@@ -8,6 +8,7 @@ Jan 2017
 """
 
 import numpy as np
+from scipy import linalg, optimize
 
 from datetime import datetime
 import othertime
@@ -83,6 +84,33 @@ def harmonic_fit(dtime, X, frq, mask=None, axis=0, phsbase=None):
         B = b[0][2::2]
         
         return A+1j*B, b[0][0::N]
+
+    def lstsqscipy(A,y):    
+        """    
+        TESTING ONLY...
+
+        Uses scipy's least_squares function that uses
+        non-least-squares methods i.e. MLE
+        """
+        if type(y) == np.ma.MaskedArray:
+            y=y.data
+
+        N=A.shape[1]
+        def fun(x0):
+            err = y - A.dot(x0[:,np.newaxis])
+            return err.ravel()
+
+        b = linalg.lstsq(A,y)
+        x0=b[0].ravel()
+
+        # Robust regression
+        b = optimize.least_squares(fun, x0, loss='soft_l1', f_scale=0.2)
+
+        A = b['x'][1::2]
+        B = b['x'][2::2]
+        
+        return A+1j*B, b['x'][0::N]
+    
     
     def phsamp(C):
         return np.abs(C), np.angle(C)
