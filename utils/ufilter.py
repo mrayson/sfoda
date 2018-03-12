@@ -13,20 +13,60 @@ from scipy import spatial, sparse
 
 import pdb
 
+###
+# Filter functions
+def gaussian(dx, coeffs):
+    """
+    Calculate the Gaussian filter weights
+    """      
+    p, m  = coeffs
+    #Gtmp = 1.0 / (4.0*np.pi*self.p) * np.exp(-dx/np.sqrt(self.p))/dx
+    #Gtmp = Gtmp[1:] # discard closest point (self)
+    if m == 1:
+        # 1D gaussian
+        coef = 1.0/(np.sqrt(2.0*np.pi)*p)
+    elif m == 2:
+        # 2D gaussian
+        coef = 1.0/(2.0*np.pi*p**2)
+        
+    Gtmp = coef * np.exp(- dx**2 / (2*p**2))
+    
+    return Gtmp / np.sum(Gtmp)
+    
+def lanczos(dx, coeffs):
+    """
+    Lanczos filter weights
+    
+    !!!Need to check this!!!
+    """        
+    a,m = coeffs
+    
+    Gtmp = np.sinc(dx) * np.sinc(dx/a)
+
+    return Gtmp / np.sum(Gtmp)
+    
+def sinc(dx, coeffs):
+    p, ndim = coeffs
+    B = 1/p
+    G = 2*B*np.sinc(dx*2*B)
+    return G/np.sum(G)
+
+#########
+
 class ufilter(object):
     """
     Unstructured grid filter class
     """
     
     c = 4. # uses point c x p for filter
-    filtertype = 'gaussian' # 'gaussian' or 'lanczos'
     kmax = 50 # Maximum number of points to use in filter matrix
     vectorized=True
     
-    def __init__(self,X,delta_f,**kwargs):
+    def __init__(self,X, delta_f, filter=sinc, **kwargs):
         
         self.X = X
         self.delta_f = delta_f
+        self.filter = filter
         
         self.__dict__.update(kwargs)
         
@@ -88,7 +128,8 @@ class ufilter(object):
             
             # Calculate the filter weights on these points
             ind = dx != np.inf
-            Gtmp = self.gaussian(dx[ind])
+            #Gtmp = self.gaussian(dx[ind])
+            Gtmp = self.filter(dx[ind], [self.p, self.m])
             
             # Insert the points into the sparse matrix
             I = i[ind]
@@ -166,10 +207,11 @@ class ufilter(object):
         
         ind = np.isinf(dx)
         # Calculate the filter weights
-        if self.filtertype=='gaussian':
-            Gtmp = self.gaussian(dx)
-        elif self.filtertype=='lanczos':
-            Gtmp = self.Lanczos(dx)
+        Gtmp = self.filter(dx, [self.p, self.m])
+        #if self.filtertype=='gaussian':
+        #    Gtmp = self.gaussian(dx)
+        #elif self.filtertype=='lanczos':
+        #    Gtmp = self.Lanczos(dx)
         
         # Set the weighting to zero for values outside of the range
         Gtmp[ind]=0
@@ -222,31 +264,3 @@ class ufilter(object):
     #    return np.round(self.c*self.p/self.dxmin)
         
     #@jit
-    def gaussian(self,dx):
-        """
-        Calculate the Gaussian filter weights
-        """      
-        #Gtmp = 1.0 / (4.0*np.pi*self.p) * np.exp(-dx/np.sqrt(self.p))/dx
-        #Gtmp = Gtmp[1:] # discard closest point (self)
-        if self.m == 1:
-            # 1D gaussian
-            coef = 1.0/(np.sqrt(2.0*np.pi)*self.p)
-        elif self.m == 2:
-            # 2D gaussian
-            coef = 1.0/(2.0*np.pi*self.p**2)
-            
-        Gtmp = coef * np.exp(- dx**2 / (2*self.p**2))
-        
-        return Gtmp / np.sum(Gtmp)
-        
-    def Lanczos(self,dx):
-        """
-        Lanczos filter weights
-        
-        !!!Need to check this!!!
-        """        
-        a = self.p
-        
-        Gtmp = np.sinc(dx) * np.sinc(dx/a)
-        
-        return Gtmp / np.sum(Gtmp)
