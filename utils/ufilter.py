@@ -36,14 +36,13 @@ def gaussian(dx, coeffs):
 def lanczos(dx, coeffs):
     """
     Lanczos filter weights
-    
-    !!!Need to check this!!!
     """        
-    a,m = coeffs
-    
-    Gtmp = np.sinc(dx) * np.sinc(dx/a)
-
-    return Gtmp / np.sum(Gtmp)
+    p, ndim = coeffs
+    a=4
+    x = dx/(p)
+    G = np.sinc(x)*np.sinc(x/a)
+    G[np.abs(x)>a] = 0.
+    return G/np.sum(G
     
 def sinc(dx, coeffs):
     p, ndim = coeffs
@@ -62,7 +61,7 @@ class ufilter(object):
     kmax = 50 # Maximum number of points to use in filter matrix
     vectorized=True
     
-    def __init__(self,X, delta_f, filter=sinc, **kwargs):
+    def __init__(self,X, delta_f, filter=lanczos, **kwargs):
         
         self.X = X
         self.delta_f = delta_f
