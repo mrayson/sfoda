@@ -42,7 +42,7 @@ def lanczos(dx, coeffs):
     x = dx/(p)
     G = np.sinc(x)*np.sinc(x/a)
     G[np.abs(x)>a] = 0.
-    return G/np.sum(G
+    return G/np.sum(G)
     
 def sinc(dx, coeffs):
     p, ndim = coeffs
