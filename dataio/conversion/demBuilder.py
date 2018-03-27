@@ -95,7 +95,7 @@ class demBuilder(object):
             self.npt = len(self.Zin)
             if self.convert2utm:
 
-                if self.bbox==None:
+                if self.bbox is None:
                     # Work out the domain limits from the input file
                     self.bbox = [LL[:,0].min(),LL[:,0].max(),LL[:,1].min(),LL[:,1].max()]
                 #else:
@@ -144,7 +144,7 @@ class demBuilder(object):
                 
             elif self.interptype=='blockavg':
                 print 'Building DEM with Block Averaging...'
-                self.blockAvg()
+                self.blockAvgMulti()
             
             elif self.interptype=='idw':
                 print 'Building DEM with Inverse Distance Weighted Interpolation...'
@@ -298,10 +298,12 @@ class demBuilder(object):
         sumpts[ind]=0
         
         #  Use the sparse matrix library for accumulation
-        self.Z += coo_matrix((np.ravel(self.Zin),(J,I)),\
+        self.Z = coo_matrix((np.ravel(self.Zin),(J,I)),\
             shape=(self.grd.ny,self.grd.nx)).todense()   
-        self.N += coo_matrix((sumpts,(J,I)),\
+        self.N = coo_matrix((sumpts,(J,I)),\
             shape=(self.grd.ny,self.grd.nx)).todense()   
+
+        self.Z/=self.N
 
 ##        # Average onto the grid
 ##        ctr=-1

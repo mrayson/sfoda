@@ -18,10 +18,11 @@ from gdalconst import *
 
 from scipy.ndimage import gaussian_filter
 
-from soda.utils.interpXYZ import tile_vector
+from soda.utils.interpXYZ import tile_vector, nn
 from soda.utils.myproj import MyProj
 
 import matplotlib.pyplot as plt
+from matplotlib.colors import LightSource
 import pdb
 
 class DEM(object):
@@ -33,7 +34,7 @@ class DEM(object):
     maxdist = 250.0
 
     convert2utm=False
-    utmzone=15
+    utmzone=None
     isnorth=True
     projstr=None
 
@@ -46,6 +47,12 @@ class DEM(object):
             xgrd,ygrd,self.Z = self.loadnc()
         elif self.infile[-3:] in ['dem','asc']:
             xgrd,ygrd,self.Z = self.readraster()
+
+        # Define a projection:
+        if self.utmzone is not None or self.projstr is not None:
+            self.P = MyProj(self.projstr, utmzone=self.utmzone, isnorth=self.isnorth)
+        else:
+            self.P = None
 
 
         self.update_grid(xgrd, ygrd)
@@ -69,13 +76,39 @@ class DEM(object):
 
         self.x, self.y = xgrd, ygrd
 
-        if self.convert2utm:                     
-            print 'Transforming the DEM coordinates...'
-            # Define a projection
-            P = MyProj(self.projstr, utmzone=self.utmzone, isnorth=self.isnorth)
-            self.X, self.Y = P(self.X, self.Y)
-            self.x = self.X[0,:]
-            self.y = self.Y[:,0]
+        #if self.convert2utm:                     
+        #    print 'Transforming the DEM coordinates...'
+        #    # Define a projection
+        #    self.X, self.Y = self.P(self.X, self.Y)
+        #    self.x = self.X[0,:]
+        #    self.y = self.Y[:,0]
+        
+    def to_xy(self, P):
+        """
+        Projects the coordinates using the projection object P
+        """
+        X, Y = P.to_xy(self.X, self.Y)
+        x = X[0,:]
+        y = Y[:,0]
+
+        self.meshgrid = False
+        self.update_grid(x,y)
+        self.X = X
+        self.Y = Y
+ 
+    def to_ll(self):
+        """
+        Projects the coordinates using the projection object P
+        """
+        X, Y = self.P.to_ll(self.X, self.Y)
+        x = X[0,:]
+        y = Y[:,0]
+        self.meshgrid=False
+        self.update_grid(x,y)
+        self.X = X
+        self.Y = Y
+ 
+ 
         
     def loadnc(self):
         """ Load the DEM data from a netcdf file"""        
@@ -137,21 +170,46 @@ class DEM(object):
         elif method == 'linear':
             return self._Finterp((y, x))
 
-    def regrid(self, x, y):
+    def regrid(self, x, y, meshgrid=False):
         """
         Regrid the data onto a different constant grid
 
         Uses interp1d (linear)
         """
 
-        Fy = interpolate.interp1d(self.y, self.Z, axis=0, \
-                bounds_error=False, fill_value=np.nan)
-        Zytmp = Fy(y)
+        ## Interp1d - only works on 1d grids
+        if meshgrid:
+            kind='linear'
+            Fy = interpolate.interp1d(self.y, self.Z, axis=0, \
+                    bounds_error=False, fill_value=np.nan, kind=kind)
+            Zytmp = Fy(y)
 
-        Fx = interpolate.interp1d(self.x, Zytmp, axis=1,\
-                bounds_error=False, fill_value=np.nan)
-        self.Z =  Fx(x)
-        self.update_grid(x, y)
+            Fx = interpolate.interp1d(self.x, Zytmp, axis=1,\
+                    bounds_error=False, fill_value=np.nan, kind=kind)
+            self.Z =  Fx(x)
+
+            # Inter2d - Usually crashes due to memory
+            F = interpolate.interp2d(self.X, self.Y, self.Z)
+            self.Z = F(x, y)
+
+            self.update_grid(x, y)
+            self.X,self.Y = x,y
+        else: # 2D structured grid
+
+            ## Use nearest neighbour
+            xyin = np.array([self.X.ravel(), self.Y.ravel()]).T
+            
+            ny,nx = x.shape
+            xyout = np.array([x.ravel(), y.ravel()]).T
+
+            F = nn(xyin, xyout)
+
+            Z = F(self.Z.ravel())
+            self.Z = Z.reshape((ny,nx))
+
+            ##
+            self.update_grid(x[0,:], y[:,0])
+            self.X,self.Y = x,y
 
     def clip(self, x0, x1, y0 , y1):
         """
@@ -369,11 +427,20 @@ class DEM(object):
         plt.axis('equal')
         return C
         
-    def plot(self,**kwargs):
+    def plot(self, ve=1, cmap=plt.cm.gist_earth, vmin=-5000, vmax=0, **kwargs):
+
+        # Illuminate the scene from the northwest
+        ls = LightSource(azdeg=315, altdeg=25)
+        Zplot = 1*self.Z
+        Zplot[np.isnan(Zplot)]=0.
+        if self.y[0] < self.y[-1]:
+            Zplot = Zplot[::-1,:]
+        rgb = ls.shade(Zplot, cmap=cmap, vert_exag=ve, blend_mode='overlay',\
+                vmin=vmin, vmax=vmax)
         #h= plt.figure(figsize=(9,8))
         #h.imshow(np.flipud(self.Z),extent=[bbox[0],bbox[1],bbox[3],bbox[2]])
-        plt.imshow(self.Z,extent=[self.x0,self.x1,self.y1,self.y0],**kwargs)
-        plt.colorbar()
+        h = plt.imshow(rgb, extent=[self.x0,self.x1,self.y0,self.y1],**kwargs)
+        plt.colorbar(h)
         
     def savenc(self,outfile='DEM.nc'):
         """ Saves the DEM to a netcdf file"""
