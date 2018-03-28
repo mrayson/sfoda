@@ -227,7 +227,6 @@ class DEM(object):
         self.Z = self.Z[j1:j2,i1:i2]
         self.update_grid(self.x[i1:i2], self.y[j1:j2])
 
-
     def readraster(self):
         """ Loads the data from a DEM raster file"""
         # register all of the drivers
