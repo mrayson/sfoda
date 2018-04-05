@@ -45,6 +45,7 @@ class demBuilder(object):
     maxdist=200
     NNear = 3 # Number of points to include in interpolation (only applicable to idw and kriging)
     p = 1.0 # power for inverse distance weighting
+    nstd_blockavg = 0.7 # Number of standard deviations to apply before removing
     
     # kriging options
     varmodel = 'spherical'
@@ -283,36 +284,57 @@ class demBuilder(object):
         
         """Block averaging interpolation"""
         print 'Interpolating %d data points'%self.npt
-        # Get the grid indices
-        J,I = self.grd.returnij(self.XY[:,0],self.XY[:,1])
-        
-        # Zero out of bound points
-        sumpts = np.ones((self.npt,))
-        ind = I==-1
-        self.Zin[ind]=0.0
-        I[ind]=0
-        sumpts[ind]=0
-        ind = J==-1
-        self.Zin[ind]=0.0
-        J[ind]=0
-        sumpts[ind]=0
-        
-        #  Use the sparse matrix library for accumulation
-        self.Z = coo_matrix((np.ravel(self.Zin),(J,I)),\
-            shape=(self.grd.ny,self.grd.nx)).todense()   
-        self.N = coo_matrix((sumpts,(J,I)),\
-            shape=(self.grd.ny,self.grd.nx)).todense()   
+        def compute_sparse_mean(XY, Zin, idx):
+            # Get the grid indices
+            J,I = self.grd.returnij(self.XY[idx,0],self.XY[idx,1])
 
-        self.Z/=self.N
-
-##        # Average onto the grid
-##        ctr=-1
-##        for jj,ii in zip(J,I):
-##            ctr+=1
-##            if jj != -1 and ii != -1:
-##                self.Z[jj,ii] += self.Zin[ctr]
-##                self.N[jj,ii] += 1.0
+            npt = J.size
             
+            # Zero out of bound points
+            sumpts = np.ones((npt,))
+            ind = I==-1
+            Zin[ind]=0.0
+            I[ind]=0
+            sumpts[ind]=0
+            ind = J==-1
+            Zin[ind]=0.0
+            J[ind]=0
+            sumpts[ind]=0
+            
+            #  Use the sparse matrix library for accumulation
+            Z = coo_matrix((np.ravel(Zin),(J,I)),\
+                shape=(self.grd.ny,self.grd.nx)).todense()   
+            N = coo_matrix((sumpts,(J,I)),\
+                shape=(self.grd.ny,self.grd.nx)).todense()   
+
+            Zmean = Z/N
+            return Zmean, N, J,I
+
+        # Compute the standard deviation
+        Zmean, N, J, I = compute_sparse_mean(self.XY, self.Zin,\
+                np.ones((self.npt,), dtype=np.bool))
+
+        mymean = np.array(Zmean[J,I]).ravel()
+        Zpr = self.Zin.ravel() - mymean
+        Zvar = coo_matrix((Zpr*Zpr,(J,I)),\
+            shape=(self.grd.ny,self.grd.nx)).todense()   
+
+        Zvar /= N
+
+        Zstd = np.sqrt(Zvar)
+        mystd = np.array(Zstd[J,I]).ravel()
+
+        # Find the outliers
+        nstd = self.nstd_blockavg
+        idx = (self.Zin <= mymean + nstd*mystd) & (self.Zin >= mymean - nstd*mystd)
+
+        # Free up some memory
+        del mystd, mymean, N, J, I,
+
+        # Recompute the mean
+        self.Z, self.N, J, I = compute_sparse_mean(self.XY, self.Zin[idx], idx)
+
+           
     
     def invdistweight(self):
         """ Inverse distance weighted interpolation """

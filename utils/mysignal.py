@@ -8,6 +8,36 @@ import numpy as np
 
 import pdb
 
+def filt_gaps(y, mask, dt, tau):
+    """
+    Simple unit impulse low-pass filter 
+
+    Allows for gaps in the data identified with the mask vector
+    
+    Returns a filtered vector with no gaps
+    """
+    
+    n = y.size
+    yf = np.zeros_like(y)
+
+    if ~mask[0]:
+        yf[0] = y[0]
+    else:
+        # Set the initial value as the mean
+        yf[0] = np.nanmean(y[~mask])
+
+    cff = dt/tau
+    ytmp = yf[0]
+    for ii in range(0,n-1):
+        if ~mask[ii+1]:
+            yf[ii+1] = yf[ii] + cff*(y[ii+1] - yf[ii])
+            ytmp = y[ii+1]
+        else:
+            yf[ii+1] = yf[ii] + cff*(ytmp - yf[ii])
+
+    return yf
+ 
+
 def powerspec2D(phi,dx=1.,dz=1.,window=np.hanning,quadrant=0):
     """
     Compute the 2D power spectrum of matrix phi

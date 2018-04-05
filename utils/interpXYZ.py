@@ -569,6 +569,9 @@ def line_count(f):
     return i + 1
 
 def tile_vector(count,chunks):
+    """
+    Return the start and end indices for a vector split into n-chunks
+    """
     rem = np.remainder(count,chunks)
     
     cnt2 = count-rem

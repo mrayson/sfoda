@@ -16,7 +16,7 @@ import shutil
 import gdal
 from gdalconst import * 
 
-from scipy.ndimage import gaussian_filter
+from scipy.ndimage import gaussian_filter, generic_filter
 
 from soda.utils.interpXYZ import tile_vector, nn
 from soda.utils.myproj import MyProj
@@ -24,6 +24,29 @@ from soda.utils.myproj import MyProj
 import matplotlib.pyplot as plt
 from matplotlib.colors import LightSource
 import pdb
+
+######
+def weight_inverse_dist(dist, maxdist):
+    # Compute the actual weight
+    w = dist/maxdist
+    #w = (dist-self.maxdist)/self.maxdist # Linear
+    w[dist>maxdist]=1.0
+    return w
+
+def despike(values):
+    centre = int(values.size / 2)
+    avg = np.mean([values[:centre], values[centre+1:]])
+    std = np.std([values[:centre], values[centre+1:]])
+    if (avg + 2 * std < values[centre]) | (avg - 2*std > values[centre]):
+        #return np.nan
+        return avg
+    else:
+        return values[centre]
+
+
+
+########
+# Main class
 
 class DEM(object):
     """
@@ -169,6 +192,12 @@ class DEM(object):
             return self._Finterp(y, x, grid=False)
         elif method == 'linear':
             return self._Finterp((y, x))
+
+    def despike(self, size=5):
+        """
+        Removes spikes with an area-averaged mean
+        """
+        self.Z = generic_filter(self.Z, despike, size=size)
 
     def regrid(self, x, y, meshgrid=False):
         """
@@ -360,7 +389,7 @@ class DEM(object):
         #plt.show()
         return weightf
 
-    def calc_weight(self):
+    def calc_weight(self, weightfunc=weight_inverse_dist, xynan=None):
         
         """ Calculate the weight at each point """
         MAXPOINTS=20e6
@@ -368,7 +397,9 @@ class DEM(object):
         
         # Calculate the distance from each point to a nan point
         xy = self.nonnanxy()
-        xynan = self.nanxy()
+
+        if xynan is None:
+            xynan = self.nanxy()
         
         # If there are no nan's return W
         if xynan.shape[0] == 0:
@@ -385,10 +416,7 @@ class DEM(object):
             # Perform query on all of the points in the grid
             dist,ind=kd.query(xy, distance_upper_bound=1.1*self.maxdist, n_jobs=-1)
             
-            # Compute the actual weight
-            w = dist/self.maxdist
-            #w = (dist-self.maxdist)/self.maxdist # Linear
-            w[dist>self.maxdist]=1.0
+            w = weightfunc(dist, self.maxdist)
             w=self.W*w
             
             # Map onto the grid
@@ -401,9 +429,7 @@ class DEM(object):
             for p1,p2 in zip(pt1,pt2):
                 print 'Calculating points %d to %d of %d...'%(p1,p2,nxy)
                 dist,ind=kd.query(xy[p1:p2,:])
-                # Compute the actual weight
-                w = dist/self.maxdist
-                w[dist>self.maxdist]=1.0
+                w = weightfunc(dist, self.maxdist)
                 w=self.W*w
                 
                 # Map onto the grid
@@ -489,20 +515,6 @@ class DEM(object):
         
         print 'DEM save to %s.'%outfile
 
-    
-def tile_vector(count,chunks):
-    rem = np.remainder(count,chunks)
-    
-    cnt2 = count-rem
-    dx = cnt2/chunks
-    
-    if count != cnt2:
-        pt1 = range(0,cnt2,dx)
-        pt2 = range(dx,cnt2,dx) + [count]
-    else:
-        pt1 = range(0,count-dx,dx)
-        pt2 = range(dx,count,dx)  
-    return pt1,pt2
     
 def blendDEMs(ncfile,outfile,W,maxdist):
     ### Combine multiple files ###   

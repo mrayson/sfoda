@@ -22,6 +22,7 @@ import othertime
 from uspectra import uspectra, getTideFreq
 from otherplot import stackplot
 from harmonic_analysis import harmonic_fit, harmonic_signal
+from mysignal import filt_gaps
 from soda.dataio.netcdfio import queryNC
 
 import pdb
@@ -184,6 +185,32 @@ class timeseries(object):
 
         return np.swapaxes(ytmp,axis,-1)
         #return signal.filtfilt(b, a, self.y, axis=axis)
+
+    def filt_uneven(self, cutoff_dt, axis=-1):
+        """
+        Lowpass filter with gaps in the output
+        
+        Inputs:
+            cutoff_dt - cuttoff period [seconds]
+            btype - 'low' or 'high' or 'band'
+        """
+        
+
+        ndim = self.y.ndim
+        assert ndim <= 2
+        
+        if ndim == 1:
+            return filt_gaps(self.y.data, self.y.mask, self.dt, cutoff_dt)
+        else:
+            # operate along the last axis
+            ytmp = np.swapaxes(self.y,-1,axis)
+            yf = np.zeros_like(ytmp)
+            nk = ytmp.shape[0]
+            for kk in range(nk):
+                yf[kk,:] = filt_gaps(ytmp.data[kk,:], ytmp.mask[kk,:], self.dt, cutoff_dt)
+
+            return np.swapaxes(yf,axis,-1)
+
 
     def godinfilt(self,filtwidths=[24,25]):
         """
