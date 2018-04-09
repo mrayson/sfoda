@@ -14,7 +14,8 @@ from scipy import spatial
 import numpy as np
 from maptools import readShpBathy, readraster #,ll2utm 
 from myproj import MyProj
-from kriging import kriging
+#from kriging import kriging
+from fkriging import kriging
 from netCDF4 import Dataset
 import othertime
 from scipy import interpolate

@@ -148,19 +148,30 @@ def load_cars_temp(carsfile, X, Y, Z, T):
 
     ######
     # Interpolate vertically
-    kind='slinear'
-    F = interp1d(Zmean, Tmean_i, kind=kind, axis=0, bounds_error=False, fill_value=0.)
-    Tmean_iz = F(Z)
+    def interp_z(Z, T, Zout, kind=2):
+        F = interp1d(Z, T, kind=kind, axis=0,\
+                bounds_error=False, fill_value='extrapolate')
+        return F(Zout)
 
-    F = interp1d(Z_A, T_Ac_i, kind=kind, axis=0, bounds_error=False, fill_value=0.)
-    T_Ac_iz = F(Z)
-    F = interp1d(Z_A, T_As_i, kind=kind, axis=0, bounds_error=False, fill_value=0.)
-    T_As_iz = F(Z)
+    Tmean_iz = interp_z(Zmean, Tmean_i, Z)
+    T_Ac_iz = interp_z(Z_A, T_Ac_i, Z)
+    T_As_iz = interp_z(Z_A, T_As_i, Z)
+    T_SAc_iz = interp_z(Z_SA, T_SAc_i, Z)
+    T_SAs_iz = interp_z(Z_SA, T_SAs_i, Z)
+    
+    #kind='slinear'
+    #F = interp1d(Zmean, Tmean_i, kind=kind, axis=0, bounds_error=False, fill_value=0.)
+    #Tmean_iz = F(Z)
 
-    F = interp1d(Z_SA, T_SAc_i, kind=kind, axis=0, bounds_error=False, fill_value=0.)
-    T_SAc_iz = F(Z)
-    F = interp1d(Z_SA, T_SAs_i, kind=kind, axis=0, bounds_error=False, fill_value=0.)
-    T_SAs_iz = F(Z)
+    #F = interp1d(Z_A, T_Ac_i, kind=kind, axis=0, bounds_error=False, fill_value=0.)
+    #T_Ac_iz = F(Z)
+    #F = interp1d(Z_A, T_As_i, kind=kind, axis=0, bounds_error=False, fill_value=0.)
+    #T_As_iz = F(Z)
+
+    #F = interp1d(Z_SA, T_SAc_i, kind=kind, axis=0, bounds_error=False, fill_value=0.)
+    #T_SAc_iz = F(Z)
+    #F = interp1d(Z_SA, T_SAs_i, kind=kind, axis=0, bounds_error=False, fill_value=0.)
+    #T_SAs_iz = F(Z)
 
 
     #######

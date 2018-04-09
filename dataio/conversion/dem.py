@@ -452,19 +452,26 @@ class DEM(object):
         plt.axis('equal')
         return C
         
-    def plot(self, ve=1, cmap=plt.cm.gist_earth, vmin=-5000, vmax=0, **kwargs):
+    def plot(self, shading=True, ve=1, cmap=plt.cm.gist_earth, vmin=-5000, vmax=0, **kwargs):
 
         # Illuminate the scene from the northwest
-        ls = LightSource(azdeg=315, altdeg=25)
         Zplot = 1*self.Z
-        Zplot[np.isnan(Zplot)]=0.
+
         if self.y[0] < self.y[-1]:
             Zplot = Zplot[::-1,:]
-        rgb = ls.shade(Zplot, cmap=cmap, vert_exag=ve, blend_mode='overlay',\
-                vmin=vmin, vmax=vmax)
-        #h= plt.figure(figsize=(9,8))
-        #h.imshow(np.flipud(self.Z),extent=[bbox[0],bbox[1],bbox[3],bbox[2]])
-        h = plt.imshow(rgb, extent=[self.x0,self.x1,self.y0,self.y1],**kwargs)
+
+        if shading:
+            Zplot[np.isnan(Zplot)]=0.
+            ls = LightSource(azdeg=315, altdeg=25)
+            rgb = ls.shade(Zplot, cmap=cmap, vert_exag=ve, blend_mode='overlay',\
+                    vmin=vmin, vmax=vmax)
+            #h= plt.figure(figsize=(9,8))
+            #h.imshow(np.flipud(self.Z),extent=[bbox[0],bbox[1],bbox[3],bbox[2]])
+            h = plt.imshow(rgb, extent=[self.x0,self.x1,self.y0,self.y1],**kwargs)
+
+        else:
+            h = plt.imshow(Zplot, extent=[self.x0,self.x1,self.y0,self.y1],\
+                vmin=vmin, vmax=vmax, cmap=cmap, **kwargs)
         plt.colorbar(h)
         
     def savenc(self,outfile='DEM.nc'):

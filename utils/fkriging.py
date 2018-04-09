@@ -45,7 +45,8 @@ def get_weights(Ns, C, gamma, dist, xin, yin, vrange, nugget, sill):
     linsolve(C,gamma,Ns+1)
     #gamma = np.linalg.solve(C,gamma)
 
-    return gamma[:-1]
+    return gamma
+    #return gamma[:-1]
  
 
 @jit(nopython=False)
@@ -53,8 +54,10 @@ def get_all_weights(Nc, Ns, W, C, gamma, \
          dist, ind, xyin, vrange, nugget, sill):
 
     for ii in range(Nc):
-        get_weights(Ns, C, gamma, dist[ii,:], xyin[ind[ii,:],0], xyin[ind[ii,:],1],\
+        gamma = get_weights(Ns, C, gamma,\
+            dist[ii,:], xyin[ind[ii,:],0], xyin[ind[ii,:],1],\
                 vrange, nugget, sill)
+
         W[:,ii] = gamma[:-1]
 
         # Reset these arrays
@@ -64,7 +67,77 @@ def get_all_weights(Nc, Ns, W, C, gamma, \
         C += 1
 
     return W
+
+######
+# Distance calculation functions
+######
+def get_distance_kdtree(xyin, xyout, nnear, anisofac=1.):
+        # Compute the spatial tree
+        kd = spatial.cKDTree(xyin)
         
+        # Perform query on all of the points in the grid
+        dist_old, idx = kd.query(xyout, k=nnear)
+
+        # Compute the distance with anisotropy
+        dx = xyout[:,0, np.newaxis] - xyin[idx,0]
+        dy = xyout[:,1, np.newaxis] - xyin[idx,1]
+    
+        dist = np.abs(anisofac*dx+1j*dy)
+
+        return dist, idx
+ 
+def nearest(trid, xpt, ypt, nnear):
+
+    # Find the cell idx
+    cidx = trid.find_simplex([xpt,ypt])
+    cidx = [cidx]
+    nodes = set(trid.simplices[cidx])
+    flag=True
+    ii = 0
+    while flag:
+        ii+=1
+        if ii > 20:
+            
+            flag=False
+        # Loop through the neighbours
+        for cc in cidx:
+            neighs = trid.neighbors[cc]
+            for ff in neighs:
+                if ff == -1:
+                    break
+                newnodes = trid.simplices[ff]
+                for nn in newnodes:
+                    if nn not in nodes and nn != -1:
+                        nodes.add(nn)
+
+                        if len(nodes) == nnear:
+                            flag=False
+                            
+            cidx = neighs
+
+    return list(nodes)
+    
+def find_tri_nearest(xyin, xyout, nnear, anisofac=1.):
+    trid = spatial.Delaunay(xyin)
+    nx = xyout.shape[0]
+    idx = np.zeros((nx,nnear), np.int32)
+    for ii in range(nx):
+        if ii%10000 == 0:
+            print ii, nx
+        xpt, ypt = xyout[ii,0], xyout[ii,1]
+        mynodes = nearest(trid, xpt, ypt, nnear)
+
+        idx[ii,:] = mynodes[0:nnear]
+    
+    # Compute the distance
+    dx = xyout[:,0, np.newaxis] - xyin[idx,0]
+    dy = xyout[:,1, np.newaxis] - xyin[idx,1]
+    
+    dist = np.abs(anisofac*dx+1j*dy)
+    
+    return dist, idx       
+
+#######
 
 class kriging(object):
     
@@ -79,11 +152,15 @@ class kriging(object):
     nugget = 0.1
     sill = 0.8
     vrange = 250.0
+
+    # Anisotropy factor for distances (scalar or vector)
+    anisofac = 1.
     
     verbose = True
     
-    def __init__(self,XYin,XYout,**kwargs):
+    def __init__(self,XYin, XYout, distance_func=get_distance_kdtree, **kwargs):
         self.__dict__.update(kwargs)
+        self.distance_func = distance_func
         
         self.XYin = XYin
         self.XYout = XYout
@@ -102,14 +179,9 @@ class kriging(object):
                 
     def _build_weights(self):
         """ Calculates the kriging weights for all of the points in the grid"""
-        # Compute the spatial tree
-        kd = spatial.cKDTree(self.XYin)
         
-        # Perform query on all of the points in the grid
-        dist, self.ind=kd.query(self.XYout,
-                distance_upper_bound=self.maxdist,
-                k=self.NNear)
-        
+        dist, self.ind = self.distance_func(self.XYin, self.XYout,\
+                self.NNear, anisofac=self.anisofac)       
         self.Nc = np.size(self.ind,axis=0)
         print '%d interpolation points.'%self.Nc
 
