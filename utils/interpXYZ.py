@@ -478,7 +478,7 @@ class nn(object):
         kd = spatial.cKDTree(XYin)
         # Perform query on all of the points in the grid
         #dist,self.ind=kd.query(XYout,distance_upper_bound=self.maxdist)
-        dist,self.ind = kd.query(XYout, k=1)
+        dist,self.ind = kd.query(XYout, k=1, n_job=-1)
         # create the mask
         self.mask = (dist==np.inf)
         self.ind[self.mask]=1

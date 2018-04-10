@@ -67,7 +67,7 @@ class DepthDriver(object):
         # Parse the depth data into an object
         if self.isDEM:
             self.indata = DEM(depthfile, convert2utm=self.convert2utm,\
-                utmzone=self.utmzone, projstr=self.projstr,\
+                utmzone=self.utmzone, projstr=self.projstr, isnorth=self.isnorth,\
             )
         else:
             self.indata = Inputs(depthfile, convert2utm=self.convert2utm,\
@@ -153,6 +153,7 @@ class DepthDriver(object):
         else:
             print 'Interpolating DEM data...'
             dv = self.indata.interp(self.xy[:,0],self.xy[:,1])*self.scalefac
+
 
         if self.interpnodes:
             self.grd.dv = np.zeros_like(self.grd.xv)

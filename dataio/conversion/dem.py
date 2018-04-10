@@ -77,8 +77,10 @@ class DEM(object):
         else:
             self.P = None
 
-
         self.update_grid(xgrd, ygrd)
+
+        if self.convert2utm:
+            self.to_xy(self.P)
 
     def update_grid(self, xgrd, ygrd):
         # Generate the grid
@@ -114,10 +116,23 @@ class DEM(object):
         x = X[0,:]
         y = Y[:,0]
 
-        self.meshgrid = False
-        self.update_grid(x,y)
-        self.X = X
-        self.Y = Y
+        xgrd, ygrd = np.meshgrid(x, y)
+        longrd,latgrd = P.to_ll(xgrd, ygrd)
+
+        # Need to interpolate the depths onto this new grid
+        self.Z = self.interp(longrd, latgrd, method='linear')
+
+        #xyin = np.array([X.ravel(), Y.ravel()]).T
+        #    
+        #ny,nx = xgrd.shape
+        #xyout = np.array([xgrd.ravel(), ygrd.ravel()]).T
+
+        #F = nn(xyin, xyout)
+
+        #Z = F(self.Z.ravel())
+        #self.Z = Z.reshape((ny,nx))
+
+        self.update_grid(x, y)
  
     def to_ll(self):
         """
@@ -130,8 +145,6 @@ class DEM(object):
         self.update_grid(x,y)
         self.X = X
         self.Y = Y
- 
- 
         
     def loadnc(self):
         """ Load the DEM data from a netcdf file"""        
@@ -177,16 +190,18 @@ class DEM(object):
         nc.close()
         return X,Y,Z
         
-    def interp(self, x, y, method='spline'):
+    def interp(self, x, y, method='linear'):
         """
         Interpolate DEM data onto scattered data points using
         scipy.interpolate.RectBivariateSpline
         """
-        if not self.__dict__.has_key('_Finterp'):
-            if method == 'spline':
-                self._Finterp = interpolate.RectBivariateSpline(self.y, self.x, self.Z)
-            elif method == 'linear':
-                self._Finterp = interpolate.RegularGridInterpolator((self.y, self.x), self.Z)
+        #if not self.__dict__.has_key('_Finterp'):
+        if method == 'spline':
+            self._Finterp = interpolate.RectBivariateSpline(self.y, self.x, self.Z,
+                    bounds_error=False,fill_value=0)
+        elif method == 'linear':
+            self._Finterp = interpolate.RegularGridInterpolator((self.y, self.x), self.Z,
+                    bounds_error=False,fill_value=0)
 
         if method == 'spline':
             return self._Finterp(y, x, grid=False)
