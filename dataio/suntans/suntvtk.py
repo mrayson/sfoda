@@ -593,8 +593,6 @@ class SunTvtk(Spatial):
                 self.ug.cell_data.scalars = self.data
                 self.ug.cell_data.scalars.name = 'suntans_scalar'
                 
-                
-                    
                 titlestr=self._SpatialgenTitle(tt=ii)
                 self.title.text=titlestr
                 

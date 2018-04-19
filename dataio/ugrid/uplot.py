@@ -1,11 +1,13 @@
 """
 Unstructured grid plotting module
 """
-from hybridgrid import HybridGrid
+from .hybridgrid import HybridGrid
 
 import numpy as np
 from matplotlib.collections import PolyCollection, LineCollection
 import matplotlib.pyplot as plt
+
+import pdb
 
 
 class Plot(HybridGrid):
@@ -24,6 +26,7 @@ class Plot(HybridGrid):
     def __init__(self, xp, yp, cells, **kwargs):
 
         HybridGrid.__init__(self, xp, yp, cells, lightmode=True, **kwargs)
+
 
     ############
     # Main user routines
