@@ -52,15 +52,16 @@ class Plot(HybridGrid):
 
         return ax, collection
 
-    def plotcelldata(self, z, xlims=None, ylims=None, colorbar=True, **kwargs):
+    def plotcelldata(self, z, xlims=None, ylims=None, colorbar=True,\
+            vmin=None, vmax=None, **kwargs):
         """
         Plot cell centered data
         """
         ax=plt.gca()
         fig = plt.gcf()
         # Find the colorbar limits if unspecified
-        if self.clim is None:
-            self.clim = [z.min(),z.max()]
+        #if self.clim is None:
+        #    self.clim = [z.min(),z.max()]
         # Set the xy limits
         if xlims is None or ylims is None:
             xlims=self.xlims()
@@ -68,7 +69,7 @@ class Plot(HybridGrid):
         
         collection = PolyCollection(self.xy(),closed=False,**kwargs)
         collection.set_array(z)
-        collection.set_clim(vmin=self.clim[0],vmax=self.clim[1])
+        collection.set_clim(vmin=vmin,vmax=vmax)
         collection.set_edgecolors(collection.to_rgba(z))    
         
         ax.add_collection(collection)

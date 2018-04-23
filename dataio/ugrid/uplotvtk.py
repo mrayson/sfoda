@@ -27,7 +27,7 @@ class PlotVTK(Plot):
 
     ###
     # Plotting stuff
-    def plotcelldata(self, data, clim=None, **kwargs):
+    def plotcelldata(self, data, vmin=None, vmax=None, **kwargs):
         """
         Surface plot of the scalar in the 'data' attribute with mayavi
         
@@ -37,15 +37,12 @@ class PlotVTK(Plot):
         self._ug.cell_data.scalars = data
         self._ug.cell_data.scalars.name = 'suntans_scalar'
 
-        if clim is None:
-            clim = [data.min(), data.max()]
-        
         # Create a new scene if there isn't one
         if not self.__dict__.has_key('fig'):
             self.newscene()
         
         src = mlab.pipeline.add_dataset(self._ug)
-        self.h=mlab.pipeline.surface(src, vmin=clim[0], vmax=clim[1], **kwargs)
+        self.h=mlab.pipeline.surface(src, vmin=vmin, vmax=vmax, **kwargs)
         
         # Add a colorbar if the isn't one
         if not self.__dict__.has_key('cb'):
