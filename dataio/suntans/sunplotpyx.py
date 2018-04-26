@@ -51,7 +51,6 @@ import matplotlib
 import sys
 
 
-
 from soda.dataio.suntans.sunpy import Spatial, Grid
 from soda.dataio.suntans.sunxray import Sunxray
 from datetime import datetime
@@ -69,7 +68,7 @@ USECMOCEAN=False
 import pdb
 
 #class SunPlotPy(QMainWindow, Spatial, Grid ):
-class SunPlotPy(Sunxray, QMainWindow):
+class SunPlotPyX(Sunxray, QMainWindow):
     """ 
     The main frame of the application
     """
@@ -89,7 +88,10 @@ class SunPlotPy(Sunxray, QMainWindow):
     oldcollectiontype='cells'
 
     # 
-    tindex=0 
+    tstep=0 
+    tstepold = 0
+    klayer = [0]
+    variable = 'dv'
     depthlevs = [0., 10., 100., 200., 300., 400., 500.,\
         1000.,2000.,3000.,4000.,5000]
 
@@ -356,6 +358,37 @@ class SunPlotPy(Sunxray, QMainWindow):
     ## Event functions
     ###########
 
+    def gen_title(self,tt=None):
+        
+        if tt  is None:
+            if type(self.tstep)==int:
+                tt = self.tstep
+            else:
+                tt = self.tstep[0]
+            
+        if self.klayer[0] in [-1,'seabed']:
+            zlayer = 'seabed'
+        elif self.klayer[0] =='surface':
+            zlayer = 'surface'
+        elif self.klayer[0]==-99:
+            zlayer = 'depth-averaged'
+        elif self.klayer[0]>=0:
+            zlayer = '%3.1f [m]'%self._ds.z_r[self.klayer[0]]
+
+        if self.__dict__.has_key('time'):
+            #tstr = datetime.strftime(self._ds.time[tt],\
+            #    '%Y-%m-%d %H:%M:%S')
+            str = self._ds.time[tt].astype(str)
+            tstr = 'Time: %s'%tstr
+        else:
+            tstr = ''
+        var = self._ds[self.variable]
+        titlestr='%s [%s]\n z: %s, %s'%(var.long_name, var.units, zlayer, tstr)
+                
+        return titlestr
+
+
+
     def create_figure(self):
         """ 
         Creates the figure
@@ -365,6 +398,7 @@ class SunPlotPy(Sunxray, QMainWindow):
             self.clim = [self.data.min(),self.data.max()]
             self.climlow.setText('%3.1f'%self.clim[0])
             self.climhigh.setText('%3.1f'%self.clim[1])
+
          
         if self.__dict__.has_key('collection'):
             #self.collection.remove()
@@ -377,7 +411,7 @@ class SunPlotPy(Sunxray, QMainWindow):
  
 
         if self.collectiontype=='cells':
-            self.collection = PolyCollection(self.xy,cmap=self.cmap)
+            self.collection = PolyCollection(self.xy(),cmap=self.cmap)
             self.collection.set_array(np.array(self.data[:]))
             if not self.showedges:
                 self.collection.set_edgecolors(self.collection.to_rgba(np.array((self.data[:])))) 
@@ -389,7 +423,7 @@ class SunPlotPy(Sunxray, QMainWindow):
         self.collection.set_clim(vmin=self.clim[0],vmax=self.clim[1])
 
         self.axes.add_collection(self.collection)    
-        self.title=self.axes.set_title(self.genTitle(),color=self.textcolor)
+        self.title=self.axes.set_title(self.gen_title(),color=self.textcolor)
         self.axes.set_xlabel('Easting [m]')
         self.axes.set_ylabel('Northing [m]')
 
@@ -416,9 +450,9 @@ class SunPlotPy(Sunxray, QMainWindow):
                 float(self.climhigh.text())]
  
         # check whether it is cell or edge type
-        if self.hasDim(self.variable,self.griddims['Ne']):
+        if self.has_dim(self.variable,'Ne'):
             self.collectiontype='edges'
-        elif self.hasDim(self.variable,self.griddims['Nc']):
+        elif self.has_dim(self.variable,'Nc'):
             self.collectiontype='cells'
 
         # Create a new figure if the variable has gone from cell to edge of vice
@@ -439,7 +473,7 @@ class SunPlotPy(Sunxray, QMainWindow):
                 self.collection.set_linewidths(0.2)
 
         # Update the title
-        self.title=self.axes.set_title(self.genTitle(),color=self.textcolor)
+        self.title=self.axes.set_title(self.gen_title(),color=self.textcolor)
 
         #Update the colorbar
         self.cbar.update_normal(self.collection)
@@ -472,17 +506,18 @@ class SunPlotPy(Sunxray, QMainWindow):
         #self.flash_status_message("Selecting variable: %s"%vname)
         # update the spatial object and load the data
         self.variable = vname
-        self.loadData(variable=self.variable)
+        #self.loadData(variable=self.variable)
+        self.data = self.load(self.variable, self.tstep, self.klayer)
 
         # Check if the variable has a depth coordinate
         depthstr = ['']
         # If so populate the vertical layer box
-        if self.hasDim(self.variable,self.griddims['Nk']):
-            depthstr = ['%3.1f'%self.z_r[k] for k in range(self.Nkmax)]
+        if self.has_dim(self.variable, 'Nk'):
+            depthstr = ['%3.1f'%self._ds.z_r[k] for k in range(self.Nkmax)]
             depthstr += ['surface','seabed']
 
-        elif self.hasDim(self.variable,'Nkw'):
-            depthstr = ['%3.1f'%self.z_w[k] for k in range(self.Nkmax+1)]
+        elif self.has_dim(self.variable,'Nkw'):
+            depthstr = ['%3.1f'%self._ds.z_w[k] for k in range(self.Nkmax+1)]
 
         self.depthlayer_list.clear()
         self.depthlayer_list.addItems(depthstr)
@@ -494,12 +529,12 @@ class SunPlotPy(Sunxray, QMainWindow):
 
     def on_select_time(self, event):
 
-        self.tindex = event#
+        self.tstep = event#
         # Update the object time index and reload the data
         #if self.plot_type=='hydro':
-        if not self.tstep==self.tindex:
-            self.tstep=self.tindex
-            self.loadData()
+        if not self.tstep==self.tstepold:
+            self.tstepold = self.tstep*1
+            self.data = self.load(self.variable, self.tstep, self.klayer)
             #self.flash_status_message("Selecting variable: %s..."%event.GetString())
 
             # Update the plot
@@ -519,7 +554,7 @@ class SunPlotPy(Sunxray, QMainWindow):
             if kindex>=self.Nkmax:
                 kindex=event.GetString()
             self.klayer = [kindex]
-            self.loadData()       
+            self.data = self.load(self.variable, self.tstep, self.klayer)
             #self.flash_status_message("Selecting depth: %s..."%event.GetString())
 
             # Update the plot
@@ -537,21 +572,24 @@ class SunPlotPy(Sunxray, QMainWindow):
             return
 
         self.statusBar().showMessage("Opening SUNTANS file: %s" % path)
-    	try:
-    	    Sunxray.__init__(self, path, _FillValue=self._FillValue)
-    	except:
-    	    Sunxray.__init__(self, path, _FillValue=-999999)
-        startvar='dv'
+
+        Sunxray.__init__(self, path[0], )
+
+        self.Nkmax = self._ds['Nk'].max()-1
 
         self.statusBar().clearMessage()
 
         # Populate the drop down menus
-        vnames = self.listCoordVars()
+        #vnames = self._ds.variables.keys()
+        vnames = self.list_coord_vars()
         self.variable_list.clear()
         self.variable_list.addItems(vnames)
         # Update the time drop down list
-        if self.__dict__.has_key('time'):
-            self.timestr = [datetime.strftime(tt,'%d-%b-%Y %H:%M:%S') for tt in self.time]
+
+        #if self.__dict__.has_key('time'):
+        if 'time' in self._ds.variables.keys():
+            #self.timestr = [datetime.strftime(tt,'%d-%b-%Y %H:%M:%S') for tt in self._ds.time.values]
+            self.timestr = [tt.astype(str) for tt in self._ds.time.values]
         else:
             # Assume that it is a harmonic-type file
             self.timestr = self.nc.Constituent_Names.split()
@@ -560,9 +598,8 @@ class SunPlotPy(Sunxray, QMainWindow):
         self.time_list.addItems(self.timestr)
 
         # Draw the depth
-        if startvar in vnames:
-            self.variable=startvar
-            self.loadData()
+        if self.variable in vnames:
+            self.data = self.loadfull(self.variable)
             self.create_figure()
 
     def on_load_grid(self, event):
@@ -738,7 +775,8 @@ class SunPlotPy(Sunxray, QMainWindow):
 
             def updateScalar(i):
                 self.tstep=[i]
-                self.loadData()
+                self.data = self.load(self.variable, self.tstep, self.klayer)
+                #self.loadData()
                 self.update_figure()
                 return (self.title,self.collection)
 
@@ -770,8 +808,8 @@ class SunPlotPy(Sunxray, QMainWindow):
 
             # Return the figure back to its status
             del self.anim
-            self.tstep=self.tindex
-            self.loadData()
+            #self.loadData()
+            self.data = self.load(self.variable, self.tstep, self.klayer)
             self.update_figure()
             print 'Finished saving animation to %s'%outfile
             print 72*'#'
@@ -854,7 +892,7 @@ def SetAxColor(ax,color,bgcolor):
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    form = SunPlotPy()
+    form = SunPlotPyX()
     form.show()
     app.exec_()
 

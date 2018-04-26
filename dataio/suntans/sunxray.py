@@ -35,15 +35,49 @@ class Sunxray(UPlot):
                 mask_and_scale=False, decode_times=False)
 
         if not lazy:
-            self._init_grid()
+            self._init_grid(**kwargs)
+            xp = self._ds.xp.values
+            yp = self._ds.yp.values
+            self.xlims = [xp.min(), xp.max()]
+            self.ylims = [yp.min(), yp.max()]
 
-    def _inti_grid(self):
+
+    def _init_grid(self, **kwargs):
         nfaces = np.sum(self._ds.cells.values >-1,axis=1)
         UPlot.__init__(self, self._ds.xp.values, self._ds.yp.values,\
             self._ds.cells.values,\
             nfaces=nfaces,\
             _FillValue=-999999,\
                 **kwargs)
+
+    def has_dim(self,varname, dimname):
+        """
+        Tests if a variable contains a dimension
+        """
+
+        dimensions = self._ds[varname].dims
+        
+        return dimname in dimensions
+        #try:
+        #    self.nc.dimensions[dimname].__len__()
+        #    return True
+        #except:
+        #    return False
+ 
+    def list_coord_vars(self):
+        """
+        List all of the variables that have the 'coordinate' attribute
+        """
+        vname=[]
+        for vv in self._ds.variables.keys():
+            print vv, self._ds[vv].attrs
+            #if 'coordinates' in self._ds[vv].attrs.keys():
+            if hasattr(self._ds[vv], 'coords'):
+            
+                vname.append(vv)
+                
+        return vname
+
 
     def load(self, varname, tstep, klayer):
         """
@@ -84,6 +118,9 @@ class Sundask(Sunxray):
         #    print ff
         # Load all of the files into list as xray objects
         self._myfiles = [Sunxray(url, lazy=True) for url in filenames]
+
+        # Keep this for compatibility with methods from the superclass
+        self._ds = self._myfiles[0]
 
         # Load the grid variables and re-sort
 

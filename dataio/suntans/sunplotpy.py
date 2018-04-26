@@ -490,12 +490,7 @@ class SunPlotPy(wx.Frame, Spatial, Grid ):
 		    Spatial.__init__(self, path, _FillValue=self._FillValue)
 		except:
 		    Spatial.__init__(self, path, _FillValue=-999999)
-                startvar='dv'
-            if dlg.GetFilterIndex()==1: #UnTRIM
-                self.flash_status_message("Opening UnTRIMS file: %s" % path)
-                #Spatial.__init__(self,path,gridvars=untrim_gridvars,griddims=untrim_griddims)
-                UNTRIMSpatial.__init__(self,path)
-                startvar='Mesh2_face_depth'
+            startvar='dv'
             
             # Populate the drop down menus
             vnames = self.listCoordVars()
