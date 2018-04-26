@@ -128,6 +128,7 @@ class suntides(Spatial):
 
                     # Compute the variance of the original signal
                     self.Var[vv][k,:] = np.var(data, axis=0)
+
                     
     def _prepDict(self,varnames):
         """

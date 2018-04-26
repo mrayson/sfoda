@@ -96,21 +96,7 @@ class Sundask(Sunxray):
         nfaces = self.loadfull('nfaces').compute()
 
         ### Grid does not need re-sorting...
-        #mnptr = self.loadfull('mnptr').compute() # Old unpartitioned index
 
-        #newptr = np.arange(mnptr.size, dtype=np.int32)
-        ##newptr = np.argsort(mnptr)
-
-        ## Rather than sorting the data to mnptr, we sort the grid variables instead
-        #cells = np.zeros_like(cells_unsort)
-        #nfaces = np.zeros_like(nfaces_unsort)
-        ##cells[mnptr,:] = cells_unsort[:,:]
-        ##nfaces[mnptr] = nfaces_unsort[:]
-        #cells[:,:] = cells_unsort[:,:]
-        #nfaces[:] = nfaces_unsort[:]
-
-
-        print 'Initializing grid...'
         # Finish initializing the class
         UPlot.__init__(self, xp, yp, cells, nfaces=nfaces,\
             _FillValue=-999999,\
@@ -128,10 +114,8 @@ class Sundask(Sunxray):
         loadfull_d = dask.delayed(localload, pure=True) 
         all_files = self._myfiles
 
-        # Lazily evaluate loadful on each file
+        # Lazily evaluate loadfull on each file
         lazy_data = [loadfull_d(url._ds, varname) for url in all_files]
-
-        # Get the array shape and type
 
         # Construct a Dask array
         arrays = [da.from_delayed(lazy_value,           
