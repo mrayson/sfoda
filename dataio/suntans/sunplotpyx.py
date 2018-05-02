@@ -52,7 +52,7 @@ import sys
 
 
 from soda.dataio.suntans.sunpy import Spatial, Grid
-from soda.dataio.suntans.sunxray import Sunxray
+from soda.dataio.suntans.sunxray import Sunxray, Sundask
 from datetime import datetime
 import numpy as np
 
@@ -68,7 +68,7 @@ USECMOCEAN=False
 import pdb
 
 #class SunPlotPy(QMainWindow, Spatial, Grid ):
-class SunPlotPyX(Sunxray, QMainWindow):
+class SunPlotPyX(Sundask, QMainWindow):
     """ 
     The main frame of the application
     """
@@ -120,6 +120,11 @@ class SunPlotPyX(Sunxray, QMainWindow):
                 shortcut="ctrl-o", slot=self.on_open_file,
                 tip="open netcdf file")
 
+        load_pfile_action = self.create_action("&Open parallel files",\
+                slot=self.on_open_p_file,
+                tip="open netcdf file")
+
+
         load_grid_action = self.create_action("&Open grid",\
                 shortcut="ctrl-g", slot=self.on_load_grid,
                 tip="open suntans grid")
@@ -133,7 +138,7 @@ class SunPlotPyX(Sunxray, QMainWindow):
                 tip="Close the application")
 
         self.add_actions(self.file_menu,
-                (load_file_action, load_grid_action,\
+                (load_file_action, load_pfile_action, load_grid_action,\
                 save_anim_action, None, quit_action))
 
 
@@ -378,7 +383,7 @@ class SunPlotPyX(Sunxray, QMainWindow):
         if self.__dict__.has_key('time'):
             #tstr = datetime.strftime(self._ds.time[tt],\
             #    '%Y-%m-%d %H:%M:%S')
-            str = self._ds.time[tt].astype(str)
+            str = self._ds.time.values[tt].astype(str)[0:-10]
             tstr = 'Time: %s'%tstr
         else:
             tstr = ''
@@ -468,6 +473,7 @@ class SunPlotPyX(Sunxray, QMainWindow):
         if self.collectiontype=='cells':
             if not self.showedges:
                 self.collection.set_edgecolors(self.collection.to_rgba(np.array((self.data[:])))) 
+                #self.collection.set_edgecolors(None)
             else:
                 self.collection.set_edgecolors('k')
                 self.collection.set_linewidths(0.2)
@@ -508,6 +514,7 @@ class SunPlotPyX(Sunxray, QMainWindow):
         self.variable = vname
         #self.loadData(variable=self.variable)
         self.data = self.load(self.variable, self.tstep, self.klayer)
+        #self.data = data.values.ravel()
 
         # Check if the variable has a depth coordinate
         depthstr = ['']
@@ -535,6 +542,7 @@ class SunPlotPyX(Sunxray, QMainWindow):
         if not self.tstep==self.tstepold:
             self.tstepold = self.tstep*1
             self.data = self.load(self.variable, self.tstep, self.klayer)
+            #self.data = data.values.ravel()
             #self.flash_status_message("Selecting variable: %s..."%event.GetString())
 
             # Update the plot
@@ -547,7 +555,6 @@ class SunPlotPyX(Sunxray, QMainWindow):
 
 
     def on_select_depth(self, event):
-        print event
         kindex = event
         if not self.klayer[0]==kindex:
             # Check if its the seabed or surface value
@@ -555,15 +562,16 @@ class SunPlotPyX(Sunxray, QMainWindow):
                 kindex=event.GetString()
             self.klayer = [kindex]
             self.data = self.load(self.variable, self.tstep, self.klayer)
+            #self.data = data.values.ravel()
             #self.flash_status_message("Selecting depth: %s..."%event.GetString())
 
             # Update the plot
             self.update_figure()
 
-    def on_open_file(self, event):
-        file_choices = "SUNTANS NetCDF (*.nc);;All Files (*.*)"
+    def on_open_p_file(self, event):
+        file_choices = "SUNTANS NetCDF (*.nc.*);;All Files (*.*)"
 
-        dlg = QFileDialog.getOpenFileNames(self, "Open SUNTANS file...",
+        dlg = QFileDialog.getOpenFileNames(self, "Open SUNTANS parallel file...",
                 "", file_choices)
 
         path = dlg[0]
@@ -571,11 +579,33 @@ class SunPlotPyX(Sunxray, QMainWindow):
         if len(path) == 0:
             return
 
+        fileparts = path[0].split('.')
+        filecard = '%s.nc.*'%fileparts[-3]
+
+        self.on_open_file([filecard], newfile=False)
+
+
+    def on_open_file(self, event, newfile=True):
+        if newfile:
+            file_choices = "SUNTANS NetCDF (*.nc);;All Files (*.*)"
+
+            dlg = QFileDialog.getOpenFileNames(self, "Open SUNTANS file...",
+                    "", file_choices)
+
+            path = dlg[0]
+
+            if len(path) == 0:
+                return
+        else:
+            path = event
+        
+
+
         self.statusBar().showMessage("Opening SUNTANS file: %s" % path)
 
-        Sunxray.__init__(self, path[0], )
+        Sundask.__init__(self, path[0], )
 
-        self.Nkmax = self._ds['Nk'].max()-1
+        self.Nkmax = self.loadfull('Nk').max()-1
 
         self.statusBar().clearMessage()
 
@@ -589,7 +619,7 @@ class SunPlotPyX(Sunxray, QMainWindow):
         #if self.__dict__.has_key('time'):
         if 'time' in self._ds.variables.keys():
             #self.timestr = [datetime.strftime(tt,'%d-%b-%Y %H:%M:%S') for tt in self._ds.time.values]
-            self.timestr = [tt.astype(str) for tt in self._ds.time.values]
+            self.timestr = [tt.astype(str)[:-10] for tt in self._ds.time.values]
         else:
             # Assume that it is a harmonic-type file
             self.timestr = self.nc.Constituent_Names.split()
@@ -606,7 +636,6 @@ class SunPlotPyX(Sunxray, QMainWindow):
         
         dir_ = QFileDialog.getExistingDirectory(None, 'Select a SUNTANS grid folder:',\
                 '~/', QFileDialog.ShowDirsOnly)
-        print dir_
         
         if dir_ is not None:
             path = dir_
@@ -748,7 +777,6 @@ class SunPlotPyX(Sunxray, QMainWindow):
         
         dir_ = QFileDialog.getSaveFileName(None, 'Save animation to file:',\
                 '~/', filters)
-        print dir_
         
         #dlg = wx.FileDialog(
         #    self, 
@@ -776,6 +804,7 @@ class SunPlotPyX(Sunxray, QMainWindow):
             def updateScalar(i):
                 self.tstep=[i]
                 self.data = self.load(self.variable, self.tstep, self.klayer)
+                #self.data = data.values.ravel()
                 #self.loadData()
                 self.update_figure()
                 return (self.title,self.collection)
@@ -810,6 +839,7 @@ class SunPlotPyX(Sunxray, QMainWindow):
             del self.anim
             #self.loadData()
             self.data = self.load(self.variable, self.tstep, self.klayer)
+            #self.data = data.values.ravel()
             self.update_figure()
             print 'Finished saving animation to %s'%outfile
             print 72*'#'

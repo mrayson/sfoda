@@ -32,7 +32,7 @@ class Sunxray(UPlot):
     def __init__(self, ncfile, lazy=False, **kwargs):
 
         self._ds = xray.open_dataset(ncfile, \
-                mask_and_scale=False, decode_times=False)
+                mask_and_scale=True, decode_times=True)
 
         if not lazy:
             self._init_grid(**kwargs)
@@ -66,14 +66,12 @@ class Sunxray(UPlot):
  
     def list_coord_vars(self):
         """
-        List all of the variables that have the 'coordinate' attribute
+        List all of the variables that have the 'mesh' attribute
         """
         vname=[]
         for vv in self._ds.variables.keys():
-            print vv, self._ds[vv].attrs
-            #if 'coordinates' in self._ds[vv].attrs.keys():
-            if hasattr(self._ds[vv], 'coords'):
-            
+            # "mesh" attribute is standard in the ugrid convention
+            if hasattr(self._ds[vv], 'mesh'):
                 vname.append(vv)
                 
         return vname
@@ -120,7 +118,7 @@ class Sundask(Sunxray):
         self._myfiles = [Sunxray(url, lazy=True) for url in filenames]
 
         # Keep this for compatibility with methods from the superclass
-        self._ds = self._myfiles[0]
+        self._ds = self._myfiles[0]._ds
 
         # Load the grid variables and re-sort
 
@@ -138,6 +136,10 @@ class Sundask(Sunxray):
         UPlot.__init__(self, xp, yp, cells, nfaces=nfaces,\
             _FillValue=-999999,\
                 **kwargs)
+
+        self.xlims = [xp.min(), xp.max()]
+        self.ylims = [yp.min(), yp.max()]
+
 
 
     def loadfull(self, varname, axis=0):
@@ -172,9 +174,9 @@ class Sundask(Sunxray):
         if ndim==1:
             return myvar[:].compute()
         if ndim==2:
-            return myvar[tstep,:].compute()
+            return myvar[tstep,:].compute().ravel()
         elif ndim==3:
-            return myvar[tstep,klayer,:].compute()
+            return myvar[tstep,klayer,:].compute().ravel()
 
 
 
