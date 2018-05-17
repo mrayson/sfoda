@@ -66,7 +66,7 @@ def dict_toxray(data, ds={}, **kwargs):
     return xray.Dataset(ds)
 
 
-def load_sql_ncstation(dbfile, station_name, varname, otherquery=None):
+def load_sql_ncstation(dbfile, station_name, varname, otherquery=None, query_only=False):
 
     """
     Load netcdf station data referenced in an sql database file
@@ -115,6 +115,9 @@ def load_sql_ncstation(dbfile, station_name, varname, otherquery=None):
     print 'Querying database...'
     print condition
     query = returnQuery(dbfile,outvar,tablename,condition)
+
+    if query_only:
+        return query
 
     # Loop through and extract the variable datasets from each of the files
     data = []
