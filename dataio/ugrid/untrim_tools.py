@@ -405,9 +405,9 @@ class UNTRIMSpatial(Spatial):
             variable=self.variable
 	
         if self.hasDim(variable,self.griddims['Ne']) and self.j==None:
-            j=range(self.Ne)
+            j=list(range(self.Ne))
         elif self.hasDim(variable,self.griddims['Nc']) and self.j==None:
-            j=range(self.Nc)
+            j=list(range(self.Nc))
         else:
             j = self.j
             
@@ -427,7 +427,7 @@ class UNTRIMSpatial(Spatial):
             self.data = data.swapaxes(0,1)
         else:
             if self.klayer[0]==-1: # grab the seabed values
-                raise Exception, 'Seabed extraction not implemented for UnTRIM'
+                raise Exception('Seabed extraction not implemented for UnTRIM')
                 #klayer = np.arange(0,self.Nkmax)
 
                 ##if type(self.tstep)==int:

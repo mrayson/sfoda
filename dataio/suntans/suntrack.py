@@ -7,7 +7,7 @@ Created on Wed Apr 17 09:54:48 2013
 @author: mrayson
 """
 
-from sunpy import Spatial, Grid
+from .sunpy import Spatial, Grid
 from soda.utils import othertime
 from soda.dataio.ugrid.gridsearch import GridSearch
 from soda.utils.cartgrid import RegGrid
@@ -49,7 +49,7 @@ class PtmNC(object):
         """
         
         # Check for the plot handle
-        if not self.__dict__.has_key('p_handle'):
+        if 'p_handle' not in self.__dict__:
             # Initialize the plot
             if ax==None:
                 ax = plt.gca()
@@ -105,7 +105,7 @@ class SunTrack(Spatial):
             # Initialise the 3-D grid
             self.init3Dgrid()
         else: # surface layer only
-            print '%s\nRunning in 2D mode...\n%s'%(24*'#',24*'#')
+            print('%s\nRunning in 2D mode...\n%s'%(24*'#',24*'#'))
             Spatial.__init__(self,ncfile,klayer=['surface'],**kwargs)
             self.nActive = self.Nc
 
@@ -177,10 +177,10 @@ class SunTrack(Spatial):
             self.initParticleNC(outfile,x.shape[0],age=self._calcage)
 
         if self.verbose:
-            print '#######################################################'
-            print 'Running SUNTANS particle tracking\n'
-            print 'Releasing %d particles.\n'%self.particles['X'].shape[0]
-            print '######################################################'
+            print('#######################################################')
+            print('Running SUNTANS particle tracking\n')
+            print('Releasing %d particles.\n'%self.particles['X'].shape[0])
+            print('######################################################')
             
         
         # Initialise the currents
@@ -212,7 +212,7 @@ class SunTrack(Spatial):
         """          
         t0 = clock()
         if self.verbose:
-            print '\tTime step: ',timenow
+            print('\tTime step: ',timenow)
          
         # Activate particles for current time step
         self.activateParticles(tsec)
@@ -225,7 +225,7 @@ class SunTrack(Spatial):
             self.rk2(timenow,tsec)
             
         else:
-            raise Exception, 'unknown advection scheme: %s. Must be "euler" or "rk2"'%self.advect_method
+            raise Exception('unknown advection scheme: %s. Must be "euler" or "rk2"'%self.advect_method)
 
         # Reset inactive particles
         self.resetInactiveParticles()
@@ -237,7 +237,7 @@ class SunTrack(Spatial):
         
         t1 = clock()
         if self.verbose:
-            print '\t\tElapsed time: %s seconds.'%(t1-t0)
+            print('\t\tElapsed time: %s seconds.'%(t1-t0))
             
     def euler(self,timenow,tsec):
         """
@@ -312,7 +312,7 @@ class SunTrack(Spatial):
         """
 
         ind = self.UVWinterp.cellind==-1
-        if not self.__dict__.has_key('kd'):
+        if 'kd' not in self.__dict__:
             self.kd = spatial.cKDTree(np.vstack((self.xv,self.yv)).T)
 
         xy = np.vstack((x[ind],y[ind])).T
@@ -390,7 +390,7 @@ class SunTrack(Spatial):
         
         # Check the time index here
         if tindex == None:
-            raise Exception, 'start time less than model time: ',self.time[0]
+            raise Exception('start time less than model time: ').with_traceback(self.time[0])
         elif self.time_index==0:
             self.time_index=1
             
@@ -414,7 +414,7 @@ class SunTrack(Spatial):
         
         if not tindex == self.time_index:
             if self.verbose:
-                print 'Reading SUNTANS currents at time: ',timenow
+                print('Reading SUNTANS currents at time: ',timenow)
             self.uT[:,0]=self.uT[:,1]
             self.vT[:,0]=self.vT[:,1]
             self.wT[:,0]=self.wT[:,1]
@@ -630,7 +630,7 @@ class SunTrack(Spatial):
         import os
 
         if self.verbose:
-            print '\nInitialising particle netcdf file: %s...\n'%outfile
+            print('\nInitialising particle netcdf file: %s...\n'%outfile)
             
         # Global Attributes
         nc = Dataset(outfile, 'w', format='NETCDF4_CLASSIC')
@@ -652,7 +652,7 @@ class SunTrack(Spatial):
         # Create variables
         def create_nc_var( name, dimensions, attdict, dtype='f8'):
             tmp=nc.createVariable(name, dtype, dimensions)
-            for aa in attdict.keys():
+            for aa in list(attdict.keys()):
                 tmp.setncattr(aa,attdict[aa])
           
         create_nc_var('tp',('nt'),{'units':'seconds since 1990-01-01 00:00:00','long_name':"time at drifter locations"},dtype='f8')
@@ -670,7 +670,7 @@ class SunTrack(Spatial):
         Writes the particle locations at the output time step, 'tstep'
         """
         if self.verbose:
-            print 'Writing netcdf output at tstep: %d...\n'%tstep
+            print('Writing netcdf output at tstep: %d...\n'%tstep)
             
         nc = Dataset(outfile, 'a')
         
@@ -891,7 +891,7 @@ class SunTrack(Spatial):
         """
         
         from mayavi import mlab
-        from suntvtk import SunTvtk
+        from .suntvtk import SunTvtk
         
         # Initiate the particle model        
         self.__call__(x,y,z,timeinfo,runmodel=False)
@@ -965,17 +965,17 @@ class SunTrack(Spatial):
 #            self.fig.scene.save_png(outimg)
             mlab.savefig(outimg,figure=self.vtk.fig)
 
-            print 'Saving image %s of %d...'%(outimg,nt)
+            print('Saving image %s of %d...'%(outimg,nt))
             
         # Call ffmpeg within python
         os.system(cmdstring)
         
-        print '####\n Animation saved to: \n %s\n####' % outfile
+        print('####\n Animation saved to: \n %s\n####' % outfile)
         # Delete the images
-        print 'Cleaning up temporary images...'
+        print('Cleaning up temporary images...')
         for ff in png_list:
             os.remove(ff)
-        print 'Complete.'
+        print('Complete.')
         
     def genTitle(self,ii):
             return 'Particle time step: %s'%datetime.strftime(self.time_track[ii],'%d-%b-%Y %H:%M:%S')
@@ -1065,7 +1065,7 @@ class SunTrack(Spatial):
             # Load the age from the last time step
             agemax = nc.variables['agemax'][:,-1]
         except:
-            raise Exception, ' "agemax" variable not present in file: %s'%ncfile
+            raise Exception(' "agemax" variable not present in file: %s'%ncfile)
         nc.close()
         
         return xp, yp, agemax
@@ -1090,7 +1090,7 @@ class SunTrack(Spatial):
         # Loop through the files and add one to the probability matrix
         # where the age exceeds the threshold
         for ncfile in ncfiles:
-            print 'Reading file: %s'%ncfile
+            print('Reading file: %s'%ncfile)
             xp,yp,agemax = self.readAgeMax(ncfile)
         
             agegrid = grd.griddata(xp,yp,agemax)
@@ -1148,7 +1148,7 @@ class interp3Dmesh(GridSearch,Grid):
         
         if update:
             # The Update the cell index using TriSearch class
-            if not self.__dict__.has_key('cellind'):
+            if 'cellind' not in self.__dict__:
                 #print ' Finding initial particle index...'
                 GridSearch.__call__(self,X,Y)
             else:
@@ -1221,7 +1221,7 @@ class interp2Dmesh(GridSearch,Grid):
         
         if update:
             # The Update the cell index using GridSearch class
-            if not self.__dict__.has_key('cellind'):
+            if 'cellind' not in self.__dict__:
                 GridSearch.__call__(self,X,Y)
             else:
                 if np.sum(np.abs(X-self.xpt))>0+1e-8:
@@ -1266,7 +1266,7 @@ class interp3D(object):
             self.F = nearest(self.XYZin)
             
         else:
-            raise Exception, 'Unknown interpolation method: %s'%self.method
+            raise Exception('Unknown interpolation method: %s'%self.method)
             
     def __call__(self,X,Y,Z,data):
         

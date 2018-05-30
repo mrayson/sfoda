@@ -3,8 +3,8 @@
 Converts the last time step of a suntans history netcdf file to an initial condition format
 """
 
-from sunpy import Spatial
-from sunboundary import InitialCond
+from .sunpy import Spatial
+from .sunboundary import InitialCond
 from datetime import datetime
 import sys
 
@@ -13,7 +13,7 @@ def sunhis2initial(hisfile,icfile):
     Main function
     """
 
-    print '#####\nCreating initial condition file (%s) from history file (%s)...'%(icfile,hisfile)
+    print('#####\nCreating initial condition file (%s) from history file (%s)...'%(icfile,hisfile))
 
     # Load the history file
     sunhis = Spatial(hisfile, tstep=-1, klayer=[-99])
@@ -29,8 +29,8 @@ def sunhis2initial(hisfile,icfile):
     sunic.uc = sunhis.loadData(variable='uc').reshape((1,)+sunic.uc.shape)
     sunic.vc = sunhis.loadData(variable='vc').reshape((1,)+sunic.vc.shape)
 
-    print sunic.h.shape
-    print sunic.T.shape
+    print(sunic.h.shape)
+    print(sunic.T.shape)
 
     # Load the age
     if sunhis.hasVar('agec'):
@@ -41,7 +41,7 @@ def sunhis2initial(hisfile,icfile):
     sunic.writeNC(icfile)
 
 def usage():
-    print 'Error. Correct usage:\npython sunhis2initial.py "hisfile.nc" "icfile.nc"'
+    print('Error. Correct usage:\npython sunhis2initial.py "hisfile.nc" "icfile.nc"')
 
 if __name__=='__main__':
     """ 

@@ -155,15 +155,15 @@ class DEM(object):
         zopts = ['z','Z','depth','topo','elevation']
 
         for xx in xopts:
-            if xx in nc.variables.keys():
+            if xx in list(nc.variables.keys()):
                 xvar = xx
 
         for yy in yopts:
-            if yy in nc.variables.keys():
+            if yy in list(nc.variables.keys()):
                 yvar = yy
 
         for zz in zopts:
-            if zz in nc.variables.keys():
+            if zz in list(nc.variables.keys()):
                 zvar = zz
 
         X = nc.variables[xvar][:]
@@ -422,7 +422,7 @@ class DEM(object):
             return weight
 
         # Compute the spatial tree
-        print 'Building KD-tree...'
+        print('Building KD-tree...')
         kd = spatial.cKDTree(xynan)
         
         nxy = len(xy)
@@ -438,11 +438,11 @@ class DEM(object):
             J,I=self.returnij(xy[:,0],xy[:,1])
             weight[J,I]=w
         else:
-            print 'Dataset too large - calculating weights for chunks...'
+            print('Dataset too large - calculating weights for chunks...')
             nchunks = np.ceil(len(xy)/MAXPOINTS)
             pt1,pt2=tile_vector(len(xy),int(nchunks))
             for p1,p2 in zip(pt1,pt2):
-                print 'Calculating points %d to %d of %d...'%(p1,p2,nxy)
+                print('Calculating points %d to %d of %d...'%(p1,p2,nxy))
                 dist,ind=kd.query(xy[p1:p2,:])
                 w = weightfunc(dist, self.maxdist)
                 w=self.W*w
@@ -453,7 +453,7 @@ class DEM(object):
         
         return weight   
         
-    def contourf(self,vv=range(-10,0),**kwargs):
+    def contourf(self,vv=list(range(-10,0)),**kwargs):
         #fig= plt.figure(figsize=(9,8))
         plt.contourf(self.X,self.Y,self.Z,vv,**kwargs)
         plt.colorbar()
@@ -461,7 +461,7 @@ class DEM(object):
         plt.contour(self.X,self.Y,self.Z,[0.0,0.0],colors='k',linewidths=0.02)
         plt.axis('equal')
         
-    def contour(self,vv=range(-10,0),**kwargs):
+    def contour(self,vv=list(range(-10,0)),**kwargs):
         #fig= plt.figure(figsize=(9,8))
         C = plt.contour(self.X,self.Y,self.Z,vv,colors='k',linestyles='-')
         plt.axis('equal')
@@ -501,7 +501,7 @@ class DEM(object):
         
         nc = Dataset(outfile, 'w', format='NETCDF4')
         # Write the global attributes
-        for gg in globalatts.keys():
+        for gg in list(globalatts.keys()):
             nc.setncattr(gg,globalatts[gg])
             
         # Create the dimensions
@@ -535,7 +535,7 @@ class DEM(object):
         
         nc.close()
         
-        print 'DEM save to %s.'%outfile
+        print('DEM save to %s.'%outfile)
 
     
 def blendDEMs(ncfile,outfile,W,maxdist):
@@ -547,8 +547,8 @@ def blendDEMs(ncfile,outfile,W,maxdist):
     for nc in ncfile:
         ii+=1
         d = DEM(infile=nc,W=W[ii],maxdist=maxdist[ii])
-        print 'Calculating weights for %s...'%nc
-        print 'Weight = %6.3f, maxdist = %f'%(W[ii],maxdist[ii])
+        print('Calculating weights for %s...'%nc)
+        print('Weight = %6.3f, maxdist = %f'%(W[ii],maxdist[ii]))
         #w=d.calc_weight()
 
         w=d.calc_weight_convolve()
@@ -567,13 +567,13 @@ def blendDEMs(ncfile,outfile,W,maxdist):
         del w
         
     # Normalise the weights
-    print 'Normalising the weights...'
+    print('Normalising the weights...')
     Wsum = np.sum(Wall,axis=2)
     for ii in range(0,nfiles):
         Wall[:,:,ii] = np.squeeze(Wall[:,:,ii]) / Wsum
         
     # Re-load in the depths from each file and sum
-    print 'Writing to an output file...'
+    print('Writing to an output file...')
     Zout = np.zeros((ny,nx))
     filestr = ''
     ii=-1
@@ -590,7 +590,7 @@ def blendDEMs(ncfile,outfile,W,maxdist):
     # Check for NaNs
     idx = np.isnan(Zout)
     if np.any(idx):
-        print 'Warning NaNs found. Zeroing...'
+        print('Warning NaNs found. Zeroing...')
         Zout[idx] = 0.
 
     # Copy the data to a new netcdf file
@@ -602,12 +602,12 @@ def blendDEMs(ncfile,outfile,W,maxdist):
         'history':'Created on '+time.ctime(),\
         'Input datasets':filestr}
     # Write the global attributes
-    for gg in globalatts.keys():
+    for gg in list(globalatts.keys()):
         nc.setncattr(gg,globalatts[gg])
         
     nc.close()
     
-    print 'Completed write to %s.'%outfile
+    print('Completed write to %s.'%outfile)
 
 
 #ncfile = [\

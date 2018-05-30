@@ -132,7 +132,7 @@ class Profile(object):
             return data
 
         else:
-             raise Exception, 'unknown value for zinterp: '%zinterp
+             raise Exception('unknown value for zinterp: '%zinterp)
 
     def find_nearest_depth(self, z):
         """
@@ -232,7 +232,7 @@ class ReadProf(ProfData):
         try:
             t0 = datetime.strptime(basetime, '%Y%m%d.%H%M%S')
         except:
-            raise Exception, 'time format must be "YYYYmmdd.HHMMSS"'
+            raise Exception('time format must be "YYYYmmdd.HHMMSS"')
 
         self.tunits = 'seconds since %s'%(datetime.strftime(t0, '%Y-%m-%d:%H%M%S'))
 
@@ -284,12 +284,12 @@ def save_profile_nc(basedir, outfile, basetime, varnames=None, **kwargs):
     Convert the profile binary file to netcdf
     """
     if varnames is None:
-        varnames = vardict.keys()
+        varnames = list(vardict.keys())
 
     # Loop through and populate a dataset
     ds = {}
     for varname in varnames:
-        print 'Loading variable %s...'%varname
+        print('Loading variable %s...'%varname)
 
         V = ReadProf(basedir, varname, basetime, **kwargs)
         data = V()
@@ -297,12 +297,12 @@ def save_profile_nc(basedir, outfile, basetime, varnames=None, **kwargs):
         if V.is3D:
             dims =('time','Nk','Nc') 
             coords = {'time':V.time,\
-                'Nk':range(0,V.Nkmax),\
-                'Nc':range(0,V.Np*V.Ni)}
+                'Nk':list(range(0,V.Nkmax)),\
+                'Nc':list(range(0,V.Np*V.Ni))}
         else:
             dims =('time','Nc') 
             coords = {'time':V.time,\
-                'Nc':range(0,V.Np*V.Ni)}
+                'Nc':list(range(0,V.Np*V.Ni))}
 
         encoding = {
                 'complevel':5,
@@ -325,7 +325,7 @@ def save_profile_nc(basedir, outfile, basetime, varnames=None, **kwargs):
     # Save to netcdf
     ds.to_netcdf('%s/%s'%(basedir,outfile), format='NETCDF4_CLASSIC')
 
-    print '\tProfile data saved to %s.'%outfile
+    print('\tProfile data saved to %s.'%outfile)
 
 ###########
 ## Testing

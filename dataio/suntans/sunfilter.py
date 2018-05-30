@@ -11,9 +11,9 @@ import numpy as np
 from netCDF4 import Dataset
 import matplotlib.pyplot as plt
 
-from sunpy import Spatial, unsurf
+from .sunpy import Spatial, unsurf
 from timeseries import timeseries
-from suntans_ugrid import ugrid
+from .suntans_ugrid import ugrid
 import othertime
 
 
@@ -80,7 +80,7 @@ class sunfilter(Spatial):
         
         # Create the output variables
         for vv in varlist:
-            print 'Creating variable: %s'%vv
+            print('Creating variable: %s'%vv)
             self.create_nc_var(outfile, vv, ugrid[vv]['dimensions'], ugrid[vv]['attributes'],\
                 dtype=ugrid[vv]['dtype'],zlib=ugrid[vv]['zlib'],complevel=ugrid[vv]['complevel'],fill_value=ugrid[vv]['fill_value'])
         
@@ -95,26 +95,26 @@ class sunfilter(Spatial):
         nc.variables['time'][:] = nctime
         
         for vv in varlist:
-            print 'Filtering variable: %s'%vv
+            print('Filtering variable: %s'%vv)
             
             if len(ugrid[vv]['dimensions']) == 2:
                 dataf = self.__call__(tstart,tend,varname=vv)
                 nc.variables[vv][:] = dataf[::substep,:].copy()
             elif len(ugrid[vv]['dimensions']) == 3:
                 for kk in range(0,self.Nkmax):
-                    print '   layer: %d'%kk
+                    print('   layer: %d'%kk)
                     self.klayer = [kk]
                     dataf = self.__call__(tstart,tend,varname=vv)
                     nc.variables[vv][:,kk,:] = dataf[::substep,:].copy()
 
 
         nc.close()
-        print '#####\nComplete - Filtered data written to: \n%s \n#####'%outfile
+        print('#####\nComplete - Filtered data written to: \n%s \n#####'%outfile)
 
 def usage():
-    print "--------------------------------------------------------------"
-    print "sunfilter.py   -h                 # show this help message      "
-    print "python sunfilter.py 'ncfilename.nc' 'outputfile.nc' [-v 'var1 var2 ...] [-s 12]"
+    print("--------------------------------------------------------------")
+    print("sunfilter.py   -h                 # show this help message      ")
+    print("python sunfilter.py 'ncfilename.nc' 'outputfile.nc' [-v 'var1 var2 ...] [-s 12]")
         
 if __name__ == '__main__':
     """
@@ -130,9 +130,9 @@ if __name__ == '__main__':
     
     try:
         opts,rest = getopt.getopt(sys.argv[3:],'hv:s:')
-    except getopt.GetoptError,e:
-        print e
-        print "-"*80
+    except getopt.GetoptError as e:
+        print(e)
+        print("-"*80)
         usage()
         exit(1)
 
@@ -152,7 +152,7 @@ if __name__ == '__main__':
     	usage()
 	exit(1)
     
-    print ncfile, outfile, varnames, substep
+    print(ncfile, outfile, varnames, substep)
     # Call the object
     sun=sunfilter(ncfile)
     sun.filter2nc(outfile,tstart,tend,substep=substep,varlist=varnames)

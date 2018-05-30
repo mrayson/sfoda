@@ -133,7 +133,7 @@ class SunMet(metfile):
     def write2NC(self,ncfile):
 
         """ Writes the data to a netcdf file"""
-        print 'Writing to netcdf file: %s',ncfile
+        print('Writing to netcdf file: %s',ncfile)
         # Create an output netcdf file
         nc = Dataset(ncfile, 'w', format='NETCDF4_CLASSIC')
         
@@ -174,7 +174,7 @@ class SunMet(metfile):
             
         # Create the main variables
         for vv in self.varnames:
-            print vv
+            print(vv)
             dimname = 'N'+vv
             varx = 'x_'+vv
             vary = 'y_'+vv
@@ -188,7 +188,7 @@ class SunMet(metfile):
             tmpvar.setncattr('coordinates',varx+','+vary)
             
         nc.close()
-        print 'Complete. File written to:\n%s'%ncfile
+        print('Complete. File written to:\n%s'%ncfile)
         
     def __getitem__(self,y):
         x = self.__dict__.__getitem__(y)

@@ -23,7 +23,7 @@ def load_cars_temp(carsfile, X, Y, Z, T):
         nx = X.shape[0]
         ny = Y.shape[0]
     except:
-        raise Exception, 'X/Y need to be numpy array objects'
+        raise Exception('X/Y need to be numpy array objects')
 
     assert nx == ny, 'X and Y should be vectors of the same length'
     xlims = slice(np.min(X)-2, np.max(X)+2)

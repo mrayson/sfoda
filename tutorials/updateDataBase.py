@@ -20,11 +20,11 @@ ncfiles = ['C:/Projects/GOMGalveston/DATA/WaterQuality/HGAC_WaterSampling.nc']
 ####
 
 if create:
-    print 'Creating database: %s'%dbfile
+    print('Creating database: %s'%dbfile)
     netcdfio.createObsDB(dbfile)
     
 for nc in ncfiles:
-    print 'Inserting metadata from: %s'%nc    
+    print('Inserting metadata from: %s'%nc)    
     netcdfio.netcdfObs2DB(nc,dbfile)
 
-print 'Done.'
+print('Done.')

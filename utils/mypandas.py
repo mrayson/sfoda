@@ -7,7 +7,7 @@ from pandas import Series as TimeSeries
 from scipy import signal
 import numpy as np
 
-import othertime
+from . import othertime
 
 import pdb
 
@@ -163,13 +163,13 @@ class ObsTimeSeries(TimeSeries):
         if groupid == None:
 	    grp = nc
 	else:
-	    if groupid in nc.groups.keys():
+	    if groupid in list(nc.groups.keys()):
 		grp = nc.groups[groupid]
 	    else:
 		grp = nc.createGroup(groupid)
         
 	# Create the time dimension (unlimited)
-        if not 'time' in grp.dimensions.keys():
+        if not 'time' in list(grp.dimensions.keys()):
 	    grp.createDimension('time',0)
                 
 	    # Create the coordinate variables

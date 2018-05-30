@@ -7,10 +7,10 @@ Stanford University
 April 2013
 """
 
-from sunpy import Grid, Spatial
-from sundepths import DepthDriver, adjust_channel_depth
-from sunboundary import modifyBCmarker, Boundary, InitialCond
-from metfile import SunMet, metfile
+from .sunpy import Grid, Spatial
+from .sundepths import DepthDriver, adjust_channel_depth
+from .sunboundary import modifyBCmarker, Boundary, InitialCond
+from .metfile import SunMet, metfile
 from soda.utils import timeseries
 
 import numpy as np 
@@ -191,7 +191,7 @@ class sundriver(object):
         if self.makewinds:
             self._makewinds()
             
-        print '###########\n Completed generating input files. Check text for errors!!!!\n##########'
+        print('###########\n Completed generating input files. Check text for errors!!!!\n##########')
         
     def _makebathy(self):
         """
@@ -200,9 +200,9 @@ class sundriver(object):
         # Interpolate the depths onto the grid
         if self.makebathy:
             if self.depthfile == None:
-                raise Exception, 'need to set "depthfile" parameter'
+                raise Exception('need to set "depthfile" parameter')
             else:
-                print 'Interpolation depths onto grid from file:\n%s'%self.depthfile
+                print('Interpolation depths onto grid from file:\n%s'%self.depthfile)
                 
             D = DepthDriver(self.depthfile,interpmethod=self.interpmethod,\
             plottype=self.plottype,NNear=self.NNear,\
@@ -220,20 +220,20 @@ class sundriver(object):
             if self.adjust_depths:
                 self.grd = adjust_channel_depth(self.grd,self.channel_shpfile)
                 # Write the depths to file
-                print 'Writing depths.dat (again)...'
+                print('Writing depths.dat (again)...')
                 self.grd.saveBathy(self.suntanspath+'/depths.dat-voro')
-                print 'Data (re-)saved to %s.'%self.suntanspath+'/depths.dat-voro'
+                print('Data (re-)saved to %s.'%self.suntanspath+'/depths.dat-voro')
  
             
-            print 'SUNTANS depths saved to: %s'%(self.suntanspath+'/depths.dat-voro')
+            print('SUNTANS depths saved to: %s'%(self.suntanspath+'/depths.dat-voro'))
         
         elif self.setconstantdepth:
-            print 'Using constant depth (%6.2f m)...'%self.H0
+            print('Using constant depth (%6.2f m)...'%self.H0)
             self.grd = Grid(self.suntanspath)
             self.grd.dv = np.zeros_like(self.grd.xv)
             self.grd.dv[:] = self.H0
         else:
-            print 'Loading grid from folder:\n%s'%self.suntanspath
+            print('Loading grid from folder:\n%s'%self.suntanspath)
             # Load the grid
             self.grd = Grid(self.suntanspath)
             # Load the depth data into the grid object
@@ -242,7 +242,7 @@ class sundriver(object):
 
         zmax = np.abs(self.grd.dv.max())
         
-        print 'Calculating vertical grid spacing for Nk = %d, r = %1.3f, %6.3f...'%(self.Nkmax,self.r,zmax)
+        print('Calculating vertical grid spacing for Nk = %d, r = %1.3f, %6.3f...'%(self.Nkmax,self.r,zmax))
 
         # Set up the vertical coordinates
         dz = self.grd.calcVertSpace(self.Nkmax,self.r,zmax)
@@ -252,7 +252,7 @@ class sundriver(object):
         self.grd.saveVertspace(self.suntanspath+'/vertspace.dat')
 
         # Write cells.dat and edges.dat to ensure they are in the right format
-        print 'Overwriting cells.dat and edges.dat to ensure format consistency.'
+        print('Overwriting cells.dat and edges.dat to ensure format consistency.')
         self.grd.saveCells(self.suntanspath+'/cells.dat')
         self.grd.saveEdges(self.suntanspath+'/edges.dat')
 
@@ -271,13 +271,13 @@ class sundriver(object):
         # Segment (flux) boundaries
         ###
         if self.opt_bcseg == 'constant':
-            print 'Setting %d boundary segments to discharge of %6.3f m3/s'%(bnd.Nseg,self.Q0)
+            print('Setting %d boundary segments to discharge of %6.3f m3/s'%(bnd.Nseg,self.Q0))
             bnd.boundary_Q[:]=self.Q0
             
         elif self.opt_bcseg == 'file':
-            print 'Loading river segment data from file...\n'
+            print('Loading river segment data from file...\n')
             for ii, ID in enumerate(bnd.segp):
-                print 'Loading discahrge data for boundary segment (%d) StationID: %d...'%(ii,ID)
+                print('Loading discahrge data for boundary segment (%d) StationID: %d...'%(ii,ID))
                 
                 ts = timeseries.loadDBstation(self.dbasefile,ID,'discharge',timeinfo=(self.starttime,self.endtime,self.dt),\
                     filttype=self.filttype,cutoff=self.cutoff)
@@ -285,7 +285,7 @@ class sundriver(object):
                 bnd.boundary_Q[:,ii]=ts.y.copy()
             
         else:
-            print 'Unknown option: opt_bcseg = %s. Not setting boundary segment data.'%self.opt_bcseg
+            print('Unknown option: opt_bcseg = %s. Not setting boundary segment data.'%self.opt_bcseg)
             
         ###
         # Type-3 boundaries
@@ -296,13 +296,13 @@ class sundriver(object):
         self.useOTISFILE = False
 
         if self.opt_bctype3=='constant':
-            print 'Setting constant type-3 boundary conditions...'  
-            print 'Setting salinity = %f, temperature = %f'%(self.S0,self.T0)
+            print('Setting constant type-3 boundary conditions...')  
+            print('Setting salinity = %f, temperature = %f'%(self.S0,self.T0))
             bnd.S[:]=self.S0
             bnd.T[:]=self.T0
             
         elif self.opt_bctype3=='depth_profile':
-            print 'Setting type-3 boundary T/S from profile...'  
+            print('Setting type-3 boundary T/S from profile...')  
             
             self.loadTSprofile()
             for ii in range(0,bnd.N3):
@@ -334,7 +334,7 @@ class sundriver(object):
             self.useROMS = True
 
         else:
-            print 'Unknown option: opt_bctype3 = %s. Not setting type-3 boundaries.'%self.opt_bctype3
+            print('Unknown option: opt_bctype3 = %s. Not setting type-3 boundaries.'%self.opt_bctype3)
 
             
         if self.useROMS:
@@ -348,7 +348,7 @@ class sundriver(object):
             
         if self.useFILE:
             ID = self.waterlevelstationID
-            print 'Loading waterlevel onto all type-3 points from stationID: %d...'%(ID)
+            print('Loading waterlevel onto all type-3 points from stationID: %d...'%(ID))
             ts = timeseries.loadDBstation(self.dbasefile,ID,'waterlevel',timeinfo=(self.starttime,self.endtime,self.dt),\
                     filttype=self.filttype,cutoff=self.cutoff)
                     
@@ -361,22 +361,22 @@ class sundriver(object):
         self.useFILE2 = False
 
         if self.opt_bctype2 == 'constant':
-            print 'Setting constant type-2 boundary conditions...'  
-            print 'Setting salinity = %f, temperature = %f'%(self.S0,self.T0)
+            print('Setting constant type-2 boundary conditions...')  
+            print('Setting salinity = %f, temperature = %f'%(self.S0,self.T0))
             bnd.boundary_S[:]=self.S0
             bnd.boundary_T[:]=self.T0
         elif self.opt_bctype2 == 'file':
-            print 'Using file for type-2 boundary condition (temperature only)'
-            print 'Setting salinity = %f'%(self.S0)
+            print('Using file for type-2 boundary condition (temperature only)')
+            print('Setting salinity = %f'%(self.S0))
             bnd.boundary_S[:]=self.S0
             self.useFILE2 = True
         else:
-            print 'Unknown option: opt_bctype2 = %s. Not setting type-2 boundaries.'%self.opt_bctype3
+            print('Unknown option: opt_bctype2 = %s. Not setting type-2 boundaries.'%self.opt_bctype3)
             
             
         if self.useFILE2:
             ID = self.TairstationID
-            print 'Loading air temperature onto all type-2 points from stationID: %s...'%(ID)
+            print('Loading air temperature onto all type-2 points from stationID: %s...'%(ID))
             ts = timeseries.loadDBstation(self.dbasefile,ID,'Tair',timeinfo=(self.starttime,self.endtime,self.dt),\
             filttype=self.tairfilttype,cutoff=self.taircutoff)
                     
@@ -396,13 +396,13 @@ class sundriver(object):
         IC = InitialCond(self.suntanspath,self.starttime)
     
         if self.opt_ic=='constant':
-            print 'Setting constant initial conditions...'  
-            print 'Setting salinity = %f, temperature = %f'%(self.S0ic,self.T0ic)
+            print('Setting constant initial conditions...')  
+            print('Setting salinity = %f, temperature = %f'%(self.S0ic,self.T0ic))
             IC.T[:]=self.T0ic
             IC.S[:]=self.S0ic
             
         elif self.opt_ic=='depth_profile':
-            print 'Setting depth-varying initial conditions...'  
+            print('Setting depth-varying initial conditions...')  
             
             self.loadTSprofile()
             for ii in range(0,IC.Nc):
@@ -410,7 +410,7 @@ class sundriver(object):
                 IC.S[0,:,ii] = self.Sz
                 
         elif self.opt_ic=='ROMS':
-            print 'Setting initial conditions from ROMS model output...'  
+            print('Setting initial conditions from ROMS model output...')  
             IC.roms2ic(self.romsfile,setUV=self.useROMSuv,seth=self.useROMSeta,interpmethod='idw',NNear=5,p=2)
                 #interpmethod=self.interpmethod,NNear=self.NNear,p=self.p,\
                 #varmodel=self.varmodel,nugget=self.nugget,sill=self.sill,\
@@ -420,7 +420,7 @@ class sundriver(object):
             IC.suntans2ic(self.suntansicfile,setUV=self.useROMSuv,seth=self.useROMSeta)
             
         else:
-            print 'Unknown option: opt_ic = %s. Not setting initial conditions.'%self.opt_ic
+            print('Unknown option: opt_ic = %s. Not setting initial conditions.'%self.opt_ic)
 
     
         # Filter the variables in space
@@ -429,7 +429,7 @@ class sundriver(object):
 
         # Set the age source term from a polygon
         if not self.agesourcepoly==None:
-            print 'Setting age source term with shapefile: %s...'%self.agesourcepoly
+            print('Setting age source term with shapefile: %s...'%self.agesourcepoly)
             IC.setAgeSource(self.agesourcepoly)
 
         # Write the initial condition file
@@ -440,8 +440,8 @@ class sundriver(object):
         Generate a metfile
         """
         if self.opt_met=='constant':
-            print 'Setting constant met forcing with: Uwind = %6.2f\nVwind = %6.2f\nTair = %6.2f\nPair = %6.2f\nRH = %6.2f\nrain = %6.2f\ncloud = %6.2f\n'\
-                %(self.Uwind,self.Vwind,self.Tair,self.Pair,self.RH,self.cloud,self.rain)
+            print('Setting constant met forcing with: Uwind = %6.2f\nVwind = %6.2f\nTair = %6.2f\nPair = %6.2f\nRH = %6.2f\nrain = %6.2f\ncloud = %6.2f\n'\
+                %(self.Uwind,self.Vwind,self.Tair,self.Pair,self.RH,self.cloud,self.rain))
             xpt = self.grd.xv.mean()
             ypt = self.grd.yv.mean()
             zpt = 10.0
@@ -459,7 +459,7 @@ class sundriver(object):
         
             met.write2NC(self.suntanspath+'/'+self.metfile)
         else:
-            print 'Unknown option: opt_met=%s. Failed to generate a metfile'%self.opt_met
+            print('Unknown option: opt_met=%s. Failed to generate a metfile'%self.opt_met)
             
     def loadTSprofile(self):
         """
@@ -478,7 +478,7 @@ class sundriver(object):
             self.Sz=FS(self.grd.z_r)
             
         except:
-            print 'Warning could not find variables: "depth", "temp_profile" or "salt_profile" in file:\n%s'%self.TSprofilefile
+            print('Warning could not find variables: "depth", "temp_profile" or "salt_profile" in file:\n%s'%self.TSprofilefile)
             self.Tz = self.T0
             self.Sz = self.S0
                     
@@ -502,14 +502,14 @@ class dumpinputs(object):
         self.plotdir = plotdir
         
         if not self.bcfile == None:
-            print 'Dumping boundary condition data to figures...'
+            print('Dumping boundary condition data to figures...')
             self._dumpbc()
         if not self.icfile == None:
-            print 'Dumping initial condition data to figures...'
+            print('Dumping initial condition data to figures...')
             self._dumpic()
             
         if not self.metfile == None:
-            print 'Dumping metfile data to figures...'
+            print('Dumping metfile data to figures...')
             self._dumpmet()
             
     def _dumpbc(self):
@@ -523,14 +523,14 @@ class dumpinputs(object):
         
         varnames = ['uc','vc','T','S','h','boundary_u','boundary_v','boundary_T','boundary_S']
         
-	print self.suntanspath, self.bcfile
+	print(self.suntanspath, self.bcfile)
         bnd = Boundary(self.suntanspath+'/'+self.bcfile,0)
         
         self.tmin = bnd.time[0]
         self.tmax = bnd.time[-1]
         
         for vv in varnames:
-            if bnd.__dict__.has_key(vv):
+            if vv in bnd.__dict__:
                 plt.figure()
                 bnd.plot(varname=vv)
                 outfile = '%s/BC_%s_TS.png'%(self.plotdir,vv)
@@ -547,7 +547,7 @@ class dumpinputs(object):
             
         # Scatter Plots
         for vv in varnames:
-            if bnd.__dict__.has_key(vv):
+            if vv in bnd.__dict__:
                 fig=plt.figure()
                 bnd.scatter(varname=vv)
                 outfile = '%s/BC_%s_scatter.png'%(self.plotdir,vv)
@@ -594,7 +594,7 @@ class dumpinputs(object):
         """
         Dump plots of meteorological data to figures
         """
-        print self.suntanspath+'/'+self.metfile
+        print(self.suntanspath+'/'+self.metfile)
         met = metfile(self.suntanspath+'/'+self.metfile)
         
         varnames = ['Uwind','Vwind','Tair','Pair','RH','rain','cloud']
@@ -603,12 +603,12 @@ class dumpinputs(object):
             plt.figure()
             eval('met.%s.plot()'%vv)
             # Set the x limits to the boundary axis
-            if self.__dict__.has_key('tmin'):
+            if 'tmin' in self.__dict__:
                 plt.xlim((self.tmin,self.tmax))
                 
             outfile = '%s/MET_%s_TS.png'%(self.plotdir,vv)
             plt.savefig(outfile)
-            print 'Meteorological data image saved to file:%s'%outfile
+            print('Meteorological data image saved to file:%s'%outfile)
             
             
         

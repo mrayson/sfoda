@@ -7,10 +7,10 @@ Created on Fri Oct 05 11:24:10 2012
 @author: mrayson
 """
 import numpy as np
-import sunpy
+from . import sunpy
 import matplotlib.pyplot as plt
 
-from sunpy import Grid
+from .sunpy import Grid
 from soda.dataio.ugrid.gridsearch import GridSearch
 from soda.utils.interpXYZ import Inputs, interpXYZ
 from soda.utils.ufilter import ufilter
@@ -84,17 +84,17 @@ class DepthDriver(object):
         self.scalefac = scalefac
         
         # Initialise the interpolation points
-        print 'Loading suntans grid points...'
+        print('Loading suntans grid points...')
         self.grd = sunpy.Grid(self.suntanspath)
 
 
         if self.interpnodes:
-            print 'Interpolating depths onto nodes and taking min...'
+            print('Interpolating depths onto nodes and taking min...')
             self.xy = np.column_stack((self.grd.xp,self.grd.yp))
 
 
         else:
-            print 'Interpolating depths straight to cell centres...'
+            print('Interpolating depths straight to cell centres...')
             self.xy = np.column_stack((self.grd.xv,self.grd.yv))
 
         # Call the interpolation routine
@@ -114,9 +114,9 @@ class DepthDriver(object):
 
         
         # Write the depths to file
-        print 'Writing depths.dat...'
+        print('Writing depths.dat...')
         self.grd.saveBathy(suntanspath+'/depths.dat-voro')
-        print 'Data saved to %s.'%suntanspath+'/depths.dat-voro'
+        print('Data saved to %s.'%suntanspath+'/depths.dat-voro')
         
         # Plot
         if self.plottype=='mpl':
@@ -126,15 +126,15 @@ class DepthDriver(object):
         elif self.plottype=='vtk3':
             self.plotvtk3D()
         elif self.plottype==None:
-            print 'Not plotting'
+            print('Not plotting')
             
-        print 'Finished depth interpolation.'
+        print('Finished depth interpolation.')
         
     def interp_depths(self):
 
         # Initialise the Interpolation class
         if not self.isDEM:
-            print 'Building interpolant class...'
+            print('Building interpolant class...')
             self.F = interpXYZ(self.indata.XY,\
                 self.xy,\
                 clip=self.clip,\
@@ -147,11 +147,11 @@ class DepthDriver(object):
                 vrange=self.vrange)
 
             # Interpolate the data
-            print 'Interpolating data...'
+            print('Interpolating data...')
             dv = self.F(self.indata.Zin)*self.scalefac
 
         else:
-            print 'Interpolating DEM data...'
+            print('Interpolating DEM data...')
             dv = self.indata.interp(self.xy[:,0],self.xy[:,1])*self.scalefac
 
 
@@ -168,9 +168,9 @@ class DepthDriver(object):
         """ 
         Smooth the data by running an interpolant over the model grid points
         """
-        print 'Smoothing the data...'
+        print('Smoothing the data...')
         if self.smoothmethod=='gaussian':
-            print '\tUsing Gaussian filter...'
+            print('\tUsing Gaussian filter...')
             Fsmooth = ufilter(self.xy, self.smoothrange)
 
         else:
@@ -190,7 +190,7 @@ class DepthDriver(object):
         self.grd.plot(cmap=plt.cm.gist_earth)
         outfile = self.suntanspath+'/depths.png'
         fig.savefig(outfile,dpi=150)
-        print 'Figure saved to %s.'%outfile
+        print('Figure saved to %s.'%outfile)
         
     def plotvtk(self):
         """
@@ -200,7 +200,7 @@ class DepthDriver(object):
         
         outfile = self.suntanspath+'/depths.png'
         self.grd.fig.scene.save(outfile)      
-        print 'Figure saved to %s.'%outfile
+        print('Figure saved to %s.'%outfile)
         
     def plotvtk3D(self):
         """
@@ -231,7 +231,7 @@ class DepthDriver(object):
         
         outfile = self.suntanspath+'/depths.png'
         f.scene.save(outfile)      
-        print 'Figure saved to %s.'%outfile
+        print('Figure saved to %s.'%outfile)
         
         #mlab.show()
 
@@ -264,11 +264,11 @@ class AverageDepth(Grid):
             isnorth=self.isnorth,vdatum=self.vdatum)
             
         tic = time.clock()
-        print 'Performing triangle search...'
+        print('Performing triangle search...')
         cells = self.tsearch(self.indata.XY[:,0],self.indata.XY[:,1])
         
         toc = time.clock()
-        print 'Search time: %f seconds.'%(toc-tic)
+        print('Search time: %f seconds.'%(toc-tic))
             
 def adjust_channel_depth(grd,shpfile,lcmax=500.):
     """
@@ -282,7 +282,7 @@ def adjust_channel_depth(grd,shpfile,lcmax=500.):
     if speedups.available:
         speedups.enable()
 
-    print 'Adjusting depths in channel regions with a shapefile...'
+    print('Adjusting depths in channel regions with a shapefile...')
         
     # Load the shapefile
     xyline,contour = readShpPointLine(shpfile,FIELDNAME='contour')
@@ -301,7 +301,7 @@ def adjust_channel_depth(grd,shpfile,lcmax=500.):
     nlines = len(L)
     weight_all = np.zeros((grd.Nc,nlines))
     for n in range(nlines):
-        print 'Calculating distance from line %d...'%n
+        print('Calculating distance from line %d...'%n)
         
         dist = [L[n].distance(P[i]) for i in range(grd.Nc)]
         dist = np.array(dist)

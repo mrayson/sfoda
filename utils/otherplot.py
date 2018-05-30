@@ -96,7 +96,7 @@ class StreakPlot(object):
         ax.set_ylim(self.ylim)
         ax.set_aspect('equal')
 
-        map(ax.add_collection,self.lcs)
+        list(map(ax.add_collection,self.lcs))
         #for lc in self.lcs:
         #    ax.add_collection(lc)
 
@@ -253,8 +253,8 @@ def SpeedDirPlot(t,u,v,convention='current',units='m s^{-1}',color1='b',color2='
     Dir, Spd = airsea.convertUV2SpeedDirn(u,v,convention=convention)
     
     
-    ax = range(2)
-    h = range(2)
+    ax = list(range(2))
+    h = list(range(2))
     fig = plt.gcf()
     ax[0] = fig.gca()
     

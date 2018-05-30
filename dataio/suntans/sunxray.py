@@ -69,7 +69,7 @@ class Sunxray(UPlot):
         List all of the variables that have the 'mesh' attribute
         """
         vname=[]
-        for vv in self._ds.variables.keys():
+        for vv in list(self._ds.variables.keys()):
             # "mesh" attribute is standard in the ugrid convention
             if hasattr(self._ds[vv], 'mesh'):
                 vname.append(vv)
@@ -107,7 +107,7 @@ class Sundask(Sunxray):
 
     def __init__(self, ncfiles, **kwargs):
 
-        print ncfiles
+        print(ncfiles)
 
         # Get the files from the first file
         filenames = sorted(glob.glob(ncfiles))

@@ -12,12 +12,12 @@
 import gzip
 from scipy import spatial
 import numpy as np
-from maptools import readShpBathy, readraster #,ll2utm 
-from myproj import MyProj
+from .maptools import readShpBathy, readraster #,ll2utm 
+from .myproj import MyProj
 #from kriging import kriging
-from fkriging import kriging
+from .fkriging import kriging
 from netCDF4 import Dataset
-import othertime
+from . import othertime
 from scipy import interpolate
 import time
 import matplotlib.pyplot as plt
@@ -56,7 +56,7 @@ class interpXYZ(object):
         self.bbox = [XYout[:,0].min(),XYout[:,0].max(),XYout[:,1].min(),XYout[:,1].max()]
 
         if self.clip:
-            print 'Clipping points outside of range'
+            print('Clipping points outside of range')
             self.XY, self.clipindex = clip_points(XY, self.bbox)
         else:
             self.XY = XY
@@ -84,7 +84,7 @@ class interpXYZ(object):
             self._curvmin()
  
         else:
-            raise Exception, 'Error - Unknown interpolation type: %s.'%self.method
+            raise Exception('Error - Unknown interpolation type: %s.'%self.method)
         
     def __call__(self,Zin):
         """
@@ -106,7 +106,7 @@ class interpXYZ(object):
             
 
         else:
-            raise Exception, 'Error - Unknown interpolation type: %s.'%self.method
+            raise Exception('Error - Unknown interpolation type: %s.'%self.method)
         
         
         return self.Z
@@ -169,7 +169,7 @@ class interpXYZ(object):
         
         nc = Dataset(outfile, 'w', format='NETCDF4')
         # Write the global attributes
-        for gg in globalatts.keys():
+        for gg in list(globalatts.keys()):
             nc.setncattr(gg,globalatts[gg])
             
         # Create the dimensions
@@ -202,7 +202,7 @@ class interpXYZ(object):
         
         nc.close()
         
-        print 'DEM save to %s.'%outfile
+        print('DEM save to %s.'%outfile)
         
         
         
@@ -345,7 +345,7 @@ class Inputs(object):
         
         
         # Read in the array
-        print 'Reading data from: %s...'%self.infile
+        print('Reading data from: %s...'%self.infile)
         if self.infile[-3:]=='.gz':
             LL,self.Zin = read_xyz_gz(self.infile)
         elif self.infile[-3:] in ['txt','dat','xyz']:
@@ -369,7 +369,7 @@ class Inputs(object):
 
         # Convert the coordinates
         if self.convert2utm:                     
-            print 'Transforming the coordinates to UTM...'
+            print('Transforming the coordinates to UTM...')
             #self.XY=ll2utm(LL,self.utmzone,self.CS,self.isnorth)
             # Define a projection
             P = MyProj(self.projstr, utmzone=self.utmzone, isnorth=self.isnorth)
@@ -579,11 +579,11 @@ def tile_vector(count,chunks):
     dx = cnt2/chunks
     
     if count != cnt2:
-        pt1 = range(0,cnt2,dx)
-        pt2 = range(dx,cnt2,dx) + [count]
+        pt1 = list(range(0,cnt2,dx))
+        pt2 = list(range(dx,cnt2,dx)) + [count]
     else:
-        pt1 = range(0,count-dx,dx)
-        pt2 = range(dx,count,dx)  
+        pt1 = list(range(0,count-dx,dx))
+        pt2 = list(range(dx,count,dx))  
     return pt1,pt2
     
 def clip_points(LL, bbox):

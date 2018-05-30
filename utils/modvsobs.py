@@ -64,7 +64,7 @@ class ModVsObs(object):
 	time1 = min(tmod[-1],tobs[-1])
 
         if time1 < time0:
-            print 'Error - the two datasets have no overlapping period.'
+            print('Error - the two datasets have no overlapping period.')
             return None
         
 	if not (tmod.shape[0] == tobs.shape[0]) and\
@@ -117,7 +117,7 @@ class ModVsObs(object):
 
         self.N = self.TSmod.t.shape[0]
         if self.N==0:
-            print 'Error - zero model points detected'
+            print('Error - zero model points detected')
             return None
 
         # Compute the error 
@@ -321,7 +321,7 @@ class ModVsObs(object):
         """
         Prints the statistics to a markdown language style table
         """
-        if not self.__dict__.has_key('meanMod'):
+        if 'meanMod' not in self.__dict__:
             self.calcStats()
 
         outstr=''
@@ -349,7 +349,7 @@ class ModVsObs(object):
             self.rmse,self.cc,self.skill)
 
         if f == None:
-            print outstr
+            print(outstr)
         else:
             f.write(outstr)
 
@@ -357,7 +357,7 @@ class ModVsObs(object):
         """
         Prints the statistics to a markdown language style table
         """
-        if not self.__dict__.has_key('meanMod'):
+        if 'meanMod' not in self.__dict__:
             self.calcStats()
 
         outstr=''
@@ -376,7 +376,7 @@ class ModVsObs(object):
             self.rmse,self.cc,self.skill)
 
         if f == None:
-            print outstr
+            print(outstr)
         else:
             f.write(outstr)
 
@@ -400,7 +400,7 @@ class ModVsObs(object):
                 self.stdObs[ii], self.rmse[ii],self.cc[ii],self.skill[ii])
 
         if f == None:
-            print outstr
+            print(outstr)
         else:
             f.write(outstr)
 
@@ -420,7 +420,7 @@ class ModVsObs(object):
         xmean = self.TSmod.y.mean(axis=axis)
         x = self.TSmod.y - xmean
 
-        k = range(1,M)
+        k = list(range(1,M))
         tau = np.asarray(k,dtype=np.float)*self.TSobs.dt
 
         Cxy = [1./(N-kk) * np.sum(y[...,0:-kk]*x[...,kk::],axis=axis) for kk in k ]
@@ -438,7 +438,7 @@ class ModVsObs(object):
         """
         
         if self.isequal==False and self.VERBOSE:
-            print 'Warning - time series is unequally spaced consider using lomb-scargle fft'
+            print('Warning - time series is unequally spaced consider using lomb-scargle fft')
         
 
         NFFT = int(2**(np.floor(np.log2(self.ny/nbandavg)))) # Nearest power of 2 to length of data
@@ -600,7 +600,7 @@ def load_netcdf(ncfile, group):
     ds = xray.open_dataset(ncfile, group=group)
 
     # work out the varname
-    varnames = ds.data_vars.keys()
+    varnames = list(ds.data_vars.keys())
 
     for vv in varnames:
         if 'mod' in vv:

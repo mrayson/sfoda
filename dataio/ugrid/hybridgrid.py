@@ -626,7 +626,7 @@ class HybridGrid(object):
         edge point to the cell mid-point
         """
         if self.VERBOSE:
-            print 'calculating orthogonality...'
+            print('calculating orthogonality...')
         nc = xv.shape[0]
         orthoang = np.zeros((nc,))
         pi_on_2 = 0.5*np.pi
@@ -678,7 +678,7 @@ class HybridGrid(object):
         try:
             nc.createDimension('Ne', self.Ne)
         except:
-            print 'No dimension: Ne'
+            print('No dimension: Ne')
         nc.createDimension('Nk', self.Nkmax)
         nc.createDimension('Nkw', self.Nkmax+1)
         nc.createDimension('numsides', self.MAXFACES)
@@ -688,7 +688,7 @@ class HybridGrid(object):
         # Write the grid variables
         def write_nc_var(var, name, dimensions, attdict, dtype='f8'):
             tmp=nc.createVariable(name, dtype, dimensions)
-            for aa in attdict.keys():
+            for aa in list(attdict.keys()):
                 tmp.setncattr(aa,attdict[aa])
             nc.variables[name][:] = var
     
@@ -700,9 +700,9 @@ class HybridGrid(object):
         self.Nk += 1 # Set to one-base in the file (reset to zero-base after)
         self.suntans_mesh=[0]  
         for vv in gridvars:
-            if self.__dict__.has_key(vv):
+            if vv in self.__dict__:
                 if self.VERBOSE:
-                    print 'Writing variables: %s'%vv
+                    print('Writing variables: %s'%vv)
 
                 write_nc_var(self[vv],vv,\
                         ugrid[vv]['dimensions'],\
@@ -710,9 +710,9 @@ class HybridGrid(object):
                         dtype=ugrid[vv]['dtype'])
             
             # Special treatment for "def"
-            if vv == 'def' and self.__dict__.has_key('DEF'):
+            if vv == 'def' and 'DEF' in self.__dict__:
                 if self.VERBOSE:
-                    print 'Writing variables: %s'%vv
+                    print('Writing variables: %s'%vv)
                 write_nc_var(self['DEF'],vv,ugrid[vv]['dimensions'],\
                         ugrid[vv]['attributes'],\
                         dtype=ugrid[vv]['dtype'])
@@ -797,7 +797,7 @@ class HybridGrid(object):
             
             return cell[order]
             
-        cells_list = map(reordercells,range(Np))
+        cells_list = list(map(reordercells,list(range(Np))))
         
         cells = -1*np.ones((Np,maxfaces),np.int)
         for ii in range(Np):
@@ -951,8 +951,8 @@ class HybridGrid(object):
         if any(missing_bcs):
 
             if self.VERBOSE:
-                print "WARNING: %d edges are on the boundary but have marker==0"%n_missing
-                print "Assuming they are closed boundaries!"
+                print("WARNING: %d edges are on the boundary but have marker==0"%n_missing)
+                print("Assuming they are closed boundaries!")
 
             self.mark[missing_bcs] = 1
 
@@ -1020,7 +1020,7 @@ class HybridGrid(object):
             #        self._pnt2cells[cc].add(i)
 
         # This accounts for unconnected points
-        if self._pnt2cells.has_key(pnt_i):
+        if pnt_i in self._pnt2cells:
             return self._pnt2cells[pnt_i]
         else:
             return []
@@ -1082,12 +1082,12 @@ class HybridGrid(object):
                     continue
                 
                 for p in self.edges[e,:2]:
-                    if not p2e.has_key(p):
+                    if p not in p2e:
                         p2e[p] = []
                     p2e[p].append(e)
             self._pnt2edges = p2e
 
-        if self._pnt2edges.has_key(pnt_i):
+        if pnt_i in self._pnt2edges:
             return self._pnt2edges[pnt_i]
         else:
             return []
@@ -1128,7 +1128,7 @@ class HybridGrid(object):
             val = getattr(self,vv)
             if not val is None:
                 if not isinstance(val, np.ndarray):
-                     print 'converting variable: %s'%vv
+                     print('converting variable: %s'%vv)
                      valout = np.asarray(val)
                      setattr(self,vv,valout)
 

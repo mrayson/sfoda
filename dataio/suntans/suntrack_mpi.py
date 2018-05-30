@@ -11,7 +11,7 @@ Created on Mon Jan 14 14:52:43 2013
 """
 
 from mpi4py import MPI
-from suntrack import SunTrack
+from .suntrack import SunTrack
 import numpy as np
 from datetime import datetime, timedelta
 import othertime
@@ -38,7 +38,7 @@ def runmpi(ncfile,outfile,tstart,tend,dt,dtout,x,y,z,agepoly=None,method='neares
         timeinfos.append( (timestart,timeend,dt) )
     
     # Initialise the particle tracking object    
-    print 'Initialising the particle tracking object on processor: %d...'%(comm.rank)
+    print('Initialising the particle tracking object on processor: %d...'%(comm.rank))
     sun = SunTrack(ncfile,interp_method='mesh',interp_meshmethod=method,is3D=is3D)
     
     # Initialise the age values
@@ -59,7 +59,7 @@ def runmpi(ncfile,outfile,tstart,tend,dt,dtout,x,y,z,agepoly=None,method='neares
             #length of each process's portion of the original vector
             local_n = np.array([n/size])
         else:
-            print 'Padding array with extra values...'
+            print('Padding array with extra values...')
             nextra = size-rem
             xpad = np.zeros((nextra,))
             x = np.hstack((x,xpad))
@@ -69,7 +69,7 @@ def runmpi(ncfile,outfile,tstart,tend,dt,dtout,x,y,z,agepoly=None,method='neares
             n = n+nextra    
             local_n = np.array([n/size])
         
-        print 'Size of original vector = %d\nSize of split vector = %d'%(n,local_n)
+        print('Size of original vector = %d\nSize of split vector = %d'%(n,local_n))
 
 	if calcage:
 	    age = np.zeros_like(x)
@@ -158,9 +158,9 @@ def runmpi(ncfile,outfile,tstart,tend,dt,dtout,x,y,z,agepoly=None,method='neares
     
     t_diff = MPI.Wtime()-t_start ### Stop stopwatch ###
     if comm.rank==0:
-        print 78*'='+'\n'+78*'='
-        print 'Completed particle tracking using %d cores in %6.2f seconds.'%(comm.size,t_diff)
-        print 78*'='+'\n'+78*'='
+        print(78*'='+'\n'+78*'=')
+        print('Completed particle tracking using %d cores in %6.2f seconds.'%(comm.size,t_diff))
+        print(78*'='+'\n'+78*'=')
 
 
 if __name__ == '__main__':
@@ -170,7 +170,7 @@ if __name__ == '__main__':
     run via:
 	    mpirun -np 4 python suntrack_mpi.py
     """
-    from suntrack import GridParticles
+    from .suntrack import GridParticles
 
     ####
     # Input variables

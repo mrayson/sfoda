@@ -38,14 +38,14 @@ class PlotVTK(Plot):
         self._ug.cell_data.scalars.name = 'suntans_scalar'
 
         # Create a new scene if there isn't one
-        if not self.__dict__.has_key('fig'):
+        if 'fig' not in self.__dict__:
             self.newscene()
         
         src = mlab.pipeline.add_dataset(self._ug)
         self.h=mlab.pipeline.surface(src, vmin=vmin, vmax=vmax, **kwargs)
         
         # Add a colorbar if the isn't one
-        if not self.__dict__.has_key('cb'):
+        if 'cb' not in self.__dict__:
             self.colorbar() 
             
         ## Add a title if there isn't one
@@ -63,7 +63,7 @@ class PlotVTK(Plot):
             clim = [data.min(), data.max()]
         
         # Create a new scene if there isn't one
-        if not self.__dict__.has_key('fig'):
+        if 'fig' not in self.__dict__:
             self.newscene()
         
         # Need to set use point (vertex) data
@@ -75,11 +75,11 @@ class PlotVTK(Plot):
         self.h.contour.filled_contours=True # This is the trick to fill the contours
         
         # Add a colorbar if the isn't one
-        if not self.__dict__.has_key('cb'):
+        if 'cb' not in self.__dict__:
             self.colorbar() 
             
         # Add a title if there isn't one
-        if not self.__dict__.has_key('title'):
+        if 'title' not in self.__dict__:
             self.title=mlab.title(Spatial.genTitle(self),height=0.95,size=0.15)
 
     ####

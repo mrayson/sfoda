@@ -10,7 +10,7 @@ Created on Thu Nov 15 19:14:03 2012
 import numpy as np
 from datetime import datetime
 import othertime
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 import netcdfio
 
 
@@ -49,10 +49,10 @@ def readUSGStxt(stationid,starttime,endtime):
     target_url = 'http://waterservices.usgs.gov/nwis/dv/?format=rdb&sites=%s&startDT=%s&endDT=%s&parameterCd=00060'%(stationid,starttime,endtime)            
 
     try:
-        print 'Opening: %s'%target_url
-        f = urllib2.urlopen(target_url)
+        print('Opening: %s'%target_url)
+        f = urllib.request.urlopen(target_url)
     except:
-        raise Exception, 'cannot open url:\n%s'%target_url  
+        raise Exception('cannot open url:\n%s'%target_url)  
         
         
     StationID=[]
@@ -82,9 +82,9 @@ def readUSGSmeta(stationid,meta=None):
     target_url = 'http://waterservices.usgs.gov/nwis/site/?format=rdb&sites=%s'%stationid
     
     try:
-        f = urllib2.urlopen(target_url)
+        f = urllib.request.urlopen(target_url)
     except:
-        raise Exception, 'cannot open url:\n%s'%target_url    
+        raise Exception('cannot open url:\n%s'%target_url)    
     
     if meta==None:
         meta={}

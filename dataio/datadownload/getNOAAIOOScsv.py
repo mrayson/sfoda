@@ -6,7 +6,7 @@
  http://opendap.co-ops.nos.noaa.gov/ioos-dif-sos/
 """
 
-import urllib2  # the lib that handles the url stuff
+import urllib.request, urllib.error, urllib.parse  # the lib that handles the url stuff
 from datetime import datetime, timedelta
 import othertime
 from xml.dom import minidom
@@ -23,15 +23,15 @@ def main(vartype,bbox,timestart,timeend,ncfile,dbfile=None):
     
     # Find the stations
     staInfo = stationInfo(vartype)
-    for vv in staInfo.keys():
+    for vv in list(staInfo.keys()):
         if staInfo[vv]['lon']>=bbox[0] and staInfo[vv]['lon']<=bbox[1] and staInfo[vv]['lat']>=bbox[2] and staInfo[vv]['lat']<=bbox[3]:
-            print 'Station %s inside lat-lon range.' % staInfo[vv]['name']
+            print('Station %s inside lat-lon range.' % staInfo[vv]['name'])
         else:
             staInfo.pop(vv)
     
     ncdata=[]
-    for ID in staInfo.keys():
-        print 'Getting %s data from %s' % (vartype,staInfo[ID]['name'])
+    for ID in list(staInfo.keys()):
+        print('Getting %s data from %s' % (vartype,staInfo[ID]['name']))
         
         # Grab the station data
         data = getAllTime(ID,varlookup[vartype],timestart,timeend)
@@ -59,7 +59,7 @@ def main(vartype,bbox,timestart,timeend,ncfile,dbfile=None):
     # Update the database
     #createObsDB(dbfile)
     if not dbfile == None:
-        print 'Updating database: %s'%dbfile
+        print('Updating database: %s'%dbfile)
         netcdfio.netcdfObs2DB(ncfile,dbfile)                
 
 def getAllTime(stationID,vartype,timestart,timeend): 
@@ -80,7 +80,7 @@ def getAllTime(stationID,vartype,timestart,timeend):
         
         t1 = datetime.strftime(t1s,'%Y-%m-%dT%H:%M:%SZ')
         t2 = datetime.strftime(t2s,'%Y-%m-%dT%H:%M:%SZ')
-        print 'Extracting dates %s to %s' % (t1,t2)
+        print('Extracting dates %s to %s' % (t1,t2))
         # generate the url string
         target_url='http://opendap.co-ops.nos.noaa.gov/ioos-dif-sos/SOS?service=SOS&request=GetObservation&version=1.0.0&observedProperty='+vartype+'&offering=urn:ioos:station:NOAA.NOS.CO-OPS:'+stationID+'&responseFormat=text%2Fcsv&eventTime='+t1+'/'+t2
         
@@ -92,7 +92,7 @@ def getAllTime(stationID,vartype,timestart,timeend):
             data=datatmp
             k+=1
         elif k > 0 and len(datatmp)>1:
-            for vv in data.keys():
+            for vv in list(data.keys()):
                 data[vv]+=datatmp[vv]
     try:
         return data
@@ -104,7 +104,7 @@ def getObsfromURL(target_url):
     data={}
     #try:
     #print target_url
-    csvfile = urllib2.urlopen(target_url) # it's a file like object and works just like a file
+    csvfile = urllib.request.urlopen(target_url) # it's a file like object and works just like a file
     k=-1
     
     for line in csvfile: # files are iterable
@@ -123,7 +123,7 @@ def getObsfromURL(target_url):
     #    print 'No data exists for this period'                
        
     if len(data)==1:
-        print 'No data exists for this period'
+        print('No data exists for this period')
         data={}
     return data
     
@@ -146,7 +146,7 @@ def getType(vv):
     'number_of_bins':1,'"bin (count)"':1,'"bin_distance (m)"\n':2,\
     '"water_surface_height_above_reference_datum (m)"':2,'"vertical_position (m)"':2,'datum_id':0}
     
-    if vartype.has_key(vv):
+    if vv in vartype:
         return vartype[vv]
     #else:
         #print 'Unknown variable type: %s'%vv
@@ -182,7 +182,7 @@ def stationInfo(vartype='CurrentsActive'):
     
     xmlfile="http://opendap.co-ops.nos.noaa.gov/ioos-dif-sos/SOS?service=SOS&request=DescribeSensor&version=1.0.0&outputFormat=text/xml;subtype=\"sensorML/1.0.1\"&procedure=urn:ioos:network:NOAA.NOS.CO-OPS:"+vartype
     
-    doc = minidom.parse(urllib2.urlopen(xmlfile))
+    doc = minidom.parse(urllib.request.urlopen(xmlfile))
     
     stations = {}
     for node in doc.getElementsByTagName('gml:Point'):
@@ -204,7 +204,7 @@ def stationInfo(vartype='CurrentsActive'):
          # Get the coordinates
         alist = node.getElementsByTagName('gml:description')
         namestr=alist[0].childNodes[0].nodeValue
-        if stations.has_key(idstr[1]):
+        if idstr[1] in stations:
             stations[idstr[1]]['name']=namestr
         #print idstr[1], namestr
         #print node.attributes.keys()

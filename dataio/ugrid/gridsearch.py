@@ -56,7 +56,7 @@ class GridSearch(HybridGrid):
         
         # Step 1) Find the nearest node
         if self.verbose:
-            print 'Finding nearest nodes...'
+            print('Finding nearest nodes...')
         self.xpt = xin
         self.ypt = yin
         
@@ -246,7 +246,7 @@ class GridSearch(HybridGrid):
         # Step 2) Find the cells surrounding each node and check if the point is inside each one       
         cellind = -1*np.ones((Np,),dtype=np.int32)
         if self.verbose:
-            print 'Finding cells...'
+            print('Finding cells...')
         for nn in range(Np):
             #print '\t%d of %d'%(nn,Np)
             cell =  self.pnt2cells(node[nn])
@@ -290,18 +290,18 @@ class GridSearch(HybridGrid):
         
         (Stolen from Rusty's TriGrid class)
         """
-        if not self.__dict__.has_key('_mypnt2cells'):
+        if '_mypnt2cells' not in self.__dict__:
             # build hash table for point->cell lookup
             self._mypnt2cells = {}
             for i in range(self.Nc):
                 for j in range(self.nfaces[i]):
-                    if not self._mypnt2cells.has_key(self.cells[i,j]):
+                    if self.cells[i,j] not in self._mypnt2cells:
                         #self._pnt2cells[self.cells[i,j]] = set()
                         self._mypnt2cells[self.cells[i,j]] = []
                     #self._pnt2cells[self.cells[i,j]].add(i)
                     self._mypnt2cells[self.cells[i,j]].append(i)
 
-        if self._mypnt2cells.has_key(pnt_i):
+        if pnt_i in self._mypnt2cells:
             return self._mypnt2cells[pnt_i]
         else:
             return [-1]
@@ -313,7 +313,7 @@ class GridSearch(HybridGrid):
         Uses the scipy KDTree routine
         """
         
-        if not self.__dict__.has_key('kd'):
+        if 'kd' not in self.__dict__:
             self.kd = cKDTree(np.vstack((self.xp,self.yp)).T)
     
         # Perform query on all of the points in the grid
@@ -328,7 +328,7 @@ class GridSearch(HybridGrid):
         Uses the scipy KDTree routine
         """
         
-        if not self.__dict__.has_key('kde'):
+        if 'kde' not in self.__dict__:
             self.kde = cKDTree(np.vstack((self.xe,self.ye)).T)
     
         # Perform query on all of the points in the grid
@@ -427,9 +427,9 @@ class GridSearch(HybridGrid):
         cells[self.cells.mask]=0
 
         xp[:,:self.maxfaces]=self.xp[cells]
-        xp[range(self.Nc),self.nfaces]=self.xp[cells[:,0]]
+        xp[list(range(self.Nc)),self.nfaces]=self.xp[cells[:,0]]
         yp[:,:self.maxfaces]=self.yp[cells]
-        yp[range(self.Nc),self.nfaces]=self.yp[cells[:,0]]
+        yp[list(range(self.Nc)),self.nfaces]=self.yp[cells[:,0]]
 
         #xp[self.cells.mask]==0
         #yp[self.cells.mask]==0

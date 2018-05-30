@@ -60,9 +60,9 @@ class PtmBin(object):
         if the beginning of that timestep is at or beyond the end of the file
         return False, signifying that ts does not exist.
         """
-        if not self.offsets.has_key(ts):
+        if ts not in self.offsets:
             for ts_scan in range(1,ts+1):
-                if not self.offsets.has_key(ts_scan):
+                if ts_scan not in self.offsets:
                     # if we don't have the offset of this step, go to the one
                     # before, and find out how big the previous frame was.
                     self.fp.seek( self.offsets[ts_scan-1])
@@ -156,7 +156,7 @@ class PtmBin(object):
         """
         
         # Check for the plot handle
-        if not self.__dict__.has_key('p_handle'):
+        if 'p_handle' not in self.__dict__:
             # Initialize the plot
             if ax==None:
                 ax = plt.gca()
@@ -196,7 +196,7 @@ def shp2pol(shpfile,outdir):
 
     outfile = '%s/%s.pol'%(outdir,polyname)
 
-    print 'Writing polygon to: %s...'%outfile
+    print('Writing polygon to: %s...'%outfile)
 
     f = open(outfile,'w')
     f.write('POLYGON_NAME\n')
@@ -208,7 +208,7 @@ def shp2pol(shpfile,outdir):
         f.write('%6.10f %6.10f\n'%(xy[ii,0],xy[ii,1]))
 
     f.close()
-    print 'Done.'
+    print('Done.')
 
 def calc_agebin(binfile,ncfile,polyfile,ntout):
     """
@@ -246,7 +246,7 @@ def calc_agebin(binfile,ncfile,polyfile,ntout):
             outctr=0
         outctr+=1
 
-    print 'Done.'
+    print('Done.')
 
 #hydrofile = '../InputFiles/untrim_hydro.nc'
 #ptmfile = '../InputFiles/line_specify_bin.out'

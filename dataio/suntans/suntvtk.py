@@ -8,7 +8,7 @@ Created on Tue Dec 18 16:12:27 2012
 """
 
 import numpy as np
-from sunpy import Spatial
+from .sunpy import Spatial
 from tvtk.api import tvtk
 from mayavi import mlab
 
@@ -63,7 +63,7 @@ class SunTvtk(Spatial):
                 self.ug = self.initMixedTvtk2D()
 
         if self.offscreen:
-            print 'Using offscreen rendering.'
+            print('Using offscreen rendering.')
             mlab.options.offscreen=True
 
     def to_metismesh(self):
@@ -132,7 +132,7 @@ class SunTvtk(Spatial):
         Requires setting Hexahedron, PentagonalPrism, HexagonalPrism...
         """
         
-        raise Exception, NotImplementedError
+        raise Exception(NotImplementedError)
 
 
     def initTvtk2D(self):
@@ -284,18 +284,18 @@ class SunTvtk(Spatial):
             clim = [self.data.min(), self.data.max()]
         
         # Create a new scene if there isn't one
-        if not self.__dict__.has_key('fig'):
+        if 'fig' not in self.__dict__:
             self.newscene()
         
         src = mlab.pipeline.add_dataset(self.ug)
         self.h=mlab.pipeline.surface(src,vmin=clim[0],vmax=clim[1],**kwargs)
         
         # Add a colorbar if the isn't one
-        if not self.__dict__.has_key('cb'):
+        if 'cb' not in self.__dict__:
             self.colorbar() 
             
         # Add a title if there isn't one
-        if not self.__dict__.has_key('title'):
+        if 'title' not in self.__dict__:
             self.title=mlab.title(Spatial.genTitle(self),height=0.95,size=0.15)
 
         return src
@@ -309,7 +309,7 @@ class SunTvtk(Spatial):
             clim = [self.data.min(), self.data.max()]
         
         # Create a new scene if there isn't one
-        if not self.__dict__.has_key('fig'):
+        if 'fig' not in self.__dict__:
             self.newscene()
         
         # Need to set use point (vertex) data
@@ -320,11 +320,11 @@ class SunTvtk(Spatial):
         self.h.contour.filled_contours=True # This is the trick to fill the contours
         
         # Add a colorbar if the isn't one
-        if not self.__dict__.has_key('cb'):
+        if 'cb' not in self.__dict__:
             self.colorbar() 
             
         # Add a title if there isn't one
-        if not self.__dict__.has_key('title'):
+        if 'title' not in self.__dict__:
             self.title=mlab.title(Spatial.genTitle(self),height=0.95,size=0.15)
     
     def isosurface(self,vv=[4.0],clim=None,**kwargs):
@@ -335,7 +335,7 @@ class SunTvtk(Spatial):
             clim = [self.data.min(), self.data.max()]
         
         # Create a new scene if there isn't one
-        if not self.__dict__.has_key('fig'):
+        if 'fig' not in self.__dict__:
             self.newscene()
         
         # Convert the cell centred data into a scene source
@@ -346,11 +346,11 @@ class SunTvtk(Spatial):
         self.h=mlab.pipeline.iso_surface(src,contours=vv,line_width=1.0,vmin=clim[0],vmax=clim[1],**kwargs)
         
         # Add a colorbar if the isn't one
-        if not self.__dict__.has_key('cb'):
+        if 'cb' not in self.__dict__:
             self.colorbar() 
             
         # Add a title if there isn't one
-        if not self.__dict__.has_key('title'):
+        if 'title' not in self.__dict__:
             self.title=mlab.title(self._SpatialgenTitle(),height=0.95,size=0.15)
     
     def volume(self,clim=None,**kwargs):
@@ -363,7 +363,7 @@ class SunTvtk(Spatial):
             self.clim = [self.data.min(), self.data.max()]
         
         # Create a new scene if there isn't one
-        if not self.__dict__.has_key('fig'):
+        if 'fig' not in self.__dict__:
             self.newscene()
         
         # Convert the cell centred data into a scene source
@@ -374,11 +374,11 @@ class SunTvtk(Spatial):
         self.h=mlab.pipeline.volume(src,**kwargs)
         
         # Add a colorbar if the isn't one
-        if not self.__dict__.has_key('cb'):
+        if 'cb' not in self.__dict__:
             self.colorbar() 
             
         # Add a title if there isn't one
-        if not self.__dict__.has_key('title'):
+        if 'title' not in self.__dict__:
             self.title=mlab.title(self._SpatialgenTitle(),height=0.95,size=0.15)
             
     def sliceplane(self,plane_orientation='y_axes',**kwargs):
@@ -390,7 +390,7 @@ class SunTvtk(Spatial):
             self.clim = [self.data.min(), self.data.max()]
         
         # Create a new scene if there isn't one
-        if not self.__dict__.has_key('fig'):
+        if 'fig' not in self.__dict__:
             self.newscene()
 
         src = mlab.pipeline.cell_to_point_data(self.ug)
@@ -398,11 +398,11 @@ class SunTvtk(Spatial):
         self.h=mlab.pipeline.scalar_cut_plane(src,plane_orientation=plane_orientation,view_controls=True,line_width=0.5)
         
        # Add a colorbar if the isn't one
-        if not self.__dict__.has_key('cb'):
+        if 'cb' not in self.__dict__:
             self.colorbar() 
             
         # Add a title if there isn't one
-        if not self.__dict__.has_key('title'):
+        if 'title' not in self.__dict__:
             self.title=mlab.title(self._SpatialgenTitle(),height=0.95,size=0.15) 
             
     def vector(self,color=(1,1,1),subsample=1,scale=1e-3,line_width=1.0,**kwargs):
@@ -411,7 +411,7 @@ class SunTvtk(Spatial):
         """
         
         # Create a new scene if there isn't one
-        if not self.__dict__.has_key('fig'):
+        if 'fig' not in self.__dict__:
             self.newscene()
         
         if not self.vector_overlay:
@@ -436,7 +436,7 @@ class SunTvtk(Spatial):
         self.vector_overlay=True
         
         # Create a new scene if there isn't one
-        if not self.__dict__.has_key('fig'):
+        if 'fig' not in self.__dict__:
             self.newscene()
         
         self.loadVectorVTK()
@@ -455,7 +455,7 @@ class SunTvtk(Spatial):
 
         
         # Create a new scene if there isn't one
-        if not self.__dict__.has_key('fig'):
+        if 'fig' not in self.__dict__:
             self.newscene()
         
         if not self.vector_overlay:
@@ -485,12 +485,12 @@ class SunTvtk(Spatial):
             stream.seed.widget.enabled = False
             
         # Add a colorbar if the isn't one
-        if not self.__dict__.has_key('cb'):
+        if 'cb' not in self.__dict__:
             self.h=stream
             self.colorbar() 
             
         # Add a title if there isn't one
-        if not self.__dict__.has_key('title'):
+        if 'title' not in self.__dict__:
             self.title=mlab.title(self._SpatialgenTitle(),height=0.95,size=0.15)
          
         return streams
@@ -532,7 +532,7 @@ class SunTvtk(Spatial):
         Z = X*0+1000.0
         
         # Create a new scene if there isn't one
-        if not self.__dict__.has_key('fig'):
+        if 'fig' not in self.__dict__:
             self.newscene()
         
         self.windobj = mlab.quiver3d(X,Y,Z,uw,vw,uw*0,scale_factor=1./scale,scale_mode='vector',\
@@ -547,7 +547,7 @@ class SunTvtk(Spatial):
         """
         
         """
-        if not self.__dict__.has_key('windobj'):
+        if 'windobj' not in self.__dict__:
             return
         else:
             X,Y,uw,vw = self.getWind(nx=self._nxwind,ny=self._nywind)
@@ -637,7 +637,7 @@ class SunTvtk(Spatial):
             if self.vector_overlay==True:
                 self.loadVectorVTK()
                 
-            if self.__dict__.has_key('windobj'):
+            if 'windobj' in self.__dict__:
                 self.windupdate()
                     
             self.loadData()
@@ -656,18 +656,18 @@ class SunTvtk(Spatial):
 #            self.fig.scene.save_png(outimg)
             mlab.savefig(outimg,figure=self.fig)
 
-            print 'Saving image %s of %d...'%(outimg,nt)
+            print('Saving image %s of %d...'%(outimg,nt))
             
         # Call ffmpeg within python
         os.system(cmdstring)
         
-        print '####\n Animation saved to: \n %s\n####' % outfile
+        print('####\n Animation saved to: \n %s\n####' % outfile)
         # Delete the images
         if deltmp:
-            print 'Cleaning up temporary images...'
+            print('Cleaning up temporary images...')
             for ff in png_list:
                 os.remove(ff)
-        print 'Complete.'
+        print('Complete.')
             
         #    def savefig(self,outfile):
         #        """
@@ -682,7 +682,7 @@ class SunTvtk(Spatial):
         Adds 3D plot of the bathymetry to the current scene
         """
         # Create a new scene if there isn't one
-        if not self.__dict__.has_key('fig'):
+        if 'fig' not in self.__dict__:
             self.newscene()
         
         if zscale is None:

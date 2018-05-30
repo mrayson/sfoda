@@ -294,7 +294,7 @@ class SunPlotPyX(Sundask, QMainWindow):
         #self.show_edge_check.toggle()
         self.show_edge_check.stateChanged.connect(self.on_show_edges)
 
-        cmaps = matplotlib.cm.datad.keys()
+        cmaps = list(matplotlib.cm.datad.keys())
         cmaps.sort()
         self.colormap_list = QComboBox()
         self.colormap_list.clear()
@@ -380,7 +380,7 @@ class SunPlotPyX(Sundask, QMainWindow):
         elif self.klayer[0]>=0:
             zlayer = '%3.1f [m]'%self._ds.z_r[self.klayer[0]]
 
-        if self.__dict__.has_key('time'):
+        if 'time' in self.__dict__:
             #tstr = datetime.strftime(self._ds.time[tt],\
             #    '%Y-%m-%d %H:%M:%S')
             str = self._ds.time.values[tt].astype(str)[0:-10]
@@ -405,7 +405,7 @@ class SunPlotPyX(Sundask, QMainWindow):
             self.climhigh.setText('%3.1f'%self.clim[1])
 
          
-        if self.__dict__.has_key('collection'):
+        if 'collection' in self.__dict__:
             #self.collection.remove()
             self.axes.collections.remove(self.collection)
         else:
@@ -422,7 +422,7 @@ class SunPlotPyX(Sundask, QMainWindow):
                 self.collection.set_edgecolors(self.collection.to_rgba(np.array((self.data[:])))) 
         elif self.collectiontype=='edges':
             xylines = [self.xp[self.edges],self.yp[self.edges]]
-            linesc = [zip(xylines[0][ii,:],xylines[1][ii,:]) for ii in range(self.Ne)]
+            linesc = [list(zip(xylines[0][ii,:],xylines[1][ii,:])) for ii in range(self.Ne)]
             self.collection = LineCollection(linesc,array=np.array(self.data[:]),cmap=self.cmap)
 
         self.collection.set_clim(vmin=self.clim[0],vmax=self.clim[1])
@@ -434,12 +434,12 @@ class SunPlotPyX(Sundask, QMainWindow):
 
         # create a colorbar
 
-        if not self.__dict__.has_key('cbar'):
+        if 'cbar' not in self.__dict__:
             self.cbar = self.fig.colorbar(self.collection)
             #SetAxColor(self.cbar.ax.axes,self.textcolor,self.bgcolor)
         else:
             #pass
-            print 'Updating colorbar...'
+            print('Updating colorbar...')
             #self.cbar.check_update(self.collection)
             self.cbar.on_mappable_changed(self.collection)
 
@@ -617,7 +617,7 @@ class SunPlotPyX(Sundask, QMainWindow):
         # Update the time drop down list
 
         #if self.__dict__.has_key('time'):
-        if 'time' in self._ds.variables.keys():
+        if 'time' in list(self._ds.variables.keys()):
             #self.timestr = [datetime.strftime(tt,'%d-%b-%Y %H:%M:%S') for tt in self._ds.time.values]
             self.timestr = [tt.astype(str)[:-10] for tt in self._ds.time.values]
         else:
@@ -645,7 +645,7 @@ class SunPlotPyX(Sundask, QMainWindow):
             Grid.__init__(self,path)
 
             # Plot the Grid
-            if self.__dict__.has_key('collection'):
+            if 'collection' in self.__dict__:
                 self.axes.collections.remove(self.collection)
 
             self.axes,self.collection = self.plotmesh(ax=self.axes,edgecolors='y')
@@ -825,7 +825,7 @@ class SunPlotPyX(Sundask, QMainWindow):
             if ext=='.gif':
                 self.anim.save(outfile,writer='imagemagick',fps=6)
             elif ext=='.mp4':
-                print 'Saving html5 video...'
+                print('Saving html5 video...')
                 # Ensures html5 compatibility
                 self.anim.save(outfile,fps=6,\
                     writer='ffmpeg',\
@@ -841,8 +841,8 @@ class SunPlotPyX(Sundask, QMainWindow):
             self.data = self.load(self.variable, self.tstep, self.klayer)
             #self.data = data.values.ravel()
             self.update_figure()
-            print 'Finished saving animation to %s'%outfile
-            print 72*'#'
+            print('Finished saving animation to %s'%outfile)
+            print(72*'#')
 
             #if not self.plot_type=='particles':
             #    self.loadData()

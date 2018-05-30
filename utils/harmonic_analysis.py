@@ -11,7 +11,7 @@ import numpy as np
 from scipy import linalg, optimize
 
 from datetime import datetime
-import othertime
+from . import othertime
 
 import pdb
 
@@ -446,12 +446,12 @@ def getTideFreq(Fin=None):
         #Fin=tidedict.keys()
         Fin = ['M2','S2','N2','K2','K1','O1','P1','Q1','M4']
     elif Fin=='all':
-        Fin=tidedict.keys()
+        Fin=list(tidedict.keys())
         
     frq = []
     Fout = Fin[:]
     for f in Fin:
-        if tidedict.has_key(f):
+        if f in tidedict:
             frq.append(twopi/(360.0/tidedict[f]*3600.0))
         else:
             'Warning: could not find constituent name: %s'%f

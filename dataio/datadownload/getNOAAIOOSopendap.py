@@ -36,7 +36,7 @@ import scipy.io as io
 import time
 from datetime import datetime, timedelta
 from othertime import MinutesSince
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from xml.dom import minidom
 import netcdfio
 
@@ -127,10 +127,10 @@ def extractIOOSold(varlist,startt,endt,latlon,outfile):
                 data[k][vv+'_time']= np.concatenate((data[k][vv+'_time'],t))
     
     
-    print '######################## Finsished Download #######################'            
+    print('######################## Finsished Download #######################')            
     output={'data':data}
     io.savemat(outfile,output,appendmat=False)
-    print 'Data saved to: %s' % outfile
+    print('Data saved to: %s' % outfile)
     return output
     
 def getData(station_id,starttime,endtime,outvar):
@@ -209,8 +209,8 @@ def getData(station_id,starttime,endtime,outvar):
     #    (nc.WATERLEVEL_6MIN_VFD_PX._BEGIN_DATE ==starttime) & \
     #    (nc.WATERLEVEL_6MIN_VFD_PX._END_DATE==endtime)]
     
-    print 'Retrieving data '+outvar+' @ site # '+station_id+' for date range: '+\
-        starttime+' to '+endtime+'...'
+    print('Retrieving data '+outvar+' @ site # '+station_id+' for date range: '+\
+        starttime+' to '+endtime+'...')
     try:
         # Build a query with the server
         if outvar == 'waterlevel':
@@ -224,7 +224,7 @@ def getData(station_id,starttime,endtime,outvar):
                 (nc[seqname]._BEGIN_DATE ==starttime) & \
                 (nc[seqname]._END_DATE==endtime)] 
         
-        print "Query ok - downloading data..."        
+        print("Query ok - downloading data...")        
         # Get the data
         #data = np.zeros((len(my_station['DATE_TIME']),1))
         #t = np.zeros((len(my_station['DATE_TIME']),1))
@@ -237,7 +237,7 @@ def getData(station_id,starttime,endtime,outvar):
             t.append(parseDate(dt))
             k=k+1
     except:
-        print "The date range and/or the variable: " + varname + " are not available from station #: "+station_id
+        print("The date range and/or the variable: " + varname + " are not available from station #: "+station_id)
         #data = np.zeros([0,1])
         #t=np.zeros([0,1])
         data=[]
@@ -249,7 +249,7 @@ def getStations():
     """Returns a list of dictionaries with NOAA station ID data"""
     
     xmlfile = 'http://opendap.co-ops.nos.noaa.gov/stations/stationsXML.jsp'
-    doc = minidom.parse(urllib2.urlopen(xmlfile))
+    doc = minidom.parse(urllib.request.urlopen(xmlfile))
     # Load the data into a list of dictionaries
     stations = []
     for node in doc.getElementsByTagName('station'):

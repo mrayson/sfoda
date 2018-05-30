@@ -128,7 +128,7 @@ def buoyancyFlux(SSS,SST,Q,EP,dz):
     try:
     	import seawater # CSIRO seawater toolbox
     except:
-    	raise Exception, ' need to install CSIRO seawater toolbox'
+    	raise Exception(' need to install CSIRO seawater toolbox')
 
     # Constants
     Cpinv = 1./4200.0 # Specific heat capacity [J kg-1 K-1]

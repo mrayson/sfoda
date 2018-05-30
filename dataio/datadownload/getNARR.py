@@ -74,7 +74,7 @@ class getNARR(object):
         self.nc = Dataset(self.grbfiles[0],'r')
         for vv in varnames:
             if self.verbose:
-                print 'Retrieving variable: %s dimension info...'%vv        
+                print('Retrieving variable: %s dimension info...'%vv)        
             self.getDimInfo(vv)
             data.update({vv:np.zeros((self.nt,self.ny,self.nx))})
         self.nc.close()
@@ -83,12 +83,12 @@ class getNARR(object):
         for ff in self.grbfiles:
             tt+=1
             if self.verbose:
-                print '     File: %s...'%ff
+                print('     File: %s...'%ff)
                 
             nc = Dataset(ff,'r')
             
             for vv in varnames:
-                print vv
+                print(vv)
                 # get the height coordinate for 4D arrays
                 if self.ndim == 4:
                      # dimension order [time, z, y, x]
@@ -120,7 +120,7 @@ class getNARR(object):
         self.nc = Dataset(self.grbfiles[0],'r')
         for vv in varnames:
             if self.verbose:
-                print 'Retrieving variable: %s dimension info...'%vv        
+                print('Retrieving variable: %s dimension info...'%vv)        
             self.getDimInfo(vv)
             data.update({vv:np.zeros((self.nt,self.ny,self.nx))})
             dims.update({vv:self.ndim})
@@ -130,11 +130,11 @@ class getNARR(object):
         for ff in self.grbfiles:
             tt+=1
             if self.verbose:
-                print '     File: %s...'%ff
+                print('     File: %s...'%ff)
                 
             nc = open_url(ff)
             for vv in varnames:
-                print vv
+                print(vv)
                 self.ndim  = dims[vv]
                   
                 MAXTRY=0
@@ -143,14 +143,14 @@ class getNARR(object):
                         self.x1, self.x2, tt, self.ndim)
                     MAXTRY=0
                 except:
-                    print "Warning: loaddap failed on attempt %d, retrying..."%MAXTRY
+                    print("Warning: loaddap failed on attempt %d, retrying..."%MAXTRY)
 
                     MAXTRY+=1
                     data[vv][tt,:,:] = _loaddapvar(vv, self.y1, self.y2,\
                         self.x1, self.x2, tt, self.ndim)
 
                     if MAXTRY==10:
-                        raise Exception, 'Loaddap connection failed.'
+                        raise Exception('Loaddap connection failed.')
 
         
         return data

@@ -34,7 +34,7 @@ October 2013
 
 import numpy as np
 from soda.utils.maptools import readShpPoly, readShpPointLine
-from hybridgrid import HybridGrid
+from .hybridgrid import HybridGrid
 
 import pdb
 
@@ -170,7 +170,7 @@ def create_gmsh_geo(shpfile, scalefile, geofile,
         
         # Find the maximum distance
         Nk =  np.log(lcmax/ss)/np.log(r)
-        print ss,Nk
+        print(ss,Nk)
         lmin = float(ndmin)*float(ss)
         lmax = lmin + Nk * ss
         fgeo.write("Field[IF + %i].DistMax = %6.2f;\n"%(ifield,lmax))
@@ -202,7 +202,7 @@ def create_gmsh_geo(shpfile, scalefile, geofile,
     fgeo.write("Mesh.Remove4Triangles = 1;\n")
     fgeo.close()
     
-    print 'Complete. GMSH geo file written to:\n\t %s'%geofile
+    print('Complete. GMSH geo file written to:\n\t %s'%geofile)
 
 def gmsh2suntans(mshfile,suntanspath,dual=False,minfaces=5):
     """
@@ -217,7 +217,7 @@ def gmsh2suntans(mshfile,suntanspath,dual=False,minfaces=5):
 
     grd.write2suntans(suntanspath)
 
-    print 'Completed gmsh to suntans conversion.'
+    print('Completed gmsh to suntans conversion.')
     
     
 def grd2suntans(grd,suntanspath):
@@ -322,10 +322,10 @@ def gmsh2hybridgrid(mshfile):
     nodes, elements  = read_msh(mshfile)
     
     # Get the coordinates
-    x = [nodes[ii]['X'] for ii in nodes.keys()]
-    y = [nodes[ii]['Y'] for ii in nodes.keys()]
+    x = [nodes[ii]['X'] for ii in list(nodes.keys())]
+    y = [nodes[ii]['Y'] for ii in list(nodes.keys())]
     
-    cells = [elements[ii]['cells'] for ii in elements.keys() if elements[ii]['type'] in celltype.keys()]
+    cells = [elements[ii]['cells'] for ii in list(elements.keys()) if elements[ii]['type'] in list(celltype.keys())]
     nfaces = [len(cells[ii]) for ii in range(len(cells))]
     
     Nc = len(cells)
@@ -362,7 +362,7 @@ def write_pos_file(posfile,X,Y,Z):
     
     fpos.write("};\n")
     fpos.close()
-    print 'Complete. pos file written to:\n\t%s'%posfile
+    print('Complete. pos file written to:\n\t%s'%posfile)
 
 
 def create_pos_file(posfile,scalefile, xlims,ylims,dx,\
@@ -413,13 +413,13 @@ def create_pos_file(posfile,scalefile, xlims,ylims,dx,\
     nlines = len(L)
     scale_all = np.zeros((nj,ni,nlines))
     for n in range(nlines):
-        print 'Calculating distance from line %d...'%n
+        print('Calculating distance from line %d...'%n)
         ss = gridscale[n] * scalefac
         lmin = ndmin * ss
         
         # Find the maximum distance
         Nk =  np.log(lcmax/ss)/np.log(r)
-        print ss,Nk
+        print(ss,Nk)
         lmax = lmin + Nk * ss
 
         
