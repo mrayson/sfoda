@@ -17,6 +17,8 @@ from netCDF4 import Dataset, num2date
 import numpy as np
 try:
     from pyspatialite import dbapi2 as db
+    print('Warning: pyspatialite not installed - reverting to sqlite3 library...')
+
 except:
     import sqlite3 as db
 
@@ -104,7 +106,7 @@ def load_sql_ncstation(dbfile, station_name, varname, otherquery=None, query_onl
         condition = 'LOWER(Variable_Name) LIKE LOWER("%s") and StationName LIKE "%%%s%%" and %s'\
             %(varname, station_name, otherquery)
 	
-	print(condition)
+        print(condition)
 
     else:
         #condition = 'Variable_Name = "%s" and StationName LIKE "%%%s%%"'\
@@ -525,8 +527,8 @@ def netcdfObs2DB(ncfile, dbfile, nctype=1):
         # Loop through the variables
         for vv in nc.groups[grp].variables:
 
-	    if vv in ['time','longitude','latitude','elevation']:
-	    	continue
+            if vv in ['time','longitude','latitude','elevation']:
+                continue
                
             write = True
 
