@@ -1651,7 +1651,7 @@ class roms_interp(ROMSGrid):
         
         # Interpolate temporally
         if self.Nt_roms > 1:
-	    print('Temporally interpolating ROMS variables...')
+            print('Temporally interpolating ROMS variables...')
             troms = othertime.SecondsSince(self.time)
             tout = othertime.SecondsSince(self.timei)
             if seth:

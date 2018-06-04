@@ -867,16 +867,16 @@ class HybridGrid(object):
     # (with adjustments) #
     ######################
     def make_edges_from_cells(self):
-	###
-	# Cython version
-	###
-	self.pnt2cells(0)
-	self.edges, self.mark, self.grad = \
-		ugridutils.make_edges_from_cells(self.cells,
-			self.nfaces, self._pnt2cells)
-	###
-	# Pure python
-	###
+        ###
+        # Cython version
+        ###
+        self.pnt2cells(0)
+        self.edges, self.mark, self.grad = \
+            ugridutils.make_edges_from_cells(self.cells,
+                self.nfaces, self._pnt2cells)
+        ###
+        # Pure python
+        ###
         ## iterate over cells, and for each cell, if it's index
         ## is smaller than a neighbor or if no neighbor exists,
         ## write an edge record
@@ -970,14 +970,14 @@ class HybridGrid(object):
         Find the neighbouring cells
         """
         ###
-	# Cython wrapper
-	###
-	# Make sure the hash table is built
-	self.pnt2cells(0)
-	self.neigh = ugridutils.make_neigh_from_cells(
-		self.cells, self.nfaces, self._pnt2cells)
-	
-	###
+        # Cython wrapper
+        ###
+        # Make sure the hash table is built
+        self.pnt2cells(0)
+        self.neigh = ugridutils.make_neigh_from_cells(
+            self.cells, self.nfaces, self._pnt2cells)
+        
+        ###
         # Pure python
         ###	
         #self.neigh = np.zeros((self.Ncells(),self.MAXFACES),np.int)
@@ -1002,13 +1002,12 @@ class HybridGrid(object):
         
     def pnt2cells(self,pnt_i):
         if self._pnt2cells is None:
-	    
-	    # Cython wrapper
-	    self._pnt2cells = ugridutils.create_pnt2cells(
-		self.cells, self.nfaces)
-	    ###
-	    # Pure python
-	    ###	
+            # Cython wrapper
+            self._pnt2cells = ugridutils.create_pnt2cells(
+            self.cells, self.nfaces)
+            ###
+            # Pure python
+            ###	
             ## build hash table for point->cell lookup
             #self._pnt2cells = {}
             #for i in range(self.Ncells()):
@@ -1049,18 +1048,18 @@ class HybridGrid(object):
 
         N.B. this is not kept up to date when modifying the grid.
         """
-	# Cython
-	if self._pnt2edges is None:
-	   self._pnt2edges = ugridutils.create_pnt2edges(self.edges, 
-	   	self.mark, DELETED_EDGE)
+        # Cython
+        if self._pnt2edges is None:
+           self._pnt2edges = ugridutils.create_pnt2edges(self.edges, 
+            self.mark, DELETED_EDGE)
 
-	self._cell_edge_map = ugridutils.cell_edge_map(self.cells,
-		self.nfaces, self._pnt2edges)
+        self._cell_edge_map = ugridutils.cell_edge_map(self.cells,
+            self.nfaces, self._pnt2edges)
 
-	return self._cell_edge_map
-	####
-	# Pure python
-	####
+        return self._cell_edge_map
+        ####
+        # Pure python
+        ####
         #if self._cell_edge_map is None:
         #    cem = 999999*np.ones( (self.Ncells(),self.MAXFACES), np.int32)
 

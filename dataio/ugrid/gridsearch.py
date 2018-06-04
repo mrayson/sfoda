@@ -121,11 +121,10 @@ class GridSearch(HybridGrid):
             
   
     def move_inside(self,cell,x,y,DINSIDE=5.0):
-    	"""
+        """
         Moves a point inside a grid by finding the closest point along an edge
         """
-
-        ind = cell==-1
+        ind =  cell == -1
         if not ind.any():
             return x,y,cell
         
@@ -215,13 +214,13 @@ class GridSearch(HybridGrid):
         #ynew[ind2]=P3.y[ind2]+0.1
 
 
-    #	#plt.figure()
-    #	#plt.plot(P1.x,P1.y,'bo')
-    #	#plt.plot(P2.x,P2.y,'bo')
-    #	#plt.plot(P3.x,P3.y,'go')
-    #	#plt.plot(xnew,ynew,'rx')
-    #	#plt.show()
-    #	#pdb.set_trace()
+        #	#plt.figure()
+        #	#plt.plot(P1.x,P1.y,'bo')
+        #	#plt.plot(P2.x,P2.y,'bo')
+        #	#plt.plot(P3.x,P3.y,'go')
+        #	#plt.plot(xnew,ynew,'rx')
+        #	#plt.show()
+        #	#pdb.set_trace()
 
         #cellnew = self.tsearch(xnew,ynew)
 

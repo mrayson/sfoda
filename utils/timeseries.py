@@ -566,8 +566,8 @@ class timeseries(object):
         """
         Returns the time indices bounded by time1 and time2
         """
-	t0 = othertime.findNearest(time1,self.t)
-	t1 = othertime.findNearest(time2,self.t)
+        t0 = othertime.findNearest(time1,self.t)
+        t1 = othertime.findNearest(time2,self.t)
         #try:
         #    t0 = othertime.findNearest(time1,self.t)
         #    t1 = othertime.findNearest(time2,self.t)
@@ -576,12 +576,12 @@ class timeseries(object):
         #    t1 = np.searchsorted(self.t, np.datetime64(time2))
 
         #t1 = min( self.Nt, t1+1)
-	t1+=1
-	if t1 > self.t.shape[0]:
-	    t1=self.t.shape[0]
-	#t0-=1
-	#if t0<0:
-	#    t0 = 0
+        t1+=1
+        if t1 > self.t.shape[0]:
+            t1=self.t.shape[0]
+        #t0-=1
+        #if t0<0:
+        #    t0 = 0
 
         return t0, t1
 
@@ -601,7 +601,7 @@ class timeseries(object):
 
         modt,mody = self.subset(t0,t1)
 
-	return self.copy_like(modt, mody)
+        return self.copy_like(modt, mody)
 
         
     def subset(self,time1,time2):
@@ -615,42 +615,43 @@ class timeseries(object):
     def resample(self, dt, ndt=2.):
         """
         Resamples the current timeseries object at the output interval
-	"dt"
+        "dt"
 
         Applies a running mean (window=dt) if dt > ndt*self.dt
-	"""
+        """
 
-	# Output time vector
-	timeout = othertime.TimeVector(self.t[0], self.t[-1], dt, 
-		istimestr=False)
+        # Output time vector
+        timeout = othertime.TimeVector(self.t[0], self.t[-1], dt, 
+            istimestr=False)
 
         # Use a running mean to filter data
-	if dt > ndt*self.dt:
-	    ymean = self.running_mean(self.y, self.dt, windowlength=dt)
-	    # Create a time series with the filtered data
-	    tsmean = self.copy_like(self.t, ymean)
+        if dt > ndt*self.dt:
+            ymean = self.running_mean(self.y, self.dt, windowlength=dt)
+            # Create a time series with the filtered data
+            tsmean = self.copy_like(self.t, ymean)
 
-	    # Interpolate onto the output step
-	    tnew, ynew = tsmean.interp(timeout, method='nearestmask')
+            # Interpolate onto the output step
+            tnew, ynew = tsmean.interp(timeout, method='nearestmask')
 
-	    return self.copy_like(tnew, ynew)
-	
-	else:
-	    # Do not filter if dt < self.dt
-	    # Interpolate onto the output step
-	    tnew, ynew = self.interp(timeout, method='linear')
+            return self.copy_like(tnew, ynew)
+        
+        else:
+            # Do not filter if dt < self.dt
+            # Interpolate onto the output step
+            tnew, ynew = self.interp(timeout, method='linear')
 
-	    return self.copy_like(tnew, ynew)
+            return self.copy_like(tnew, ynew)
 
 	
 	        
     def copy_like(self, t, y):
-    	"""
-	Create a new time series "like" current one
+        """
+        Create a new time series "like" current one
 
-	Retains relevant attributes
-	"""
-	return timeseries(t, y,\
+        Retains relevant attributes
+        """
+
+        return timeseries(t, y,\
             units='%s'%self.units,\
             long_name='%s'%self.long_name,\
             StationID = '%s'%self.StationID,\
@@ -716,35 +717,35 @@ class timeseries(object):
         #else:
         #    tsec = othertime.SecondsSince(time,basetime=self.basetime)
 
-	# SecondsSince handle datetime64 objects
-	tsec = othertime.SecondsSince(time,basetime=self.basetime)
+        # SecondsSince handle datetime64 objects
+        tsec = othertime.SecondsSince(time,basetime=self.basetime)
 
         return tsec
  
     def _set_time(self, t):
         """
-	Return the time variable as a datetime64 object
-	~~Return the time variable as a datetime object~~
-	"""
-	if isinstance(t, pd.DatetimeIndex):
-	    #return othertime.datetime64todatetime(t.values)
-            return t.values
-	elif isinstance(t[0], datetime):
-	    return othertime.datetimetodatetime64(t) 
-	elif isinstance(t[0], np.datetime64):
-            return t
-	    #return othertime.datetime64todatetime(t) 
-	else:
-	    raise Exception('unknown time type: ').with_traceback(type(t))
+        Return the time variable as a datetime64 object
+        ~~Return the time variable as a datetime object~~
+        """
+        if isinstance(t, pd.DatetimeIndex):
+            #return othertime.datetime64todatetime(t.values)
+                return t.values
+        elif isinstance(t[0], datetime):
+            return othertime.datetimetodatetime64(t) 
+        elif isinstance(t[0], np.datetime64):
+                return t
+            #return othertime.datetime64todatetime(t) 
+        else:
+            raise Exception('unknown time type: ').with_traceback(type(t))
 
-	#if isinstance(t, pd.tseries.index.DatetimeIndex):
-	#    return othertime.datetime64todatetime(t.values)
-	#elif isinstance(t[0], datetime):
-	#    return t
-	#elif isinstance(t[0], np.datetime64):
-	#    return othertime.datetime64todatetime(t) 
-	#else:
-	#    raise Exception, 'unknown time type: ', type(t)
+        #if isinstance(t, pd.tseries.index.DatetimeIndex):
+        #    return othertime.datetime64todatetime(t.values)
+        #elif isinstance(t[0], datetime):
+        #    return t
+        #elif isinstance(t[0], np.datetime64):
+        #    return othertime.datetime64todatetime(t) 
+        #else:
+        #    raise Exception, 'unknown time type: ', type(t)
 
     def _check_dt(self, tsec):
         """
@@ -770,8 +771,8 @@ class timeseries(object):
         """
         Nearest interpolation with preseverd mask
         """
-	if y is None:
-	    y = self.y
+        if y is None:
+            y = self.y
 
         t0 = self.tsec[0]
         t = self.tsec - t0

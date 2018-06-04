@@ -294,7 +294,7 @@ class uspectra(object):
         
         #amp = np.abs(self.C)
         #phs = np.angle(self.C)#+np.pi # [0, 2*pi]
-	phs, amp = complex2phsamp(self.C)
+        phs, amp = complex2phsamp(self.C)
         
         if not phsbase is None:
             phs = np.mod(phs+\

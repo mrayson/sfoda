@@ -296,10 +296,10 @@ class Grid(object):
         #if type(self.DEF) == type(np.ma.MaskedArray()):
         #    if np.all(self.DEF.mask):
         #        self.calc_def()
-	try:
-	    self.calc_def()
-	except:
- 	    print('No def array...')
+        try:
+            self.calc_def()
+        except:
+            print('No def array...')
        
     def maskgrid(self):
         """
@@ -1318,10 +1318,10 @@ class Spatial(Grid):
         elif self.hasDim(variable,self.griddims['Nc']) and self.j is None:
             j=list(range(self.Nc))
         else:
-	    if isinstance(self.j, np.ndarray):
-	    	j = [self.j[0]]
-	    else:
-		j = [self.j]
+            if isinstance(self.j, np.ndarray):
+                j = [self.j[0]]
+            else:
+                j = [self.j]
 
 
         nc = self.nc
@@ -2042,7 +2042,8 @@ class Spatial(Grid):
             dd, j = self.findNearest(self.j)
             print('Nearest cell: %d, xv[%d]: %6.10f, yv[%d]: %6.10f'%(j,j,self.xv[j],j,self.yv[j]))
             #self.j = j.copy()
-	    return j
+
+        return j
      
     def hasVar(self,varname):
         """
@@ -2727,7 +2728,7 @@ class TimeSeries(timeseries, Spatial):
         
         # Update the j position
         dist, j = self.find_nearest(self.XY)
-	self.j = j
+        self.j = j
         
         # Find the klayer
         if isinstance(self.Z,type(np.array(()))):
@@ -2745,7 +2746,7 @@ class TimeSeries(timeseries, Spatial):
                 self.klayer=self.klayer
 
         # Loads in a time series object                     
-	data = self.loadDataRaw().reshape((self.Nt, len(self.klayer)))
+        data = self.loadDataRaw().reshape((self.Nt, len(self.klayer)))
         timeseries.__init__(self, self.time[self.tstep], data)
         
     def contourf(self,clevs=20,**kwargs):
@@ -3455,7 +3456,7 @@ if __name__ == '__main__':
             exit(1)
         elif opt == '-f':
             ncfile = str(val)
-	    print(ncfile)
+            print(ncfile)
         elif opt == '-v':
             varname = val
         elif opt == '-t':

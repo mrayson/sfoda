@@ -304,23 +304,22 @@ class SunTrack(Spatial):
 	#    This is done by default in the messh interpolation class
 	#self.particles['X'],self.particles['Y'] = self.checkHorizBounds(self.particles['X'],self.particles['Y'])
         
-    def checkHorizBounds(self,x,y):
-    	"""
-        NOT USED
-        Moves particles outside of the horizontal bounds of the grid back
-        to the closet cell centre.
-        """
+    #def checkHorizBounds(self,x,y):
+    #	"""
+    #    NOT USED
+    #    Moves particles outside of the horizontal bounds of the grid back
+    #    to the closet cell centre.
+    #    """
+    #    ind = self.UVWinterp.cellind == -1
+    #    if 'kd' not in self.__dict__:
+    #        self.kd = spatial.cKDTree(np.vstack((self.xv,self.yv)).T)
 
-        ind = self.UVWinterp.cellind==-1
-        if 'kd' not in self.__dict__:
-            self.kd = spatial.cKDTree(np.vstack((self.xv,self.yv)).T)
+    #    xy = np.vstack((x[ind],y[ind])).T
+    #    dist,cell = self.kd.query(xy)
+    #    x[ind]=self.xv[cell]
+    #    y[ind]=self.yv[cell]
 
-        xy = np.vstack((x[ind],y[ind])).T
-        dist,cell = self.kd.query(xy)
-        x[ind]=self.xv[cell]
-        y[ind]=self.yv[cell]
-
-        return x, y
+    #    return x, y
 
     def checkVerticalBounds(self,x,y,z):
         """
@@ -514,7 +513,7 @@ class SunTrack(Spatial):
         self.time_index = -9999
 
     def initParticleTime(self,tstart):
-    	"""
+        """
         Initialise the particle start time
         """
         if tstart==None:
@@ -659,9 +658,10 @@ class SunTrack(Spatial):
         create_nc_var('xp',('ntrac','nt'),{'units':'m','long_name':"Easting coordinate of drifter",'time':'tp'},dtype='f8')
         create_nc_var('yp',('ntrac','nt'),{'units':'m','long_name':"Northing coordinate of drifter",'time':'tp'},dtype='f8')
         create_nc_var('zp',('ntrac','nt'),{'units':'m','long_name':"vertical position of drifter (negative is downward from surface)",'time':'tp'},dtype='f8')
-	if age:
-	    create_nc_var('age',('ntrac','nt'),{'units':'seconds','long_name':"Particle age",'time':'tp'},dtype='f8')
-	    create_nc_var('agemax',('ntrac','nt'),{'units':'seconds','long_name':"Maximum particle age",'time':'tp'},dtype='f8')
+
+        if age:
+            create_nc_var('age',('ntrac','nt'),{'units':'seconds','long_name':"Particle age",'time':'tp'},dtype='f8')
+            create_nc_var('agemax',('ntrac','nt'),{'units':'seconds','long_name':"Maximum particle age",'time':'tp'},dtype='f8')
 
         nc.close()
     
@@ -679,10 +679,10 @@ class SunTrack(Spatial):
         nc.variables['yp'][:,tstep]=y
         nc.variables['zp'][:,tstep]=z
 
-	if not age==None:
-	    nc.variables['age'][:,tstep]=age
-	if not agemax==None:
-	    nc.variables['agemax'][:,tstep]=agemax
+        if not age is None:
+            nc.variables['age'][:,tstep]=age
+        if not agemax is None:
+            nc.variables['agemax'][:,tstep]=agemax
 
         nc.close()
 #################
@@ -714,12 +714,11 @@ class SunTrack(Spatial):
         if not plotage:
             h1 = plt.plot([],[],'y.',markersize=1.0)
             h1 = h1[0]
-
         else:
             h1 = plt.scatter(self.particles['X'],self.particles['Y'],s=1.0,c=self.particles['age'],vmin=0,vmax=agemax,edgecolors=None)
 
-	    self.fig.colorbar(h1)
-        
+        self.fig.colorbar(h1)
+
         title=ax.set_title("")
         
         def init():
@@ -781,15 +780,15 @@ class SunTrack(Spatial):
         
         # Plot the particles at the first time step
         if not plotage:
-#	    h1 = plt.plot([],[],'y.',markersize=1.0)
             h1 = plt.plot([],[],'.',**kwargs)
             h1 = h1[0]
-
         else:
-            h1 = plt.scatter(nc.variables['xp'][0,:],nc.variables['yp'][0,:],s=1.0,c=nc.variables['age'][0,:],vmin=0,vmax=agemax,edgecolors=None)
+            h1 = plt.scatter(nc.variables['xp'][0,:],nc.variables['yp'][0,:],\
+                s=1.0,c=nc.variables['age'][0,:],\
+                vmin=0,vmax=agemax,edgecolors=None)
 
-	    self.fig.delaxes(self.fig.axes[1])
-	    self.cb = self.fig.colorbar(h1)
+        self.fig.delaxes(self.fig.axes[1])
+        self.cb = self.fig.colorbar(h1)
 	    #self.cb.on_mappable_changed(h1) # Updates the colobar
 
         
@@ -862,18 +861,17 @@ class SunTrack(Spatial):
             if ii==0:
                 # Re-initialise the particle location
                 self.particles={'X':x,'Y':y,'Z':z}
-		if self._calcage:
-		    self.particles.update({'age':np.zeros_like(x),'agemax':np.zeros_like(x)})
-                
-            self.advectParticles(self.time_track[ii],self.time_track_sec[ii])
-	    if plotage:
-		# Update the scatter object
-		h1.set_offsets(np.vstack([self.particles['X'],self.particles['Z']]).T)
-		h1.set_array(self.particles['age'])
-		h1.set_edgecolors(h1.to_rgba(np.array(self.particles['age'])))    
-	    else:
-		h1.set_xdata(self.particles['X'])
-		h1.set_ydata(self.particles['Z'])
+            if self._calcage:
+                self.particles.update({'age':np.zeros_like(x),'agemax':np.zeros_like(x)})
+                self.advectParticles(self.time_track[ii],self.time_track_sec[ii])
+            if plotage:
+                # Update the scatter object
+                h1.set_offsets(np.vstack([self.particles['X'],self.particles['Z']]).T)
+                h1.set_array(self.particles['age'])
+                h1.set_edgecolors(h1.to_rgba(np.array(self.particles['age'])))    
+            else:
+                h1.set_xdata(self.particles['X'])
+                h1.set_ydata(self.particles['Z'])
 
             title.set_text(self.genTitle(ii))
             return (h1,title)
@@ -1030,14 +1028,12 @@ class SunTrack(Spatial):
 
         
     def plotAgeMax(self,ncfile,dx,dy,vmax=7,xlims=None,ylims=None,**kwargs):
-    	"""
+        """
         Filled contour plot of the maximum age of particle based on their initial locations
         """
-        # Set the xy limits
-        if xlims==None or ylims==None:
+        if xlims is None or ylims is None:
                 xlims=self.xlims 
                 ylims=self.ylims
-
 
         xp,yp,agemax = self.readAgeMax(ncfile)
         
@@ -1072,7 +1068,7 @@ class SunTrack(Spatial):
 
 
     def calcAgeMaxProb(self,ncfiles,dx,dy,exceedance_thresh,plot=True,xlims=None,ylims=None,**kwargs):
-    	"""
+        """
         Calculate the probability of the age exceeding a threshold time from
         a series of particle tracking runs. 
         """
@@ -1128,7 +1124,8 @@ class interp3Dmesh(GridSearch,Grid):
 
         if self.method == 'linear':
             Grid.__init__(self,grdfile)
-	    self.datatmp = np.zeros(mask.shape,dtype=np.double)
+
+        self.datatmp = np.zeros(mask.shape,dtype=np.double)
         
         self.z = np.sort(z)
         self.z[-1]=10.0 # Set the surface layer to large
@@ -1183,7 +1180,7 @@ class interp3Dmesh(GridSearch,Grid):
         return dataout
 
     def lininterp(self,X,Y,Z,data,k):
-    	"""
+        """
         Wrapper for linear interpolation
 
         interpLinear method in sunpy needs to be called layer by layer

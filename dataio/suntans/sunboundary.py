@@ -563,33 +563,32 @@ class Boundary(object):
         
         """
         # Include type 3 cells 
-	if self.N3>0:
-	    roms = romsio.roms_interp(romsfile,self.xv,self.yv,-self.z,self.time,**kwargs)
+        if self.N3>0:
+            roms = romsio.roms_interp(romsfile,self.xv,self.yv,-self.z,self.time,**kwargs)
 	    
-	    h, T, S, uc, vc = roms.interp(setUV=setUV,seth=seth)
+            h, T, S, uc, vc = roms.interp(setUV=setUV,seth=seth)
 
-	    self.T+=T
-	    self.S+=S
+            self.T+=T
+            self.S+=S
 	    
-	    if seth:
-		self.h+=h
-	    if setUV:
-		self.uc+=uc
-		self.vc+=vc
+            if seth:
+                self.h+=h
+            if setUV:
+                self.uc+=uc
+                self.vc+=vc
 
         # Include type 2 cells 
-	if self.N2 > 0:
-	    roms = romsio.roms_interp(romsfile,self.xe,self.ye,-self.z,self.time,**kwargs)
-	    
-	    h, T, S, uc, vc = roms.interp(setUV=setUV,seth=False)
+        if self.N2 > 0:
+            roms = romsio.roms_interp(romsfile,self.xe,self.ye,-self.z,self.time,**kwargs)
+            
+            h, T, S, uc, vc = roms.interp(setUV=setUV,seth=False)
 
-	    self.boundary_T+=T
-	    self.boundary_S+=S
-	    
-	    if setUV:
-		self.boundary_u += uc
-		self.boundary_v += vc
-
+            self.boundary_T+=T
+            self.boundary_S+=S
+            
+            if setUV:
+                self.boundary_u += uc
+                self.boundary_v += vc
 
 
     def oceanmodel2bdy(self,ncfile,\

@@ -539,9 +539,9 @@ class SunPlotPy(Spatial, QMainWindow):
             return
 
         self.statusBar().showMessage("Opening SUNTANS file: %s" % path)
-    	try:
+        try:
     	    Spatial.__init__(self, path, _FillValue=self._FillValue)
-    	except:
+        except:
     	    Spatial.__init__(self, path, _FillValue=-999999)
         startvar='dv'
 

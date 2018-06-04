@@ -1,6 +1,8 @@
 """
 Tools for downloading specfific ocean/atmosphere/climate
 datasets from an opendap server
+
+I wrote this prior to knowing about xarray and would suggest using xarray
 """
 
 from .mythredds import GetDAP, Dataset, MFncdap
