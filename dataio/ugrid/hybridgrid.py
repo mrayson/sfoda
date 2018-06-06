@@ -15,6 +15,7 @@ import operator as op
 import matplotlib.pyplot as plt
 
 from soda.dataio.ugrid import ugridutils
+#from soda.dataio.ugrid import newugridutils as ugridutils
 import pdb
 
 ###
@@ -69,6 +70,8 @@ class HybridGrid(object):
     _FillValue = FILLVALUE # Default is 999999
 
     def __init__(self,xp,yp,cells,**kwargs):
+        if self.VERBOSE:
+            print("Creating a hybridgrid class:")
 
         self.__dict__.update(**kwargs)
         
@@ -93,6 +96,8 @@ class HybridGrid(object):
             
         # Get the edges
         if self.edges is None or self.grad is None:
+            if self.VERBOSE:
+                print("Creating the edges...")
             self.make_edges_from_cells()
             #self.make_edges_from_cells_sparse()
         else:
@@ -1004,7 +1009,7 @@ class HybridGrid(object):
         if self._pnt2cells is None:
             # Cython wrapper
             self._pnt2cells = ugridutils.create_pnt2cells(
-            self.cells, self.nfaces)
+                self.cells, self.nfaces)
             ###
             # Pure python
             ###	
