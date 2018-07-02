@@ -94,29 +94,30 @@ class HybridGrid(object):
         # Make sure the inputs are ndarrays
         self.check_inputs()
             
-        # Get the edges
-        if self.edges is None or self.grad is None:
-            if self.VERBOSE:
-                print("Creating the edges...")
-            self.make_edges_from_cells()
-            #self.make_edges_from_cells_sparse()
-        else:
-            self.edges = self.edges.astype(np.int64)
-            self.grad = self.grad.astype(np.int64)
-
-        self.Ne = self.edges.shape[0]
-
-        # make_edges_from_cells sets everything to zero
-        if not self.mark is None:
-            self.mark=self.mark.astype(np.int64)
-
-        # Make sure the BCs are ok
-        self.check_missing_bcs()
-
         #######
         # Compute the rest of the grid quantities
         #######
         if not self.lightmode:
+
+            # Get the edges
+            if self.edges is None or self.grad is None:
+                if self.VERBOSE:
+                    print("Creating the edges...")
+                self.make_edges_from_cells()
+                #self.make_edges_from_cells_sparse()
+            else:
+                self.edges = self.edges.astype(np.int64)
+                self.grad = self.grad.astype(np.int64)
+
+            self.Ne = self.edges.shape[0]
+
+            # make_edges_from_cells sets everything to zero
+            if not self.mark is None:
+                self.mark=self.mark.astype(np.int64)
+
+            # Make sure the BCs are ok
+            self.check_missing_bcs()
+
             # Make sure the nodes are rotated counter-clockwise
             self.Ac = self.calc_area()
             self.ensure_ccw()

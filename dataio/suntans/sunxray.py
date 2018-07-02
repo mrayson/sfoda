@@ -31,8 +31,12 @@ class Sunxray(UPlot):
     """
     def __init__(self, ncfile, lazy=False, **kwargs):
 
-        self._ds = xray.open_dataset(ncfile, \
-                mask_and_scale=True, decode_times=True)
+        try:
+            self._ds = xray.open_dataset(ncfile, \
+                    mask_and_scale=True, decode_times=True)
+        except:
+            self._ds = xray.open_mfdataset(ncfile, \
+                    mask_and_scale=True, decode_times=True)
 
         if not lazy:
             self._init_grid(**kwargs)
@@ -91,7 +95,7 @@ class Sunxray(UPlot):
         """
         Load data from a complete/full variable
         """
-        return self._ds[varname][:].values
+        return self._ds[varname][:]
 
     def __repr__(self):
         return self._ds.__repr__()
