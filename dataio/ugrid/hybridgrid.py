@@ -878,8 +878,10 @@ class HybridGrid(object):
         ###
         self.pnt2cells(0)
         self.edges, self.mark, self.grad = \
-            ugridutils.make_edges_from_cells(self.cells,
-                self.nfaces, self._pnt2cells)
+            ugridutils.make_edges_from_cells(\
+                self.cells,
+                self.nfaces,\
+                self._pnt2cells)
         ###
         # Pure python
         ###
@@ -1057,10 +1059,9 @@ class HybridGrid(object):
         # Cython
         if self._pnt2edges is None:
            self._pnt2edges = ugridutils.create_pnt2edges(self.edges, 
-            self.mark, DELETED_EDGE)
-
-        self._cell_edge_map = ugridutils.cell_edge_map(self.cells,
-            self.nfaces, self._pnt2edges)
+               self.mark, DELETED_EDGE)
+           self._cell_edge_map = ugridutils.cell_edge_map(self.cells,
+                self.nfaces, self._pnt2edges)
 
         return self._cell_edge_map
         ####

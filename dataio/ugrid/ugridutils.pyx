@@ -166,11 +166,17 @@ def make_edges_from_cells(ndarray[int32_t,ndim=2] cells,
 
     #self.edge = np.array(edges,np.int32)
     Ne = len(edges)
-    edges = np.array(edges)
-    alledges = np.array([edges[ii,0:2] for ii in range(Ne)])
-    mark = np.array([edges[ii,2] for ii in range(Ne)])
-    grad = np.array([edges[ii,3:5] for ii in range(Ne)])
+    #edges = np.asarray(edges)
+    #alledges = np.array([edges[ii,0:2] for ii in range(Ne)])
+    #mark = np.array([edges[ii,2] for ii in range(Ne)])
+    #grad = np.array([edges[ii,3:5] for ii in range(Ne)])
+
+    alledges = np.array([edge[0:2] for edge in edges])
+    mark = np.array([edge[2] for edge in edges])
+    grad = np.array([edge[3:5] for edge in edges])
+
         
+    #return edges[:,0:2], edges[:,2], edges[3:5]
     return alledges, mark, grad
 
 @cython.boundscheck(False)

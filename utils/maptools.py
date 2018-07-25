@@ -419,6 +419,43 @@ def readraster(infile):
 
     return x, y, data
 
+
+def save_raster(output_file, Z, x, y, driver='GTiff'):
+    """
+    Save gridded data to a raster format
+
+    See http://www.gdal.org/formats_list.html for a list of driver codes
+    
+    Popular ones:
+        'GTiff' - geotiff
+        'AAIGrid' - ESRI gridded ascii
+    """
+
+    M,N = Z.shape
+
+    assert x.shape[0] == N
+    assert y.shape[0] == M
+
+    x0 = x[0]
+    y1 = y.max() # Upper left y
+    dx = np.mean(np.diff(x))
+    dy = -np.mean(np.diff(y))
+
+    # Create gtif
+    driver = gdal.GetDriverByName(driver)
+    dst_ds = driver.Create(output_file, N, M, 1, gdal.GDT_Byte )
+
+    # top left x, w-e pixel resolution, rotation, top left y, rotation, n-s pixel resolution
+    dst_ds.SetGeoTransform( [ x0, dx, 0, y1, 0, dy ] )
+
+    # set the reference info 
+    srs = osr.SpatialReference()
+    srs.SetWellKnownGeogCS("WGS84")
+    dst_ds.SetProjection( srs.ExportToWkt() )
+
+    # write the band
+    dst_ds.GetRasterBand(1).WriteArray(Z[::-1,:])
+
 def plotmap(shpfile,color='0.5',fieldname='FID',convert=None,zone=15,\
     scale=1.,offset=0.,subset=1):
     """

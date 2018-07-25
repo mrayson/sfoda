@@ -3211,7 +3211,7 @@ def readTXT(fname,sep=None):
     Reads a txt file into an array of floats
     """
     
-    fp = file(fname,'rt')
+    fp = open(fname,'rt')
     data = np.array([list(map(float,line.split(sep))) for line in fp])
     fp.close()
     
