@@ -15,12 +15,12 @@ August 2012
 from netCDF4 import Dataset, num2date
 #import shapefile
 import numpy as np
-try:
-    from pyspatialite import dbapi2 as db
-    print('Warning: pyspatialite not installed - reverting to sqlite3 library...')
-
-except:
-    import sqlite3 as db
+#try:
+#    from pyspatialite import dbapi2 as db
+#    print('Warning: pyspatialite not installed - reverting to sqlite3 library...')
+#
+#except:
+import sqlite3 as db
 
 from datetime import datetime
 import matplotlib.pyplot as plt
@@ -38,6 +38,8 @@ _dirpath = os.path.dirname(_path)
 # Load the netcdf metadata for all of the routines
 with open('%s/dataio/ncmetadata.yaml'%_dirpath, 'r') as f:
     ncmeta = yaml.load(f)
+
+mysqldir = '/home/suntans/.conda/envs/soda/lib/'
 
 ###################
 # xray routines
@@ -297,6 +299,15 @@ def createObsDB(dbfile):
     """ Create a database for storing observational netcdf metadata"""
     
     conn = db.connect(dbfile)
+
+    # Add spatialite module
+    #   See this banter here:
+    #       https://groups.google.com/forum/#!topic/spatialite-users/o0jUwMUqx_g
+    conn.enable_load_extension(True) 
+    conn.execute("SELECT load_extension('mod_spatialite')") 
+    
+
+
     c = conn.cursor()
     # Create table
 #    tablefields = {'NetCDF_Filename':'text','NetCDF_GroupID':'text','Variable_Name':'text',\
@@ -516,6 +527,11 @@ def netcdfObs2DB(ncfile, dbfile, nctype=1):
     
     # Open the database
     conn = db.connect(dbfile)
+
+    # Load the spatialite features
+    conn.enable_load_extension(True) 
+    conn.execute("SELECT load_extension('%s/mod_spatialite')"%mysqldir) 
+
     c = conn.cursor()
     tablename = 'observations'
     
