@@ -22,12 +22,12 @@ import numpy
 os.environ["CC"]='cc'
 
 extensions =[
-    Extension("ugridutils",["ugridutils.pyx"],
+    Extension("ugridutils",["dataio/ugrid/ugridutils.pyx"],
         include_dirs=[numpy.get_include()],
         extra_compile_args=
             ['-shared', '-pthread', '-fPIC', '-fwrapv', '-O2', '-Wall',
             '-fno-strict-aliasing'],),
-    Extension("searchutils",["searchutils.pyx"],
+    Extension("searchutils",["dataio/ugrid/searchutils.pyx"],
         include_dirs=[numpy.get_include()],
         extra_compile_args=['-O3','-ffast-math','-march=native','-fopenmp'],
         extra_link_args=['-fopenmp'],),
