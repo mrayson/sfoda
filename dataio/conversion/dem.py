@@ -33,6 +33,9 @@ def weight_inverse_dist(dist, maxdist):
     w[dist>maxdist]=1.0
     return w
 
+def weight_tanh_dist(dist,maxdist):
+    return 0.5+0.5*np.tanh( (dist-0.5*maxdist) / (0.17*maxdist) )
+
 def despike(values):
     centre = int(values.size / 2)
     avg = np.mean([values[:centre], values[centre+1:]])
@@ -232,15 +235,16 @@ class DEM(object):
                     bounds_error=False, fill_value=np.nan, kind=kind)
             self.Z =  Fx(x)
 
-            # Inter2d - Usually crashes due to memory
-            F = interpolate.interp2d(self.X, self.Y, self.Z)
-            self.Z = F(x, y)
+            ## Inter2d - Usually crashes due to memory
+            #F = interpolate.interp2d(self.X, self.Y, self.Z)
+            #self.Z = F(x, y)
 
             self.update_grid(x, y)
             self.X,self.Y = x,y
         else: # 2D structured grid
 
             ## Use nearest neighbour
+            self.X,self.Y = np.meshgrid(x,y)
             xyin = np.array([self.X.ravel(), self.Y.ravel()]).T
             
             ny,nx = x.shape
@@ -400,11 +404,12 @@ class DEM(object):
         weightf = gaussian_filter(weight, sigma)
         weightf[np.isnan(self.Z)] = 0.
 
+
         #plt.imshow(weightf[::4,::4])
         #plt.show()
         return weightf
 
-    def calc_weight(self, weightfunc=weight_inverse_dist, xynan=None):
+    def calc_weight(self, weightfunc=weight_tanh_dist, xynan=None):
         
         """ Calculate the weight at each point """
         MAXPOINTS=20e6
@@ -549,9 +554,8 @@ def blendDEMs(ncfile,outfile,W,maxdist):
         d = DEM(infile=nc,W=W[ii],maxdist=maxdist[ii])
         print 'Calculating weights for %s...'%nc
         print 'Weight = %6.3f, maxdist = %f'%(W[ii],maxdist[ii])
-        #w=d.calc_weight()
-
-        w=d.calc_weight_convolve()
+        w=d.calc_weight()
+        #w=d.calc_weight_convolve()
 
         ny = d.ny
         nx = d.nx
