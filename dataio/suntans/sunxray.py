@@ -29,13 +29,21 @@ class Sunxray(UPlot):
 
     xray object is stored in the "_ds" attribute
     """
+    
+    # Default chunking
+    #chunks={'Nk':50,'Nc':-1}
+    chunks=None
+
     def __init__(self, ncfile, lazy=False, **kwargs):
+        self.__dict__.update(kwargs)
 
         try:
             self._ds = xray.open_dataset(ncfile, \
+                    chunks=self.chunks,\
                     mask_and_scale=True, decode_times=True)
         except:
             self._ds = xray.open_mfdataset(ncfile, \
+                    chunks=self.chunks,\
                     mask_and_scale=True, decode_times=True)
 
         if not lazy:
@@ -109,7 +117,7 @@ class Sundask(Sunxray):
     i.e. not worry about the parallel io, dask, etc
     """
 
-    def __init__(self, ncfiles, **kwargs):
+    def __init__(self, ncfiles, loadgrid=True, **kwargs):
 
         print(ncfiles)
 
@@ -119,30 +127,31 @@ class Sundask(Sunxray):
         #for ff in filenames:
         #    print ff
         # Load all of the files into list as xray objects
-        self._myfiles = [Sunxray(url, lazy=True) for url in filenames]
+        self._myfiles = [Sunxray(url, lazy=True, **kwargs) \
+                for url in filenames]
 
         # Keep this for compatibility with methods from the superclass
         self._ds = self._myfiles[0]._ds
 
         # Load the grid variables and re-sort
+        if loadgrid:
+            # Each files stores all node coordinates (luckily)
+            xp = self._myfiles[0].loadfull('xp')
+            yp = self._myfiles[0].loadfull('yp')
 
-        # Each files stores all node coordinates (luckily)
-        xp = self._myfiles[0].loadfull('xp')
-        yp = self._myfiles[0].loadfull('yp')
+            # Load the actual data
+            cells = self.loadfull('cells').compute()
+            nfaces = self.loadfull('nfaces').compute()
 
-        # Load the actual data
-        cells = self.loadfull('cells').compute()
-        nfaces = self.loadfull('nfaces').compute()
+            ### Grid does not need re-sorting...
 
-        ### Grid does not need re-sorting...
+            # Finish initializing the class
+            UPlot.__init__(self, xp, yp, cells, nfaces=nfaces,\
+                _FillValue=-999999,\
+                    **kwargs)
 
-        # Finish initializing the class
-        UPlot.__init__(self, xp, yp, cells, nfaces=nfaces,\
-            _FillValue=-999999,\
-                **kwargs)
-
-        self.xlims = [xp.min(), xp.max()]
-        self.ylims = [yp.min(), yp.max()]
+            self.xlims = [xp.min(), xp.max()]
+            self.ylims = [yp.min(), yp.max()]
 
 
 
