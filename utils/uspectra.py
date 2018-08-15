@@ -20,7 +20,7 @@ import operator
 from scipy.interpolate import interp1d
 import pdb
 
-from harmonic_analysis import getTideFreq, harmonic_fit
+from .harmonic_analysis import getTideFreq, harmonic_fit
 
 # For testing 
 #import netcdfio      
@@ -294,7 +294,7 @@ class uspectra(object):
         
         #amp = np.abs(self.C)
         #phs = np.angle(self.C)#+np.pi # [0, 2*pi]
-	phs, amp = complex2phsamp(self.C)
+        phs, amp = complex2phsamp(self.C)
         
         if not phsbase is None:
             phs = np.mod(phs+\
@@ -329,13 +329,13 @@ def lstsqfftseq(t,y,frq,verbose=False):
     printstep = 5 
     printstep0 = 0
     if verbose:
-        print 'Computing uneven spectra for %d bands...' % nf
+        print('Computing uneven spectra for %d bands...' % nf)
     for ff in range(0,nf):
         ii+=1
         perccomplete = float(ii)/float(nf)*100.0
         if perccomplete > printstep0:
             if verbose:
-                print '%d %% complete...'%(int(perccomplete))
+                print('%d %% complete...'%(int(perccomplete)))
                 printstep0+=printstep
         
         # Construct the harmonic signal
@@ -555,13 +555,13 @@ def lspr(x,y,ofac=4.0,hifac=1,verbose=True):
     printstep = 5 
     printstep0 = 0
     if verbose:
-        print 'Computing uneven spectra using Lomb-Scargle algorithm...' 
+        print('Computing uneven spectra using Lomb-Scargle algorithm...') 
         
     for i in range(nout):
         perccomplete = float(i)/nout*100.0
         if perccomplete > printstep0:
             if verbose:
-                print '%d %% complete...'%(int(perccomplete))
+                print('%d %% complete...'%(int(perccomplete)))
                 printstep0+=printstep
 
         px[i]=pnow	

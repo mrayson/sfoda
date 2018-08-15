@@ -8,7 +8,7 @@ Object oriented version created December 2013
 @author: mrayson
 """
 
-from sunpy import Grid
+from .sunpy import Grid
 from netCDF4 import Dataset
 import getopt, sys, time
 import numpy as np
@@ -27,9 +27,9 @@ class JoinSuntans(Grid):
     def __init__(self,suntanspath,basename,numprocs,outvars=None):
         tic=time.clock()
         
-        print '########################################################'
-        print '     Initializing python SUNTANS NetCDF joining script...'
-        print '########################################################'
+        print('########################################################')
+        print('     Initializing python SUNTANS NetCDF joining script...')
+        print('########################################################')
         
         # Step 1) Read the main grid
         #print 'Loading suntans grid points...'
@@ -50,7 +50,7 @@ class JoinSuntans(Grid):
             self.outvars=gridvars+outvars
             newvariables = [vv for vv in self.variables if vv['Name'] in self.outvars]
             self.variables = newvariables
-            print 'Writing variables: ', newvariables
+            print('Writing variables: ', newvariables)
 
         # Step 3) Set the dimension sizes based on the original grid
         self.dims['Nc']=self.Nc
@@ -88,12 +88,12 @@ class JoinSuntans(Grid):
 
         # Write the non-time varying variables  
         for outfile,nc in zip(self.outfiles,self.nc):
-            print 'Writing non-time varying variables to file:\n\t%s...'%outfile
+            print('Writing non-time varying variables to file:\n\t%s...'%outfile)
             self.write_var_notime(nc)
 
         # Write the other variables
         for outfile,nc,t1,t2 in zip(self.outfiles,self.nc,self.t1,self.t2):
-            print 'Writing time varying variables to file:\n\t%s...'%outfile
+            print('Writing time varying variables to file:\n\t%s...'%outfile)
             self.write_var(nc,t1,t2)
 
         # Multi-core attempt...
@@ -109,17 +109,17 @@ class JoinSuntans(Grid):
         # Close all of the open files
         #self.close_all()
         toc=time.clock()
-        print 'Elapsed time %10.3f seconds.'%(toc-tic)
-        print '########################################################'
-        print '     Finished joining netcdf files'
-        print '########################################################'
+        print('Elapsed time %10.3f seconds.'%(toc-tic))
+        print('########################################################')
+        print('     Finished joining netcdf files')
+        print('########################################################')
 
 
     def write_var(self,nc,t1,t2):
         """
         Write the time-varying variables
         """
-        tout = range(t1,t2)
+        tout = list(range(t1,t2))
         nc.variables['time'][:]=self.ncin[0].variables['time'][tout]
 
         for vv in self.variables:
@@ -130,10 +130,10 @@ class JoinSuntans(Grid):
             elif vv['isEdge']:
                 isCellEdge=True            
 
-            tout = range(t1,t2)
+            tout = list(range(t1,t2))
 
             if vv['ndims']==2 and vv['isTime'] and isCellEdge and vname not in nowritevars:
-                print '\t\t%s - steps %d to %d of %d'%(vname,t1,t2,self.nt)
+                print('\t\t%s - steps %d to %d of %d'%(vname,t1,t2,self.nt))
                 sz = (t2-t1,self.dims[vv['Dimensions'][1]])
                 outvar=np.zeros(sz)
                 for n in range(self.numprocs):
@@ -144,7 +144,7 @@ class JoinSuntans(Grid):
                 nc.variables[vname][:,:]=outvar
 
             elif vv['ndims']==3 and vv['isTime'] and isCellEdge and vname not in nowritevars:
-                print '\t\t%s - steps %d to %d of %d'%(vname,t1,t2,self.nt)
+                print('\t\t%s - steps %d to %d of %d'%(vname,t1,t2,self.nt))
                 sz = (t2-t1,self.dims[vv['Dimensions'][1]],self.dims[vv['Dimensions'][2]])
                 outvar=np.zeros(sz)
                 for n in range(self.numprocs):
@@ -284,7 +284,7 @@ class JoinSuntans(Grid):
         for vv in variables:
             vname = vv['Name']
             if not vv['isCell'] and not vv['isEdge'] and not vv['Name'] in nowritevars:
-                print vname
+                print(vname)
                 nc.variables[vname][:]=ncin.variables[vname][:]
         
         nc.close()
@@ -295,18 +295,18 @@ def nc_info(ncfile):
     """
     Returns the metadata of all variables, attribute and dimensions
     """
-    print 'Reading: %s...'%ncfile
+    print('Reading: %s...'%ncfile)
     nc = Dataset(ncfile, 'r')
     
     # Create a dictionary with the dimensions and their values
     dims = {}
     
-    for dd in nc.dimensions.keys():
+    for dd in list(nc.dimensions.keys()):
         dims.update({dd:nc.dimensions[dd].__len__()})
     
     # Create a list of dictionaries with the variable info
     variables=[]
-    for vv in nc.variables.keys():
+    for vv in list(nc.variables.keys()):
         # Attributes
         attdata = nc.variables[vv].__dict__
         
@@ -342,11 +342,11 @@ def init_nc(outfile,variables,dims,globalatts):
     """
     Initialises the output netcdf file for writing
     """
-    print "Generating file: %s..."%outfile    
+    print("Generating file: %s..."%outfile)    
     nc = Dataset(outfile,'w',format='NETCDF4_CLASSIC') 
     
     # Write the global attributes
-    for gg in globalatts.keys():
+    for gg in list(globalatts.keys()):
         nc.setncattr(gg,globalatts[gg])
             
     # Create the dimensions
@@ -361,24 +361,24 @@ def init_nc(outfile,variables,dims,globalatts):
             tmpvar=nc.createVariable(vv['Name'],vv['dtype'],vv['Dimensions'])
     
         # Create the attributes
-        for aa in vv['Attributes'].keys():
+        for aa in list(vv['Attributes'].keys()):
             if aa not in ['_FillValue']:
                 tmpvar.setncattr(aa,vv['Attributes'][aa]) 
                    
     nc.close()    
 
 def usage():
-    print "--------------------------------------------------------------"
-    print "sunjoin.py   -h                 # show this help message      "
-    print "         -f suntans.nc        # SUNTANS output netcdf file  "
-    print "         -p pathname          # Path to SUNTANS output folder      "
-    print "         -n  N                # Number of processors"
-    print "         -t  N                # Number of time steps to output (-1 all steps in one file)"
-    print " 	    -v  'var1 var2 ...'  # List of variales to write (default: all)"
-    print "\n\n Example Usage:"
-    print "-----------"
-    print " python sunjoin.py -f suntans.nc -p ./rundata -n 16 -t 48"
-    print ""
+    print("--------------------------------------------------------------")
+    print("sunjoin.py   -h                 # show this help message      ")
+    print("         -f suntans.nc        # SUNTANS output netcdf file  ")
+    print("         -p pathname          # Path to SUNTANS output folder      ")
+    print("         -n  N                # Number of processors")
+    print("         -t  N                # Number of time steps to output (-1 all steps in one file)")
+    print(" 	    -v  'var1 var2 ...'  # List of variales to write (default: all)")
+    print("\n\n Example Usage:")
+    print("-----------")
+    print(" python sunjoin.py -f suntans.nc -p ./rundata -n 16 -t 48")
+    print("")
     
     
 if __name__ == '__main__':
@@ -391,9 +391,9 @@ if __name__ == '__main__':
     
     try:
         opts,rest = getopt.getopt(sys.argv[1:],'hf:p:n:t:v:')
-    except getopt.GetoptError,e:
-        print e
-        print "-"*80
+    except getopt.GetoptError as e:
+        print(e)
+        print("-"*80)
         usage()
         exit(1)
 

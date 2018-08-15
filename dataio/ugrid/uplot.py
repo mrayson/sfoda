@@ -109,7 +109,7 @@ class Plot(HybridGrid):
         Ne = xylines[0].shape[0]
 
         # Put this into the format needed by LineCollection
-        linesc = [zip(xylines[0][ii,:],xylines[1][ii,:]) for ii in range(Ne)]
+        linesc = [list(zip(xylines[0][ii,:],xylines[1][ii,:])) for ii in range(Ne)]
 
         collection = LineCollection(linesc,array=z,**kwargs)
 

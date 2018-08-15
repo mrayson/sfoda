@@ -32,7 +32,7 @@ from matplotlib.backends.backend_wxagg import \
     NavigationToolbar2WxAgg as NavigationToolbar
 import matplotlib.animation as animation
 
-from romsio import ROMS
+from .romsio import ROMS
 from datetime import datetime
 import numpy as np
 
@@ -187,7 +187,7 @@ class ROMSPlotPy(wx.Frame, ROMS ):
         #    style=wx.ALIGN_RIGHT)
         #self.show_edge_check.Bind(wx.EVT_CHECKBOX, self.on_show_edges)
 
-        cmaps = matplotlib.cm.datad.keys()
+        cmaps = list(matplotlib.cm.datad.keys())
         cmaps.sort()
         self.colormap_list = wx.ComboBox(
             self.panel, 
@@ -292,7 +292,7 @@ class ROMSPlotPy(wx.Frame, ROMS ):
             self.clim = [float(self.climlow.GetValue()),\
                 float(self.climhigh.GetValue())]
          
-        if self.__dict__.has_key('collection'):
+        if 'collection' in self.__dict__:
             #self.collection.remove()
             self.axes.collections.remove(self.collection)
         else:
@@ -313,7 +313,7 @@ class ROMSPlotPy(wx.Frame, ROMS ):
 
         # create a colorbar
 
-        if not self.__dict__.has_key('cbar'):
+        if 'cbar' not in self.__dict__:
             self.cbar = self.fig.colorbar(self.collection)
         else:
             #print 'Updating colorbar...'
@@ -415,7 +415,7 @@ class ROMSPlotPy(wx.Frame, ROMS ):
     def on_depthlayer_constant(self, event):
         dstr = event.GetString()
 
-        self.K = range(0,self.Nz)
+        self.K = list(range(0,self.Nz))
         self.zlayer = True
         self.Z = -np.abs(float(dstr))
 
@@ -453,7 +453,7 @@ class ROMSPlotPy(wx.Frame, ROMS ):
             self.variable_list.SetItems(vnames)
             
             # Update the time drop down list
-            if self.__dict__.has_key('time'):
+            if 'time' in self.__dict__:
                 self.timestr = [datetime.strftime(tt,'%d-%b-%Y %H:%M:%S') for tt in self.time]
             else:
                 # Assume that it is a harmonic-type file
@@ -512,7 +512,7 @@ class ROMSPlotPy(wx.Frame, ROMS ):
             self.time_list.SetItems(self.timestr)
 
             # Plot the first time step
-            if self.__dict__.has_key('xlims'):
+            if 'xlims' in self.__dict__:
                 self.PTM.plot(self.PTM.nt-1,ax=self.axes,xlims=self.xlims,\
                 ylims=self.ylims,fontcolor='w')
             else:
@@ -619,7 +619,7 @@ class ROMSPlotPy(wx.Frame, ROMS ):
                 return (self.title,self.collection)
 
             def updateScalar(i):
-                print i, self.Nt
+                print(i, self.Nt)
                 self.tstep=[i]
                 self.loadData(tstep=self.tstep)
                 self.update_figure()
@@ -627,7 +627,7 @@ class ROMSPlotPy(wx.Frame, ROMS ):
 
             self.anim = animation.FuncAnimation(self.fig, updateScalar,\
                 init_func=init_anim,\
-                frames=range(self.tstep[0],self.Nt), interval=50, blit=True)
+                frames=list(range(self.tstep[0],self.Nt)), interval=50, blit=True)
 
             if ext=='.gif':
                 self.anim.save(outfile,writer='imagemagick',fps=6)

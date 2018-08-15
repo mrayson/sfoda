@@ -15,6 +15,7 @@ import operator as op
 import matplotlib.pyplot as plt
 
 from soda.dataio.ugrid import ugridutils
+#from soda.dataio.ugrid import newugridutils as ugridutils
 import pdb
 
 ###
@@ -69,6 +70,8 @@ class HybridGrid(object):
     _FillValue = FILLVALUE # Default is 999999
 
     def __init__(self,xp,yp,cells,**kwargs):
+        if self.VERBOSE:
+            print("Creating a hybridgrid class:")
 
         self.__dict__.update(**kwargs)
         
@@ -91,27 +94,30 @@ class HybridGrid(object):
         # Make sure the inputs are ndarrays
         self.check_inputs()
             
-        # Get the edges
-        if self.edges is None or self.grad is None:
-            self.make_edges_from_cells()
-            #self.make_edges_from_cells_sparse()
-        else:
-            self.edges = self.edges.astype(np.int64)
-            self.grad = self.grad.astype(np.int64)
-
-        self.Ne = self.edges.shape[0]
-
-        # make_edges_from_cells sets everything to zero
-        if not self.mark is None:
-            self.mark=self.mark.astype(np.int64)
-
-        # Make sure the BCs are ok
-        self.check_missing_bcs()
-
         #######
         # Compute the rest of the grid quantities
         #######
         if not self.lightmode:
+
+            # Get the edges
+            if self.edges is None or self.grad is None:
+                if self.VERBOSE:
+                    print("Creating the edges...")
+                self.make_edges_from_cells()
+                #self.make_edges_from_cells_sparse()
+            else:
+                self.edges = self.edges.astype(np.int64)
+                self.grad = self.grad.astype(np.int64)
+
+            self.Ne = self.edges.shape[0]
+
+            # make_edges_from_cells sets everything to zero
+            if not self.mark is None:
+                self.mark=self.mark.astype(np.int64)
+
+            # Make sure the BCs are ok
+            self.check_missing_bcs()
+
             # Make sure the nodes are rotated counter-clockwise
             self.Ac = self.calc_area()
             self.ensure_ccw()
@@ -626,7 +632,7 @@ class HybridGrid(object):
         edge point to the cell mid-point
         """
         if self.VERBOSE:
-            print 'calculating orthogonality...'
+            print('calculating orthogonality...')
         nc = xv.shape[0]
         orthoang = np.zeros((nc,))
         pi_on_2 = 0.5*np.pi
@@ -678,7 +684,7 @@ class HybridGrid(object):
         try:
             nc.createDimension('Ne', self.Ne)
         except:
-            print 'No dimension: Ne'
+            print('No dimension: Ne')
         nc.createDimension('Nk', self.Nkmax)
         nc.createDimension('Nkw', self.Nkmax+1)
         nc.createDimension('numsides', self.MAXFACES)
@@ -688,7 +694,7 @@ class HybridGrid(object):
         # Write the grid variables
         def write_nc_var(var, name, dimensions, attdict, dtype='f8'):
             tmp=nc.createVariable(name, dtype, dimensions)
-            for aa in attdict.keys():
+            for aa in list(attdict.keys()):
                 tmp.setncattr(aa,attdict[aa])
             nc.variables[name][:] = var
     
@@ -700,9 +706,9 @@ class HybridGrid(object):
         self.Nk += 1 # Set to one-base in the file (reset to zero-base after)
         self.suntans_mesh=[0]  
         for vv in gridvars:
-            if self.__dict__.has_key(vv):
+            if vv in self.__dict__:
                 if self.VERBOSE:
-                    print 'Writing variables: %s'%vv
+                    print('Writing variables: %s'%vv)
 
                 write_nc_var(self[vv],vv,\
                         ugrid[vv]['dimensions'],\
@@ -710,9 +716,9 @@ class HybridGrid(object):
                         dtype=ugrid[vv]['dtype'])
             
             # Special treatment for "def"
-            if vv == 'def' and self.__dict__.has_key('DEF'):
+            if vv == 'def' and 'DEF' in self.__dict__:
                 if self.VERBOSE:
-                    print 'Writing variables: %s'%vv
+                    print('Writing variables: %s'%vv)
                 write_nc_var(self['DEF'],vv,ugrid[vv]['dimensions'],\
                         ugrid[vv]['attributes'],\
                         dtype=ugrid[vv]['dtype'])
@@ -797,7 +803,7 @@ class HybridGrid(object):
             
             return cell[order]
             
-        cells_list = map(reordercells,range(Np))
+        cells_list = list(map(reordercells,list(range(Np))))
         
         cells = -1*np.ones((Np,maxfaces),np.int)
         for ii in range(Np):
@@ -867,16 +873,18 @@ class HybridGrid(object):
     # (with adjustments) #
     ######################
     def make_edges_from_cells(self):
-	###
-	# Cython version
-	###
-	self.pnt2cells(0)
-	self.edges, self.mark, self.grad = \
-		ugridutils.make_edges_from_cells(self.cells,
-			self.nfaces, self._pnt2cells)
-	###
-	# Pure python
-	###
+        ###
+        # Cython version
+        ###
+        self.pnt2cells(0)
+        self.edges, self.mark, self.grad = \
+            ugridutils.make_edges_from_cells(\
+                self.cells,
+                self.nfaces,\
+                self._pnt2cells)
+        ###
+        # Pure python
+        ###
         ## iterate over cells, and for each cell, if it's index
         ## is smaller than a neighbor or if no neighbor exists,
         ## write an edge record
@@ -951,8 +959,8 @@ class HybridGrid(object):
         if any(missing_bcs):
 
             if self.VERBOSE:
-                print "WARNING: %d edges are on the boundary but have marker==0"%n_missing
-                print "Assuming they are closed boundaries!"
+                print("WARNING: %d edges are on the boundary but have marker==0"%n_missing)
+                print("Assuming they are closed boundaries!")
 
             self.mark[missing_bcs] = 1
 
@@ -970,14 +978,14 @@ class HybridGrid(object):
         Find the neighbouring cells
         """
         ###
-	# Cython wrapper
-	###
-	# Make sure the hash table is built
-	self.pnt2cells(0)
-	self.neigh = ugridutils.make_neigh_from_cells(
-		self.cells, self.nfaces, self._pnt2cells)
-	
-	###
+        # Cython wrapper
+        ###
+        # Make sure the hash table is built
+        self.pnt2cells(0)
+        self.neigh = ugridutils.make_neigh_from_cells(
+            self.cells, self.nfaces, self._pnt2cells)
+        
+        ###
         # Pure python
         ###	
         #self.neigh = np.zeros((self.Ncells(),self.MAXFACES),np.int)
@@ -1002,13 +1010,12 @@ class HybridGrid(object):
         
     def pnt2cells(self,pnt_i):
         if self._pnt2cells is None:
-	    
-	    # Cython wrapper
-	    self._pnt2cells = ugridutils.create_pnt2cells(
-		self.cells, self.nfaces)
-	    ###
-	    # Pure python
-	    ###	
+            # Cython wrapper
+            self._pnt2cells = ugridutils.create_pnt2cells(
+                self.cells, self.nfaces)
+            ###
+            # Pure python
+            ###	
             ## build hash table for point->cell lookup
             #self._pnt2cells = {}
             #for i in range(self.Ncells()):
@@ -1020,7 +1027,7 @@ class HybridGrid(object):
             #        self._pnt2cells[cc].add(i)
 
         # This accounts for unconnected points
-        if self._pnt2cells.has_key(pnt_i):
+        if pnt_i in self._pnt2cells:
             return self._pnt2cells[pnt_i]
         else:
             return []
@@ -1049,18 +1056,17 @@ class HybridGrid(object):
 
         N.B. this is not kept up to date when modifying the grid.
         """
-	# Cython
-	if self._pnt2edges is None:
-	   self._pnt2edges = ugridutils.create_pnt2edges(self.edges, 
-	   	self.mark, DELETED_EDGE)
+        # Cython
+        if self._pnt2edges is None:
+           self._pnt2edges = ugridutils.create_pnt2edges(self.edges, 
+               self.mark, DELETED_EDGE)
+           self._cell_edge_map = ugridutils.cell_edge_map(self.cells,
+                self.nfaces, self._pnt2edges)
 
-	self._cell_edge_map = ugridutils.cell_edge_map(self.cells,
-		self.nfaces, self._pnt2edges)
-
-	return self._cell_edge_map
-	####
-	# Pure python
-	####
+        return self._cell_edge_map
+        ####
+        # Pure python
+        ####
         #if self._cell_edge_map is None:
         #    cem = 999999*np.ones( (self.Ncells(),self.MAXFACES), np.int32)
 
@@ -1082,12 +1088,12 @@ class HybridGrid(object):
                     continue
                 
                 for p in self.edges[e,:2]:
-                    if not p2e.has_key(p):
+                    if p not in p2e:
                         p2e[p] = []
                     p2e[p].append(e)
             self._pnt2edges = p2e
 
-        if self._pnt2edges.has_key(pnt_i):
+        if pnt_i in self._pnt2edges:
             return self._pnt2edges[pnt_i]
         else:
             return []
@@ -1128,7 +1134,7 @@ class HybridGrid(object):
             val = getattr(self,vv)
             if not val is None:
                 if not isinstance(val, np.ndarray):
-                     print 'converting variable: %s'%vv
+                     print('converting variable: %s'%vv)
                      valout = np.asarray(val)
                      setattr(self,vv,valout)
 

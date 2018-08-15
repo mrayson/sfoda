@@ -26,8 +26,8 @@ def TimeVector(starttime,endtime,dt,istimestr=True,timeformat='%Y%m%d.%H%M%S'):
     
     # Convert t1,t2 into datetime
     if isinstance(t1, np.datetime64):
-	tnew = datetime64todatetime([t1,t2])
-	t1,t2 = tnew
+        tnew = datetime64todatetime([t1,t2])
+        t1,t2 = tnew
 
     time = []
     t0=t1
@@ -56,16 +56,16 @@ def SecondsSince(timein, basetime = datetime(1990,1,1)):
     isdatetime64 = False
     if isinstance(timein, list) or isinstance(timein, np.ndarray):
         isarray = True
-	if isinstance(timein[0], datetime):
-	     isdatetime = True
-	elif isinstance(timein[0], np.datetime64):
-	     isdatetime64 = True
+
+        if isinstance(timein[0], datetime):
+             isdatetime = True
+        elif isinstance(timein[0], np.datetime64):
+             isdatetime64 = True
 
     if isarray and isdatetime64:
         # Use milliseconds (lose too much precision otherwise)
         time0 = np.datetime64(basetime).astype('<M8[us]')
         tsec = ((timein.astype('<M8[us]') - time0)).astype(np.float64)*1e-6
-
 
     elif isarray and isdatetime:
         tsec = np.array([(t-basetime).total_seconds() for t in timein])
@@ -73,20 +73,15 @@ def SecondsSince(timein, basetime = datetime(1990,1,1)):
     else: # Assume its a datetime object (this is not good..)
         if isinstance(timein, datetime):
             tsec = (timein-basetime).total_seconds()
-	    #timein = np.datetime64(timein)
 
-	    #time0 = np.datetime64(timein)
-	    #tsec = (timein-time0).item().total_seconds() # TimeDelta object
         else:
             time0 = np.datetime64(basetime).astype('<M8[us]')
-	    try:
+            try:
                 #raise Exception, 'Time conversion error'
                 # This case shouldn't arise
-		tsec = ((timein.astype('<M8[us]') - time0)).astype(np.float64)*1e-6
-	    except:
-		
-	    	tsec = (timein-time0).total_seconds() # TimeDelta object
-
+                tsec = ((timein.astype('<M8[us]') - time0)).astype(np.float64)*1e-6
+            except:
+                tsec = (timein-time0).total_seconds() # TimeDelta object
 
     return tsec
 

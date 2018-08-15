@@ -10,8 +10,8 @@ import os
 import numpy as np
 from netCDF4 import Dataset, num2date
 from datetime import datetime
-import othertime
-from inpolygon import inpolygon
+from . import othertime
+from .inpolygon import inpolygon
 
 import pdb
 
@@ -62,9 +62,9 @@ class Particle(object):
         Read the tstep from a netcdf file
         """
         # Check if the file is opened
-        if not self.__dict__.has_key('_nc'):
+        if '_nc' not in self.__dict__:
             if ncfile == None:
-                raise Exception, 'must set "ncfile" on call to read_nc().'
+                raise Exception('must set "ncfile" on call to read_nc().')
             else:
                 # Open the file for reading
                 self._nc = Dataset(ncfile,'r')
@@ -86,12 +86,12 @@ class Particle(object):
         Writes the particle locations at the output time step, 'tstep'
         """
         if self.verbose:
-            print '\tWriting netcdf output at tstep: %d...'%tstep
+            print('\tWriting netcdf output at tstep: %d...'%tstep)
 
         # Check if the file is opened
-        if not self.__dict__.has_key('_nc'):
+        if '_nc' not in self.__dict__:
             if ncfile == None:
-                raise Exception, 'must set "ncfile" on call to write_nc().'
+                raise Exception('must set "ncfile" on call to write_nc().')
             else:
                 self.create_nc(ncfile)
             
@@ -114,7 +114,7 @@ class Particle(object):
         """
 
         if self.verbose:
-            print '\nInitialising particle netcdf file: %s...\n'%ncfile
+            print('\nInitialising particle netcdf file: %s...\n'%ncfile)
             
         # Global Attributes
         nc = Dataset(ncfile, 'w', format='NETCDF4_CLASSIC')
@@ -129,7 +129,7 @@ class Particle(object):
         # Create variables
         def create_nc_var( name, dimensions, attdict, dtype='f8'):
             tmp=nc.createVariable(name, dtype, dimensions)
-            for aa in attdict.keys():
+            for aa in list(attdict.keys()):
                 tmp.setncattr(aa,attdict[aa])
           
         basetimestr = 'seconds since %s'%(datetime.strftime(self.basetime,\

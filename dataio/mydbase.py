@@ -10,7 +10,7 @@ def dict2sql(dbfile, myDict, table):
     Converts a dictionary to an sql database table
     """
     if os.path.exists(dbfile):
-	print 'Deleting old db file.'
+	print('Deleting old db file.')
 	os.unlink(dbfile)
 
     conn = sqlite3.connect(dbfile)
@@ -23,10 +23,10 @@ def dict2sql(dbfile, myDict, table):
     tablefields = []
     tabletypes = []
     tablefmt = []
-    for vv in myDict.values()[0].keys():
+    for vv in list(myDict.values())[0].keys():
 	#print myDict.values()[0][vv], type(myDict.values()[0][vv])
-	if isinstance(myDict.values()[0][vv], str) \
-	    or isinstance(myDict.values()[0][vv], np.unicode):
+	if isinstance(list(myDict.values())[0][vv], str) \
+	    or isinstance(list(myDict.values())[0][vv], np.str):
 	    tabletypes += ['text']
 	    tablefmt += ['"%s"']
 	else:
@@ -45,7 +45,7 @@ def dict2sql(dbfile, myDict, table):
     cursor.execute(createstr)
 
     # Insert the values
-    for kk in myDict.keys():
+    for kk in list(myDict.keys()):
         dbstr = dbtuple%tuple(myDict[kk].values())		
 	sqlstr = 'INSERT INTO %s VALUES %s'%(table,dbstr)
 	#print sqlstr
@@ -62,7 +62,7 @@ def dict2sql(dbfile, myDict, table):
     #cursor.execute(sql, myDict.values())
 
     cursor.close()
-    print 'Updated database...'
+    print('Updated database...')
 
 def returnQuery(dbfile,outvar,tablename,condition):
     """Returns a dictionary with the fields specified in a query

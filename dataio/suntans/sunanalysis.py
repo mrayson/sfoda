@@ -10,8 +10,8 @@ Stanford University
 March 2014
 """
 
-from sunpy import Spatial
-from sunslice import MultiSliceEdge
+from .sunpy import Spatial
+from .sunslice import MultiSliceEdge
 import soda.utils.mypandas as mpd
 from soda.utils.timeseries import timeseries
 from soda.utils.maptools import maskShpPoly
@@ -49,9 +49,9 @@ class Energetics(Spatial):
         """
         Calculate the terms for tstep
         """
-        if self.verbose: print 'Calculating energy at time step: %d'%tstep
+        if self.verbose: print('Calculating energy at time step: %d'%tstep)
         if cellindex==None: 
-            self.cellindex=range(self.Nc)
+            self.cellindex=list(range(self.Nc))
         else:
             self.cellindex=cellindex
 
@@ -61,7 +61,7 @@ class Energetics(Spatial):
         # Step 1: Load the flux variable and the vertical depths
         # These are needed for depth integrals and upwind calculations
         ###
-        if self.verbose: print 'Loading raw model data...'
+        if self.verbose: print('Loading raw model data...')
 
         self.dzf = self.loadData(variable='dzf')
         # dzf is calculated using max free surface height
@@ -69,7 +69,7 @@ class Energetics(Spatial):
 
         self.u=self.loadData(variable=self.fluxvar)
         if self.fluxvar=='U':
-            if self.verbose: print 'Calculating U to flow rate...'
+            if self.verbose: print('Calculating U to flow rate...')
             #TBC
 
         # Load the cell variable used by others at all depth
@@ -97,17 +97,17 @@ class Energetics(Spatial):
         self.energy={}
         ###
         # Term: Vertical PE flux
-        if self.verbose: print 'Calculating vertical buoyancy flux...'
+        if self.verbose: print('Calculating vertical buoyancy flux...')
         self.energy.update({'B_flux':self.calc_buoyflux()})
 
         ###
         # Term: Wind work 
-        if self.verbose: print 'Calculating the wind work...'
+        if self.verbose: print('Calculating the wind work...')
         self.energy.update({'W_work':self.calc_windwork()})
 
         ###
         # Depth integrated KE and PE
-        if self.verbose: print 'Calculating energy...'
+        if self.verbose: print('Calculating energy...')
         self.KE = self.calc_KE(u=self.uc,v=self.vc)
         self.energy.update({'KE':self.depthint(self.KE,dz=self.dzz)})
 
@@ -116,12 +116,12 @@ class Energetics(Spatial):
 
         ###
         # Dissipation
-        if self.verbose: print 'Calculating dissipation...'
+        if self.verbose: print('Calculating dissipation...')
         self.energy.update({'diss':self.calc_dissipation()})
 
         ###
         # Flux terms
-        if self.verbose: print 'Calculating energy flux divergence terms...'
+        if self.verbose: print('Calculating energy flux divergence terms...')
 
         # Pressure work flux
 
@@ -140,9 +140,9 @@ class Energetics(Spatial):
         !! Note that all terms are converted to Wm-2 (multiplied by rho0) !!
         !! Divergent terms are divided by cell area (self.Ac) !!!
         """
-        tstep = range(0,self.Nt)[trange[0]:trange[1]]
+        tstep = list(range(0,self.Nt))[trange[0]:trange[1]]
         # Write the output to netcdf
-        print 'Writing the output to netcdf...'
+        print('Writing the output to netcdf...')
 
         self.writeNC(outfile)
 
@@ -197,12 +197,12 @@ class Energetics(Spatial):
  
         
         # Calculate the energy for each time step and write the output
-        print 'Writing the variable data to netcdf...'
+        print('Writing the variable data to netcdf...')
         nc = Dataset(outfile,'a')
 
         for ii, tt in enumerate(tstep):
             # Call the object to calculate the variables
-            print 'Writing energy for timestep %d of %d...'%(tt,tstep[-1])
+            print('Writing energy for timestep %d of %d...'%(tt,tstep[-1]))
             self.__call__(tt)
 
             # Write the variable data out
@@ -243,7 +243,7 @@ class Energetics(Spatial):
 
         # Specify the surface gradient the same as the next layer
         ctop = self.getctop(self.eta)
-        j = range(Nc)
+        j = list(range(Nc))
         dphi_dz[ctop[j],j] = dphi_dz[ctop[j]+1,j]
 
         # Specify the seabed gradients
@@ -371,7 +371,7 @@ class Energetics(Spatial):
         dv_dz = self.gradZ(self.vc,self.dzz)
         self.S2 = (du_dz**2 + dv_dz**2)
         # Zero the seabed shear - it is too large??
-        self.S2[self.Nk,range(self.Nc)]=0
+        self.S2[self.Nk,list(range(self.Nc))]=0
 
         diss = self.nu_v * self.S2
 
@@ -392,7 +392,7 @@ def energy_budget(energyfile,polyfile,trange):
     mask,maskpoly = maskShpPoly(sun.xv,sun.yv,polyfile)
 
     # Initialise the output dictionary
-    tstep = range(0,sun.Nt)[trange[0]:trange[1]]
+    tstep = list(range(0,sun.Nt))[trange[0]:trange[1]]
     nt = len(tstep)
 
     budget ={}
@@ -400,7 +400,7 @@ def energy_budget(energyfile,polyfile,trange):
         budget.update({vv:np.zeros((nt,))})
 
     for ii,tt in enumerate(tstep):
-        print 'Area-integrating step: %d of %d...'%(ii,tstep[-1])
+        print('Area-integrating step: %d of %d...'%(ii,tstep[-1]))
         for vv in varnames:
             sun.tstep=[tt]
             data = sun.loadData(variable=vv)
@@ -434,7 +434,7 @@ def calc_avg_budget(sun, trange, cellindex,plot=False):
     #sun = Spatial(avgfile,klayer=[-99])
 
     # Calculate the time dimensions
-    tstep = range(0,sun.Nt)[trange[0]:trange[1]]
+    tstep = list(range(0,sun.Nt))[trange[0]:trange[1]]
     nt = len(tstep)
     time = sun.time[tstep]
 
@@ -486,7 +486,7 @@ def calc_avg_budget(sun, trange, cellindex,plot=False):
     ###
     for ii,tt in enumerate(tstep):
         sun.tstep=[tt]
-        print 'Calculating budget for time = %d of %d'%(tt,tstep[-1])
+        print('Calculating budget for time = %d of %d'%(tt,tstep[-1]))
         # Load the depth-average and flux quantities
         s_dz = sun.loadDataRaw(variable='s_dz')
         T_dz = sun.loadDataRaw(variable='T_dz')
@@ -665,10 +665,10 @@ def calc_isopycnal_discharge(ncfile,xpt,ypt,saltbins,tstart,tend,scalarvar='salt
  
     SE.tstep = SE.getTstep(tstart,tend)
 
-    print 'Loading the salt flux data...'
+    print('Loading the salt flux data...')
     #s_F_all= SE.loadData(variable='s_F')
     s_F_all= SE.loadData(variable=scalarvar)
-    print 'Loading the flux data...'
+    print('Loading the flux data...')
     Q_all = SE.loadData(variable='U_F')
 
 
@@ -826,7 +826,7 @@ def calc_isopycnal_discharge(ncfile,xpt,ypt,saltbins,tstart,tend,scalarvar='salt
 
     output =[]
     outputf =[]
-    print 'Calculating slice fluxes...'
+    print('Calculating slice fluxes...')
     ii=-1
     Qbar = np.zeros((len(Q_all),SE.Nkmax))
     for s_F,Q in zip(s_F_all,Q_all):
@@ -878,17 +878,17 @@ def calc_scalar_flux(ncfile,xpt,ypt,tstart,tend, \
     #SE = SliceEdge(ncfile,xpt=xpt,ypt=ypt)
 
     if tstart==None:
-        SE.tstep = range(len(SE.time))
+        SE.tstep = list(range(len(SE.time)))
     else:
         SE.tstep = SE.getTstep(tstart,tend)
 
-    print 'Loading the area data...'
+    print('Loading the area data...')
     A_all= SE.loadData(variable='area')
-    print 'Loading the salt data...'
+    print('Loading the salt data...')
     S_all= SE.loadData(variable=scalarvar) # psu 
-    print 'Loading the salt flux data...'
+    print('Loading the salt flux data...')
     F_all= SE.loadData(variable=fluxvar) # psu m3 s-1
-    print 'Loading the flux data...'
+    print('Loading the flux data...')
     Q_all = SE.loadData(variable='U_F')
 
 
@@ -999,7 +999,7 @@ def volume_integrate(ncfile,varnames,shpfiles,constantdzz=False):
     #dzz = np.repeat(sun.dz[:,np.newaxis],sun.Nc,axis=1)
     for ii in range(sun.Nt):
         sun.tstep = [ii]
-        print 'Volume integrating for time step: %d of %d...'%(ii,sun.Nt)
+        print('Volume integrating for time step: %d of %d...'%(ii,sun.Nt))
 
         # Load the depth and mean age arrays
         if not constantdzz:
@@ -1057,9 +1057,9 @@ def area_integrate(ncfile,varnames,shpfiles):
         for varname in varnames:
             data[poly].update({varname:np.zeros((sun.Nt,))})
 
-    sun.tstep = range(sun.Nt)
+    sun.tstep = list(range(sun.Nt))
     for varname in varnames:
-        print 'Area integrating varibles: %s ...'%(varname)
+        print('Area integrating varibles: %s ...'%(varname))
         tmp = sun.loadData(variable=varname)
         for mask,poly in zip(masks,polynames):
             tmp_dA = ne.evaluate("sum(tmp*Ac*mask,axis=1)")
@@ -1097,15 +1097,15 @@ def river_discharge(ncfile,shpfiles):
     for poly  in polynames:
         data.update({poly:{'Q_r':np.zeros((sun.Nt,)),'time':sun.time}})
 
-    print 'Loading the data...'
+    print('Loading the data...')
     #U = sun.loadData(variable='U_F')
-    sun.tstep = range(sun.Nt)
+    sun.tstep = list(range(sun.Nt))
     U = np.zeros((sun.Nt,sun.Nkmax,ind.shape[0]))
     for tt in range(sun.Nt):
         sun.tstep = tt 
         tmp = sun.loadData(variable='U_F')
         U[tt,...] = tmp[:,ind]
-        print '\t%d of %d...'%(tt,sun.Nt)
+        print('\t%d of %d...'%(tt,sun.Nt))
 
     for mask,poly in zip(masks,polynames):
         tmp_dA  = np.sum( np.sum(U*mask,axis=-1), axis=-1)

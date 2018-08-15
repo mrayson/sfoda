@@ -37,10 +37,14 @@ class Sunxray(UPlot):
     def __init__(self, ncfile, lazy=False, **kwargs):
         self.__dict__.update(kwargs)
 
-        print('Setting Chunks: ',self.chunks)
-        self._ds = xray.open_dataset(ncfile, \
-                chunks=self.chunks, \
-                mask_and_scale=True, decode_times=True)
+        try:
+            self._ds = xray.open_dataset(ncfile, \
+                    chunks=self.chunks,\
+                    mask_and_scale=True, decode_times=True)
+        except:
+            self._ds = xray.open_mfdataset(ncfile, \
+                    chunks=self.chunks,\
+                    mask_and_scale=True, decode_times=True)
 
         if not lazy:
             self._init_grid(**kwargs)
@@ -77,7 +81,7 @@ class Sunxray(UPlot):
         List all of the variables that have the 'mesh' attribute
         """
         vname=[]
-        for vv in self._ds.variables.keys():
+        for vv in list(self._ds.variables.keys()):
             # "mesh" attribute is standard in the ugrid convention
             if hasattr(self._ds[vv], 'mesh'):
                 vname.append(vv)
@@ -99,7 +103,7 @@ class Sunxray(UPlot):
         """
         Load data from a complete/full variable
         """
-        return self._ds[varname][:].values
+        return self._ds[varname][:]
 
     def __repr__(self):
         return self._ds.__repr__()
@@ -115,7 +119,7 @@ class Sundask(Sunxray):
 
     def __init__(self, ncfiles, loadgrid=True, **kwargs):
 
-        print ncfiles
+        print(ncfiles)
 
         # Get the files from the first file
         filenames = sorted(glob.glob(ncfiles))

@@ -30,9 +30,9 @@ def isoslice(var, prop, isoval=0, axis=0, masking=True):
     u_at_s30 = isoslice(u,s,30);       # u at s == 30
     """
     if var.ndim<2:
-        raise ValueError, 'variable must have at least two dimensions'
+        raise ValueError('variable must have at least two dimensions')
     if not prop.shape == var.shape:
-        raise ValueError, 'dimension of var and prop must be identical'
+        raise ValueError('dimension of var and prop must be identical')
 
     var = var.swapaxes(0, axis)
     prop = prop.swapaxes(0, axis)
@@ -55,8 +55,8 @@ def isoslice(var, prop, isoval=0, axis=0, masking=True):
     if masking:
         result = np.ma.masked_where(zc.sum(axis=0)==0, result)
         if np.all(result.mask):
-            raise Warning, 'property==%f out of range (%f, %f)' % \
-                           (isoval, (prop+isoval).min(), (prop+isoval).max())
+            raise Warning('property==%f out of range (%f, %f)' % \
+                           (isoval, (prop+isoval).min(), (prop+isoval).max()))
     result = result.reshape(sz[1:])
     return(result)
 

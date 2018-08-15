@@ -123,7 +123,7 @@ def find_tri_nearest(xyin, xyout, nnear, anisofac=1.):
     idx = np.zeros((nx,nnear), np.int32)
     for ii in range(nx):
         if ii%10000 == 0:
-            print ii, nx
+            print(ii, nx)
         xpt, ypt = xyout[ii,0], xyout[ii,1]
         mynodes = nearest(trid, xpt, ypt, nnear)
 
@@ -183,7 +183,7 @@ class kriging(object):
         dist, self.ind = self.distance_func(self.XYin, self.XYout,\
                 self.NNear, anisofac=self.anisofac)       
         self.Nc = np.size(self.ind,axis=0)
-        print '%d interpolation points.'%self.Nc
+        print('%d interpolation points.'%self.Nc)
 
         # Initialise some array to calculate the weights
         Ns = self.NNear

@@ -86,18 +86,18 @@ def tide_pred_correc(modfile,lon,lat,time,dbfile,ID,z=None,conlist=None):
     """
     from timeseries import timeseries, loadDBstation
     
-    print 'Calculating tidal correction factors from time series...'
+    print('Calculating tidal correction factors from time series...')
     # Load using the timeseries module
     t0 = datetime.strftime(time[0],'%Y%m%d.%H%M%S')
     t1 = datetime.strftime(time[-1],'%Y%m%d.%H%M%S')
     dt = time[1]-time[0]
     
-    print t0, t1, dt.total_seconds()
+    print(t0, t1, dt.total_seconds())
     timeinfo = (t0,t1,dt.total_seconds())
     TS,meta = loadDBstation(dbfile,ID,'waterlevel',timeinfo=timeinfo,filttype='low',cutoff=2*3600,output_meta=True)
     lonpt=meta['longitude']
     latpt=meta['latitude']
-    print lonpt,latpt
+    print(lonpt,latpt)
     
     # Extract the OTIS tide prediction
     u_re, u_im, v_re, v_im, h_re, h_im, omega, conlist = extract_HC(modfile,lonpt,latpt)
@@ -135,7 +135,7 @@ def tide_pred_correc(modfile,lon,lat,time,dbfile,ID,z=None,conlist=None):
     # Rebuild the time series
     #tsec=TS_harm.tsec - TS_harm.tsec[0]
     tsec = othertime.SecondsSince(time,basetime=time[0])
-    print tsec[0]
+    print(tsec[0])
     for nn,om in enumerate(omega):
         for ii in range(0,nx):
             h[:,ii] += damp[nn]*h_amp[nn,ii] * np.cos(om*tsec - (h_phs[nn,ii] + dphs[nn]))
@@ -291,7 +291,7 @@ def extract_HC(modfile,lon,lat,z=None,conlist=None):
         
     for vv in conlist:
         if not vv in conOTIS:
-            print 'Warning: constituent name: %s not present in OTIS file.'%vv
+            print('Warning: constituent name: %s not present in OTIS file.'%vv)
             conlist.remove(vv)
             
     ###
@@ -310,7 +310,7 @@ def extract_HC(modfile,lon,lat,z=None,conlist=None):
     for ii, vv in enumerate(conlist):
         idx = otis_constits[vv]['index']
         omega[ii] = otis_constits[vv]['omega']
-        print 'Interpolating consituent: %s...'%vv
+        print('Interpolating consituent: %s...'%vv)
         
         # Read and interpolate h
         X ,Y, tmp_h_re, tmp_h_im = read_OTPS_h(hfile,idx)
@@ -374,7 +374,7 @@ def nodal_correction(year,conlist,amp, phase):
             if len(jj) > 0:
                 JJ.append(jj)
                 
-            if oneday.has_key(vv):
+            if vv in oneday:
                 od[ii]=(np.pi/180)*oneday[vv]
                   
         I = int( np.where(year==tc.years)[0] )
@@ -422,7 +422,7 @@ def read_OTPS_UV(uvfile,ic):
     nc = nm[2]
     
     if ic < 1 or ic > nc:
-        raise Exception,'ic must be > 1 and < %d'%ic
+        raise Exception('ic must be > 1 and < %d'%ic)
     
     # Read the actual data
     nskip = (ic-1)*(nm[0]*nm[1]*16+8) + 8 + ll - 28
@@ -471,6 +471,7 @@ def read_OTPS_grd(grdfile):
     
     nob = np.fromfile(f,dtype=np.int32,count=1)
     nob.byteswap(True)
+    nob = int(nob)
     if nob == 0: 
        f.seek(20,1)
        iob = []
@@ -478,12 +479,12 @@ def read_OTPS_grd(grdfile):
        f.seek(8,1)
        iob = np.fromfile(f,dtype=np.int32,count=2*nob)
        iob.byteswap(True)
-       iob = np.reshape(iob,(2,int(nob)))
+       iob = np.reshape(iob,(2,nob))
        f.seek(8,1)
     
-    hz = np.fromfile(f,dtype=np.float32,count=n*m)
+    hz = np.fromfile(f,dtype=np.float32,count=int(n*m))
     f.seek(8,1)
-    mask = np.fromfile(f,dtype=np.int32,count=n*m)
+    mask = np.fromfile(f,dtype=np.int32,count=int(n*m))
     
     hz.byteswap(True)
     mask.byteswap(True)
@@ -529,7 +530,7 @@ def read_OTPS_h(hfile,ic):
     nc = nm[2]
     
     if ic < 1 or ic > nc:
-        raise Exception,'ic must be > 1 and < %d'%ic
+        raise Exception('ic must be > 1 and < %d'%ic)
         #return -1
     
     # Read the actual data
@@ -693,11 +694,11 @@ def nodal(time,con):
     pf = np.ones((ncon,nt))
     v0u = np.zeros((ncon,nt))
     for ii,vv in enumerate(con):
-        if ndict.has_key(vv):
+        if vv in ndict:
             pu[ii,:] = ndict[vv]['u']*rad
             pf[ii,:] = ndict[vv]['f']
             
-        if otis_constits.has_key(vv):
+        if vv in otis_constits:
             v0u[ii,:] = otis_constits[vv]['v0u']
      
     return pu, pf, v0u

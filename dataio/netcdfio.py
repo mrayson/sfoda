@@ -15,10 +15,12 @@ August 2012
 from netCDF4 import Dataset, num2date
 #import shapefile
 import numpy as np
-try:
-    from pyspatialite import dbapi2 as db
-except:
-    import sqlite3 as db
+#try:
+#    from pyspatialite import dbapi2 as db
+#    print('Warning: pyspatialite not installed - reverting to sqlite3 library...')
+#
+#except:
+import sqlite3 as db
 
 from datetime import datetime
 import matplotlib.pyplot as plt
@@ -37,6 +39,8 @@ _dirpath = os.path.dirname(_path)
 with open('%s/dataio/ncmetadata.yaml'%_dirpath, 'r') as f:
     ncmeta = yaml.load(f)
 
+mysqldir = '/home/suntans/.conda/envs/soda/lib/'
+
 ###################
 # xray routines
 ###################
@@ -51,12 +55,12 @@ def dict_toxray(data, ds={}, **kwargs):
     **kwargs are passed directly to xray.DataArray()
     """
     
-    for vv in data.keys():
+    for vv in list(data.keys()):
         
-        if ncmeta.has_key(vv):
+        if vv in ncmeta:
             attrs = ncmeta[vv]['attributes']
         else:
-            print 'Warning variable: %s not in ncmetadata.yaml. Dataset will have no attrs'
+            print('Warning variable: %s not in ncmetadata.yaml. Dataset will have no attrs')
             attrs = {}
 
         da = xray.DataArray(data[vv], attrs = attrs, **kwargs)
@@ -104,7 +108,7 @@ def load_sql_ncstation(dbfile, station_name, varname, otherquery=None, query_onl
         condition = 'LOWER(Variable_Name) LIKE LOWER("%s") and StationName LIKE "%%%s%%" and %s'\
             %(varname, station_name, otherquery)
 	
-	print condition
+        print(condition)
 
     else:
         #condition = 'Variable_Name = "%s" and StationName LIKE "%%%s%%"'\
@@ -112,8 +116,8 @@ def load_sql_ncstation(dbfile, station_name, varname, otherquery=None, query_onl
             %(varname, station_name)
     
     # Query the database
-    print 'Querying database...'
-    print condition
+    print('Querying database...')
+    print(condition)
     query = returnQuery(dbfile,outvar,tablename,condition)
 
     if query_only:
@@ -124,7 +128,7 @@ def load_sql_ncstation(dbfile, station_name, varname, otherquery=None, query_onl
     ii = 0
     for  ncfile, ncgroup, ncvarname in \
                 zip(query['NetCDF_Filename'], query['NetCDF_GroupID'], query['Variable_Name']):
-        print ncfile, ncgroup
+        print(ncfile, ncgroup)
 
         nc = xray.open_dataset(ncfile, group=ncgroup)
 
@@ -164,11 +168,11 @@ def writePointData2Netcdf(ncfile,data,globalatts):
     """    
     
     # Convert the dictionary array to a grouped netcdf file
-    print '################################################'
-    print ' Writing to file: %s...' % ncfile
+    print('################################################')
+    print(' Writing to file: %s...' % ncfile)
     nc = Dataset(ncfile, 'w', format='NETCDF4')
     # Write the global attributes
-    for gg in globalatts.keys():
+    for gg in list(globalatts.keys()):
         nc.setncattr(gg,globalatts[gg])
     
     # Each listing in the dictionary is treated as a separate group
@@ -186,7 +190,7 @@ def writePointData2Netcdf(ncfile,data,globalatts):
                 dimname = cc['Name']
                 dimlength = np.size(cc['Value']) 
                 grp.createDimension(dimname,dimlength)
-                print dimname, dimlength
+                print(dimname, dimlength)
                 
                 # Create the coordinate variables
                 tmpvar=grp.createVariable(cc['Name'],'f8',(dimname,))
@@ -194,7 +198,7 @@ def writePointData2Netcdf(ncfile,data,globalatts):
 
                 
                 # Create the attributes
-                for aa in cc.keys():
+                for aa in list(cc.keys()):
                     if aa !='Name' and aa !='Value':
                         tmpvar.setncattr(aa,cc[aa]) 
             # Now create the varible and attribute data
@@ -203,16 +207,16 @@ def writePointData2Netcdf(ncfile,data,globalatts):
             coordList = [str(x) for x in dd[vv]['coordinates'].split(', ')]
             tmpvar = grp.createVariable(vv,'f8',(coordList))
             # Write the data
-            print vv, np.size(dd[vv]['Data']), coordList
+            print(vv, np.size(dd[vv]['Data']), coordList)
             tmpvar[:] = dd[vv]['Data']
             # Write the attriute data
-            for aa in dd[vv].keys():
+            for aa in list(dd[vv].keys()):
                 if aa !='Data' and aa !='coords':
                     tmpvar.setncattr(aa,dd[vv][aa]) 
     
     nc.close()
-    print 'Completed writing file.'    
-    print '################################################'        
+    print('Completed writing file.')    
+    print('################################################')        
     return
 
 def pointNC2shp(ncfile,shpfile):
@@ -255,7 +259,7 @@ def pointNC2shp(ncfile,shpfile):
                 w.record(long_name,StationName,StationID)
     
     w.save(shpfile)
-    print 'NetCDF metadata written to shapefile: %s'%shpfile
+    print('NetCDF metadata written to shapefile: %s'%shpfile)
     return
 
 def db2shp(dbfile,shpfile):
@@ -295,6 +299,15 @@ def createObsDB(dbfile):
     """ Create a database for storing observational netcdf metadata"""
     
     conn = db.connect(dbfile)
+
+    # Add spatialite module
+    #   See this banter here:
+    #       https://groups.google.com/forum/#!topic/spatialite-users/o0jUwMUqx_g
+    conn.enable_load_extension(True) 
+    conn.execute("SELECT load_extension('mod_spatialite')") 
+    
+
+
     c = conn.cursor()
     # Create table
 #    tablefields = {'NetCDF_Filename':'text','NetCDF_GroupID':'text','Variable_Name':'text',\
@@ -346,7 +359,7 @@ def createObsDB(dbfile):
         tablestr += ff+' '+tt+','
     tablestr = tablestr[:-1] + ')'
     
-    print tablestr
+    print(tablestr)
     createstr = 'CREATE TABLE %s %s' % (tablename,tablestr)
     c.execute(createstr)
 
@@ -421,7 +434,7 @@ def netcdfObs2DB(ncfile, dbfile, nctype=1):
         StationName = nc.groups[grp].stationname
             
         ele = 0.
-        if 'DepthHeight' in nc.groups[grp].variables.keys():
+        if 'DepthHeight' in list(nc.groups[grp].variables.keys()):
              ele += nc.groups[grp].variables['DepthHeight'][:]
 
         if hasattr(nc.groups[grp].variables[vv], 'height'):
@@ -514,6 +527,11 @@ def netcdfObs2DB(ncfile, dbfile, nctype=1):
     
     # Open the database
     conn = db.connect(dbfile)
+
+    # Load the spatialite features
+    conn.enable_load_extension(True) 
+    conn.execute("SELECT load_extension('%s/mod_spatialite')"%mysqldir) 
+
     c = conn.cursor()
     tablename = 'observations'
     
@@ -525,8 +543,8 @@ def netcdfObs2DB(ncfile, dbfile, nctype=1):
         # Loop through the variables
         for vv in nc.groups[grp].variables:
 
-	    if vv in ['time','longitude','latitude','elevation']:
-	    	continue
+            if vv in ['time','longitude','latitude','elevation']:
+                continue
                
             write = True
 
@@ -536,17 +554,17 @@ def netcdfObs2DB(ncfile, dbfile, nctype=1):
 
    
             elif nctype == 2:
-                print grp, vv
+                print(grp, vv)
                 lon, lat, long_name, StationID, StationName, ele, dates = \
                     get_meta_type2(nc, grp ,vv)
 
             elif nctype == 3:
-                print grp, vv
+                print(grp, vv)
                 lon, lat, long_name, StationID, StationName, ele, dates = \
                     get_meta_type3(nc, grp ,vv)
 
             elif nctype == 4:
-                print grp, vv
+                print(grp, vv)
                 lon, lat, long_name, StationID, StationName, ele, dates = \
                     get_meta_type4(nc, grp ,vv)
 

@@ -18,11 +18,11 @@ import operator
 import xray
 import pandas as pd
 
-import othertime
-from uspectra import uspectra, getTideFreq
-from otherplot import stackplot
-from harmonic_analysis import harmonic_fit, harmonic_signal
-from mysignal import filt_gaps
+from . import othertime
+from .uspectra import uspectra, getTideFreq
+from .otherplot import stackplot
+from .harmonic_analysis import harmonic_fit, harmonic_signal
+from .mysignal import filt_gaps
 from soda.dataio.netcdfio import queryNC
 
 import pdb
@@ -92,7 +92,7 @@ class timeseries(object):
         """
         
         if self.isequal==False and self.VERBOSE:
-            print 'Warning - time series is unequally spaced consider using lomb-scargle fft'
+            print('Warning - time series is unequally spaced consider using lomb-scargle fft')
         
 
         NFFT = int(2**(np.floor(np.log2(self.ny/nbandavg)))) # Nearest power of 2 to length of data
@@ -127,7 +127,7 @@ class timeseries(object):
 
         ymean = self.y.mean(axis=axis)
         y = self.y - ymean
-        k = range(1,M)
+        k = list(range(1,M))
         tau = np.asarray(k,dtype=np.float)*self.dt
 
         Cyy = [1./(N-kk) * np.sum(y[...,0:-kk]*y[...,kk::],axis=axis) for kk in k ]
@@ -169,8 +169,8 @@ class timeseries(object):
         """
         
         if self.isequal==False and self.VERBOSE:
-            print 'Warning - time series is unequally spaced.\
-                Use self.interp to interpolate onto an equal grid'
+            print('Warning - time series is unequally spaced.\
+                Use self.interp to interpolate onto an equal grid')
         
         if not btype == 'band':
             Wn = self.dt/cutoff_dt
@@ -223,7 +223,7 @@ class timeseries(object):
         
         if self.isequal==False or self.dt != 3600.:
             # Puts the data onto an hourly matrix 
-            print 'Warning -- downsampling data to use Godin filter...'
+            print('Warning -- downsampling data to use Godin filter...')
             y, t = self._evenly_dist_data(self.y, self.tsec, 3600.)
         else:
             y, t = self.y, self.t
@@ -516,7 +516,7 @@ class timeseries(object):
         nbad += np.sum(ind)
         
         if self.VERBOSE:
-            print 'Despiked %d points'%nbad
+            print('Despiked %d points'%nbad)
         
         
         
@@ -566,8 +566,8 @@ class timeseries(object):
         """
         Returns the time indices bounded by time1 and time2
         """
-	t0 = othertime.findNearest(time1,self.t)
-	t1 = othertime.findNearest(time2,self.t)
+        t0 = othertime.findNearest(time1,self.t)
+        t1 = othertime.findNearest(time2,self.t)
         #try:
         #    t0 = othertime.findNearest(time1,self.t)
         #    t1 = othertime.findNearest(time2,self.t)
@@ -576,12 +576,12 @@ class timeseries(object):
         #    t1 = np.searchsorted(self.t, np.datetime64(time2))
 
         #t1 = min( self.Nt, t1+1)
-	t1+=1
-	if t1 > self.t.shape[0]:
-	    t1=self.t.shape[0]
-	#t0-=1
-	#if t0<0:
-	#    t0 = 0
+        t1+=1
+        if t1 > self.t.shape[0]:
+            t1=self.t.shape[0]
+        #t0-=1
+        #if t0<0:
+        #    t0 = 0
 
         return t0, t1
 
@@ -601,7 +601,7 @@ class timeseries(object):
 
         modt,mody = self.subset(t0,t1)
 
-	return self.copy_like(modt, mody)
+        return self.copy_like(modt, mody)
 
         
     def subset(self,time1,time2):
@@ -615,47 +615,48 @@ class timeseries(object):
     def resample(self, dt, ndt=2.):
         """
         Resamples the current timeseries object at the output interval
-	"dt"
+        "dt"
 
         Applies a running mean (window=dt) if dt > ndt*self.dt
-	"""
+        """
 
-	# Output time vector
-	timeout = othertime.TimeVector(self.t[0], self.t[-1], dt, 
-		istimestr=False)
+        # Output time vector
+        timeout = othertime.TimeVector(self.t[0], self.t[-1], dt, 
+            istimestr=False)
 
         # Use a running mean to filter data
-	if dt > ndt*self.dt:
-	    ymean = self.running_mean(self.y, self.dt, windowlength=dt)
-	    # Create a time series with the filtered data
-	    tsmean = self.copy_like(self.t, ymean)
+        if dt > ndt*self.dt:
+            ymean = self.running_mean(self.y, self.dt, windowlength=dt)
+            # Create a time series with the filtered data
+            tsmean = self.copy_like(self.t, ymean)
 
-	    # Interpolate onto the output step
-	    tnew, ynew = tsmean.interp(timeout, method='nearestmask')
+            # Interpolate onto the output step
+            tnew, ynew = tsmean.interp(timeout, method='nearestmask')
 
-	    return self.copy_like(tnew, ynew)
-	
-	else:
-	    # Do not filter if dt < self.dt
-	    # Interpolate onto the output step
-	    tnew, ynew = self.interp(timeout, method='linear')
+            return self.copy_like(tnew, ynew)
+        
+        else:
+            # Do not filter if dt < self.dt
+            # Interpolate onto the output step
+            tnew, ynew = self.interp(timeout, method='linear')
 
-	    return self.copy_like(tnew, ynew)
+            return self.copy_like(tnew, ynew)
 
 	
 	        
     def copy_like(self, t, y):
-    	"""
-	Create a new time series "like" current one
+        """
+        Create a new time series "like" current one
 
-	Retains relevant attributes
-	"""
-	return timeseries(t, y,\
-            units=u'%s'%self.units,\
-            long_name=u'%s'%self.long_name,\
-            StationID = u'%s'%self.StationID,\
-            StationName = u'%s'%self.StationName,\
-            varname = u'%s'%self.varname,\
+        Retains relevant attributes
+        """
+
+        return timeseries(t, y,\
+            units='%s'%self.units,\
+            long_name='%s'%self.long_name,\
+            StationID = '%s'%self.StationID,\
+            StationName = '%s'%self.StationName,\
+            varname = '%s'%self.varname,\
             X= self.X,\
             Y= self.Y,\
             Z= self.Z,\
@@ -688,10 +689,10 @@ class timeseries(object):
 
         # Define the attributes
         attrs = {\
-            'units':u'%s'%self.units,\
-            'long_name':u'%s'%self.long_name,\
-            'StationID':u'%s'%self.StationID,\
-            'StationName':u'%s'%self.StationName,\
+            'units':'%s'%self.units,\
+            'long_name':'%s'%self.long_name,\
+            'StationID':'%s'%self.StationID,\
+            'StationName':'%s'%self.StationName,\
         }
 
         return xray.DataArray( y.copy(), \
@@ -716,35 +717,35 @@ class timeseries(object):
         #else:
         #    tsec = othertime.SecondsSince(time,basetime=self.basetime)
 
-	# SecondsSince handle datetime64 objects
-	tsec = othertime.SecondsSince(time,basetime=self.basetime)
+        # SecondsSince handle datetime64 objects
+        tsec = othertime.SecondsSince(time,basetime=self.basetime)
 
         return tsec
  
     def _set_time(self, t):
         """
-	Return the time variable as a datetime64 object
-	~~Return the time variable as a datetime object~~
-	"""
-	if isinstance(t, pd.DatetimeIndex):
-	    #return othertime.datetime64todatetime(t.values)
-            return t.values
-	elif isinstance(t[0], datetime):
-	    return othertime.datetimetodatetime64(t) 
-	elif isinstance(t[0], np.datetime64):
-            return t
-	    #return othertime.datetime64todatetime(t) 
-	else:
-	    raise Exception, 'unknown time type: ', type(t)
+        Return the time variable as a datetime64 object
+        ~~Return the time variable as a datetime object~~
+        """
+        if isinstance(t, pd.DatetimeIndex):
+            #return othertime.datetime64todatetime(t.values)
+                return t.values
+        elif isinstance(t[0], datetime):
+            return othertime.datetimetodatetime64(t) 
+        elif isinstance(t[0], np.datetime64):
+                return t
+            #return othertime.datetime64todatetime(t) 
+        else:
+            raise Exception('unknown time type: ').with_traceback(type(t))
 
-	#if isinstance(t, pd.tseries.index.DatetimeIndex):
-	#    return othertime.datetime64todatetime(t.values)
-	#elif isinstance(t[0], datetime):
-	#    return t
-	#elif isinstance(t[0], np.datetime64):
-	#    return othertime.datetime64todatetime(t) 
-	#else:
-	#    raise Exception, 'unknown time type: ', type(t)
+        #if isinstance(t, pd.tseries.index.DatetimeIndex):
+        #    return othertime.datetime64todatetime(t.values)
+        #elif isinstance(t[0], datetime):
+        #    return t
+        #elif isinstance(t[0], np.datetime64):
+        #    return othertime.datetime64todatetime(t) 
+        #else:
+        #    raise Exception, 'unknown time type: ', type(t)
 
     def _check_dt(self, tsec):
         """
@@ -770,18 +771,19 @@ class timeseries(object):
         """
         Nearest interpolation with preseverd mask
         """
-	if y is None:
-	    y = self.y
+        if y is None:
+            y = self.y
 
         t0 = self.tsec[0]
         t = self.tsec - t0
 
-        tout -= tout[0]
+        #tout -= tout[0]
+        tnew = tout - t0 # Reference to the same time
 
-        shape = y.shape[:-1] + tout.shape
-        yout = np.ma.MaskedArray(np.zeros(shape),mask=True)
+        shape = y.shape[:-1] + tnew.shape
+        yout = np.ma.MaskedArray(np.zeros(shape), mask=True)
 
-        tind = np.searchsorted(tout,t) - 1
+        tind = np.searchsorted(tnew, t) - 1
 
         yout[...,tind] = y[:]
 
@@ -794,7 +796,7 @@ class timeseries(object):
         No interpolation is performed
         """
         if self.VERBOSE:
-            print 'inserting the data into an equally-spaced time vector (dt = %f s).'%self.dt
+            print('inserting the data into an equally-spaced time vector (dt = %f s).'%self.dt)
     
         t0 = tsec[0]
         t = tsec - t0
@@ -896,7 +898,7 @@ class ModVsObs(object):
         time1 = min(tmod[-1],tobs[-1])
 
         if time1 < time0:
-            print 'Error - the two datasets have no overlapping period.'
+            print('Error - the two datasets have no overlapping period.')
             return None
         
         # Clip both the model and observation to this daterange
@@ -919,7 +921,7 @@ class ModVsObs(object):
 
         self.N = self.TSmod.t.shape[0]
         if self.N==0:
-            print 'Error - zero model points detected'
+            print('Error - zero model points detected')
             return None
 
         self.calcStats()
@@ -1051,7 +1053,7 @@ class ModVsObs(object):
         """
         Prints the statistics to a markdown language style table
         """
-        if not self.__dict__.has_key('meanMod'):
+        if 'meanMod' not in self.__dict__:
             self.calcStats()
 
         outstr=''
@@ -1066,7 +1068,7 @@ class ModVsObs(object):
             self.rmse,self.cc,self.skill)
 
         if f == None:
-            print outstr
+            print(outstr)
         else:
             f.write(outstr)
 
@@ -1089,7 +1091,7 @@ class ModVsObs(object):
                 self.stdObs[ii], self.rmse[ii],self.cc[ii],self.skill[ii])
 
         if f == None:
-            print outstr
+            print(outstr)
         else:
             f.write(outstr)
 
@@ -1109,7 +1111,7 @@ class ModVsObs(object):
         xmean = self.TSmod.y.mean(axis=axis)
         x = self.TSmod.y - xmean
 
-        k = range(1,M)
+        k = list(range(1,M))
         tau = np.asarray(k,dtype=np.float)*self.TSobs.dt
 
         Cxy = [1./(N-kk) * np.sum(y[...,0:-kk]*x[...,kk::],axis=axis) for kk in k ]
@@ -1127,7 +1129,7 @@ class ModVsObs(object):
         """
         
         if self.isequal==False and self.VERBOSE:
-            print 'Warning - time series is unequally spaced consider using lomb-scargle fft'
+            print('Warning - time series is unequally spaced consider using lomb-scargle fft')
         
 
         NFFT = int(2**(np.floor(np.log2(self.ny/nbandavg)))) # Nearest power of 2 to length of data
@@ -1169,8 +1171,8 @@ def loadDBstation(dbfile, stationName, varname, timeinfo=None, \
     condition = 'Variable_Name = "%s" and StationID = "%s"' % (varname,stationName)
     #condition = 'Variable_Name = "%s" and StationName LIKE "%%%s%%"' % (varname,stationName)
     
-    print 'Querying database...'
-    print condition
+    print('Querying database...')
+    print(condition)
     data, query = queryNC(dbfile,outvar,tablename,condition)  
 
     yout = data[0][varname].squeeze()
@@ -1178,26 +1180,26 @@ def loadDBstation(dbfile, stationName, varname, timeinfo=None, \
     yout[np.isnan(yout)] = 0.0
     
     if len(data)==0:
-        print '!!! Warning - Did not find any stations matching query. Returning -1 !!!'
+        print('!!! Warning - Did not find any stations matching query. Returning -1 !!!')
         return -1
     else:
         ts = timeseries(data[0]['time'],yout)
         
         
     if not timeinfo==None:
-        print 'Interpolating station data between %s and %s\n'%(timeinfo[0],timeinfo[1])
+        print('Interpolating station data between %s and %s\n'%(timeinfo[0],timeinfo[1]))
         tnew,ynew =\
             ts.interp((timeinfo[0],timeinfo[1],timeinfo[2]),method=method)
         ts = timeseries(tnew,ynew)
         ts.dt = timeinfo[2] # This needs updating
         
     if not filttype==None:
-        print '%s-pass filtering output data. Cutoff period = %f [s].'%(filttype,cutoff)
+        print('%s-pass filtering output data. Cutoff period = %f [s].'%(filttype,cutoff))
         yfilt = ts.filt(cutoff,btype=filttype,axis=-1)
         ts.y = yfilt.copy()
     
     if output_meta:
-        if data[0].has_key('elevation'):
+        if 'elevation' in data[0]:
             ele = data[0]['elevation']
         else:
             ele = np.array([0.0])

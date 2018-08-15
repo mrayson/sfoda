@@ -17,8 +17,8 @@ from shapely.geometry import LineString, Point
 from soda.dataio.ugrid.hybridgrid import Line
 from soda.dataio.ugrid.hybridgrid import Point as GPoint
 from soda.dataio.ugrid.gridsearch import GridSearch
-from sunpy import Spatial
-from sunpy import unsurf
+from .sunpy import Spatial
+from .sunpy import unsurf
 
 
 import pdb
@@ -188,12 +188,12 @@ class Slice(Spatial):
         #kbed = np.max(self.Nk[self.cellind]-1,0)
         kbed = self.Nk[self.cellind]
         if zlayer == 'seabed':
-            a= self.data[:,kbed,range(0,self.Npt)]
+            a= self.data[:,kbed,list(range(0,self.Npt))]
             zstring = 'seabed'
             
         elif zlayer == 'diff':
             atop = self.data[:,0,:]    
-            abot = self.data[:,kbed,range(0,self.Npt)]
+            abot = self.data[:,kbed,list(range(0,self.Npt))]
             a = atop - abot
             zstring = 'Surface value - seabed value'
             
@@ -266,7 +266,7 @@ class Slice(Spatial):
 
         for tt in range(self.Ntslice):
             if self.Ntslice>1:
-                print 'Slicing data at time-step: %d of %d...'%(tt,self.Ntslice)
+                print('Slicing data at time-step: %d of %d...'%(tt,self.Ntslice))
             
             self.tstep=[tstep[tt]]
             rawdata = Spatial.loadData(self, variable=variable)
@@ -276,7 +276,7 @@ class Slice(Spatial):
                 elif method == 'linear':
                     slicedata[tt,kk,:] = self.interpLinear(rawdata[kk,:].squeeze(),self.xslice[0,:],self.yslice[0,:],self.cellind,k=kk)
                 else:
-                    raise Exception, ' unknown interpolation method: %s. Must be "nearest" or "linear"'%method
+                    raise Exception(' unknown interpolation method: %s. Must be "nearest" or "linear"'%method)
             
         mask = self.maskslice.reshape((1,self.Nkmax,self.Npt))
         mask = mask==False
@@ -290,7 +290,7 @@ class Slice(Spatial):
         
     def get_klayer(self):
         if self.klayer[0]==-99:
-            klayer=range(self.Nkmax)
+            klayer=list(range(self.Nkmax))
             Nkmax = self.Nkmax
         else:
             klayer=self.klayer
@@ -391,7 +391,7 @@ class Slice(Spatial):
         elif xaxis == 'distslice':
             xlab = 'Distance along transect [m]'
         else:
-            raise Exception, ' unknown "xaxis" value %d.\n Must be one of "xslice", "yslice" or "distslice".'%xaxis
+            raise Exception(' unknown "xaxis" value %d.\n Must be one of "xslice", "yslice" or "distslice".'%xaxis)
             
         return xlab
         
@@ -853,7 +853,7 @@ class SliceEdge(Slice):
                 break
             if ii>1 and abortedge:
                 if self.mark[self.grd.find_edge([newnode,nodelist[-1]])] not in [0,5]:
-                    print 'Warning: reached a boundary cell. Aborting edge finding routine'
+                    print('Warning: reached a boundary cell. Aborting edge finding routine')
                     break
 
             nodelist.append(newnode)
@@ -983,7 +983,7 @@ class MultiSliceEdge(SliceEdge):
                 dx_norm = dx / dx_sum
                 data[ii,:] =  np.sum( phimean*dx_norm,axis=-1)
         else:   
-            raise Exception, 'axis = %s not supported'%axis
+            raise Exception('axis = %s not supported'%axis)
 
         return data
 

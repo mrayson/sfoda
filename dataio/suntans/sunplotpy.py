@@ -212,7 +212,7 @@ class SunPlotPy(wx.Frame, Spatial, Grid ):
                 cmaps.append(cmap+'_r') # Add all reverse map options
         else:
             # Use matplotlib standard
-            cmaps = matplotlib.cm.datad.keys()
+            cmaps = list(matplotlib.cm.datad.keys())
 
         cmaps.sort()
         self.colormap_list = wx.ComboBox(
@@ -312,7 +312,7 @@ class SunPlotPy(wx.Frame, Spatial, Grid ):
             self.climlow.SetValue('%3.1f'%self.clim[0])
             self.climhigh.SetValue('%3.1f'%self.clim[1])
          
-        if self.__dict__.has_key('collection'):
+        if 'collection' in self.__dict__:
             #self.collection.remove()
             self.axes.collections.remove(self.collection)
         else:
@@ -329,7 +329,7 @@ class SunPlotPy(wx.Frame, Spatial, Grid ):
                 self.collection.set_edgecolors(self.collection.to_rgba(np.array((self.data[:])))) 
         elif self.collectiontype=='edges':
             xylines = [self.xp[self.edges],self.yp[self.edges]]
-            linesc = [zip(xylines[0][ii,:],xylines[1][ii,:]) for ii in range(self.Ne)]
+            linesc = [list(zip(xylines[0][ii,:],xylines[1][ii,:])) for ii in range(self.Ne)]
             self.collection = LineCollection(linesc,array=np.array(self.data[:]),cmap=self.cmap)
 
         self.collection.set_clim(vmin=self.clim[0],vmax=self.clim[1])
@@ -341,12 +341,12 @@ class SunPlotPy(wx.Frame, Spatial, Grid ):
 
         # create a colorbar
 
-        if not self.__dict__.has_key('cbar'):
+        if 'cbar' not in self.__dict__:
             self.cbar = self.fig.colorbar(self.collection)
             #SetAxColor(self.cbar.ax.axes,self.textcolor,self.bgcolor)
         else:
             #pass
-            print 'Updating colorbar...'
+            print('Updating colorbar...')
             #self.cbar.check_update(self.collection)
             self.cbar.on_mappable_changed(self.collection)
 
@@ -497,7 +497,7 @@ class SunPlotPy(wx.Frame, Spatial, Grid ):
             self.variable_list.SetItems(vnames)
             
             # Update the time drop down list
-            if self.__dict__.has_key('time'):
+            if 'time' in self.__dict__:
                 self.timestr = [datetime.strftime(tt,'%d-%b-%Y %H:%M:%S') for tt in self.time]
             else:
                 # Assume that it is a harmonic-type file
@@ -527,7 +527,7 @@ class SunPlotPy(wx.Frame, Spatial, Grid ):
             Grid.__init__(self,path)
 
             # Plot the Grid
-            if self.__dict__.has_key('collection'):
+            if 'collection' in self.__dict__:
                 self.axes.collections.remove(self.collection)
 
             self.axes,self.collection = self.plotmesh(ax=self.axes,edgecolors='y')
@@ -565,7 +565,7 @@ class SunPlotPy(wx.Frame, Spatial, Grid ):
             self.time_list.SetItems(self.timestr)
 
             # Plot the first time step
-            if self.__dict__.has_key('xlims'):
+            if 'xlims' in self.__dict__:
                 self.PTM.plot(self.PTM.nt-1,ax=self.axes,xlims=self.xlims,\
                 ylims=self.ylims,color=self.particlecolor,\
                 fontcolor='w',markersize=self.particlesize)
@@ -694,7 +694,7 @@ class SunPlotPy(wx.Frame, Spatial, Grid ):
             if ext=='.gif':
                 self.anim.save(outfile,writer='imagemagick',fps=6)
             elif ext=='.mp4':
-                print 'Saving html5 video...'
+                print('Saving html5 video...')
                 # Ensures html5 compatibility
                 self.anim.save(outfile,fps=6,\
                     writer='ffmpeg',\
@@ -738,11 +738,11 @@ class SunPlotPy(wx.Frame, Spatial, Grid ):
 
     def on_overlay_bathy(self,event):
         # Plot depth contours
-        print 'Plotting contours...'
+        print('Plotting contours...')
         self.contourf(z=self.dv, clevs=self.depthlevs,\
             ax=self.axes,\
             filled=False, colors='0.5', linewidths=0.5, zorder=1e6)
-        print 'Done'
+        print('Done')
    
     def on_plot_gridstat(self, event):
         """

@@ -22,8 +22,8 @@ Created on Fri Nov 02 15:24:12 2012
 """
 
 
-import sunpy
-from sunpy import Grid,Spatial
+from . import sunpy
+from .sunpy import Grid,Spatial
 from netCDF4 import Dataset, num2date
 import numpy as np
 from scipy.interpolate import interp1d
@@ -99,9 +99,9 @@ class Boundary(object):
             self.initArrays()
             
         else:
-            print 'Loading boundary data from a NetCDF file...'
+            print('Loading boundary data from a NetCDF file...')
             self.infile = suntanspath
-            print '\t%s'%self.infile
+            print('\t%s'%self.infile)
             self._loadBoundaryNC()
 
             self.tsec = self.ncTime()
@@ -116,7 +116,7 @@ class Boundary(object):
         """
         # Check to see if the interpolate class has been set up
         iclass = '_I_%s'%varname
-        if not self.__dict__.has_key(iclass):
+        if iclass not in self.__dict__:
             setattr( self,iclass,interp1d(self.tsec,self[varname][:],kind=method,\
                 axis=0,bounds_error=False,fill_value=0) )
 
@@ -430,7 +430,7 @@ class Boundary(object):
         
         nc.close()
         
-        print 'Boundary data sucessfully written to: %s'%ncfile
+        print('Boundary data sucessfully written to: %s'%ncfile)
         
     def _loadBoundaryNC(self):
         """
@@ -555,7 +555,7 @@ class Boundary(object):
     def savefig(self,outfile,dpi=150):
         
         self.fig.savefig(outfile,dpi=dpi)
-        print 'Boundary condition image saved to file:%s'%outfile
+        print('Boundary condition image saved to file:%s'%outfile)
     
     def roms2boundary(self,romsfile,setUV=False,seth=False,**kwargs):
         """
@@ -563,33 +563,32 @@ class Boundary(object):
         
         """
         # Include type 3 cells 
-	if self.N3>0:
-	    roms = romsio.roms_interp(romsfile,self.xv,self.yv,-self.z,self.time,**kwargs)
+        if self.N3>0:
+            roms = romsio.roms_interp(romsfile,self.xv,self.yv,-self.z,self.time,**kwargs)
 	    
-	    h, T, S, uc, vc = roms.interp(setUV=setUV,seth=seth)
+            h, T, S, uc, vc = roms.interp(setUV=setUV,seth=seth)
 
-	    self.T+=T
-	    self.S+=S
+            self.T+=T
+            self.S+=S
 	    
-	    if seth:
-		self.h+=h
-	    if setUV:
-		self.uc+=uc
-		self.vc+=vc
+            if seth:
+                self.h+=h
+            if setUV:
+                self.uc+=uc
+                self.vc+=vc
 
         # Include type 2 cells 
-	if self.N2 > 0:
-	    roms = romsio.roms_interp(romsfile,self.xe,self.ye,-self.z,self.time,**kwargs)
-	    
-	    h, T, S, uc, vc = roms.interp(setUV=setUV,seth=False)
+        if self.N2 > 0:
+            roms = romsio.roms_interp(romsfile,self.xe,self.ye,-self.z,self.time,**kwargs)
+            
+            h, T, S, uc, vc = roms.interp(setUV=setUV,seth=False)
 
-	    self.boundary_T+=T
-	    self.boundary_S+=S
-	    
-	    if setUV:
-		self.boundary_u += uc
-		self.boundary_v += vc
-
+            self.boundary_T+=T
+            self.boundary_S+=S
+            
+            if setUV:
+                self.boundary_u += uc
+                self.boundary_v += vc
 
 
     def oceanmodel2bdy(self,ncfile,\
@@ -598,7 +597,7 @@ class Boundary(object):
         Interpolate data from a downloaded netcdf file to the open boundaries
 
         """
-        print 'Loading boundary data from ocean model netcdf file:\n\t%s...'%ncfile
+        print('Loading boundary data from ocean model netcdf file:\n\t%s...'%ncfile)
 
         dt = timedelta(days=0.5)
         trange = [self.time[0] - dt, self.time[-1] + dt]
@@ -700,18 +699,18 @@ class Boundary(object):
         """
         
         if self.N3>0:
-            print 'Interpolating otis onto type 3 bc''s...'
+            print('Interpolating otis onto type 3 bc''s...')
             #xy = np.vstack((self.xv,self.yv)).T
             #ll = utm2ll(xy, self.utmzone, north=self.isnorth)
             Lo, La = self.Proj.to_ll(self.xv, self.yv)
             ll = np.column_stack((Lo,La))
 
             
-            if self.__dict__.has_key('dv'):
+            if 'dv' in self.__dict__:
                 z=self.dv
             else:
-                print 'Using OTIS depths to calculate velocity. Use setDepth()\
-                to set this.'
+                print('Using OTIS depths to calculate velocity. Use setDepth()\
+                to set this.')
                 z=None
                 
             h,U,V = readotps.tide_pred(otisfile, ll[:,0], ll[:,1],\
@@ -725,7 +724,7 @@ class Boundary(object):
                     self.vc[:,k,:] += V
 
         if self.N2>0:
-            print 'Interolating otis onto type 2 bc''s...'
+            print('Interolating otis onto type 2 bc''s...')
             #xy = np.hstack((self.xe,self.ye))
             #ll = utm2ll(xy,self.utmzone,north=self.isnorth)
 
@@ -733,11 +732,11 @@ class Boundary(object):
             ll = np.column_stack((Lo,La))
 
             
-            if self.__dict__.has_key('de'):
+            if 'de' in self.__dict__:
                 z=self.de
             else:
-                print 'Using OTIS depths to calculate velocity. Use setDepth()\
-                to set this .'
+                print('Using OTIS depths to calculate velocity. Use setDepth()\
+                to set this .')
                 z=None
                 
             h,U,V = readotps.tide_pred(otisfile,ll[:,0],ll[:,1],np.array(self.time),z=z,conlist=conlist)
@@ -748,7 +747,7 @@ class Boundary(object):
                 self.boundary_v[:,k,:] += V
 
             
-        print 'Finished interpolating OTIS tidal data onto boundary arrays.'
+        print('Finished interpolating OTIS tidal data onto boundary arrays.')
        
     def otisfile2boundary(self,otisfile,dbfile,stationID,setUV=False,conlist=None):
         """
@@ -767,10 +766,10 @@ class Boundary(object):
         ll = np.column_stack((Lo,La))
 
         
-        if self.__dict__.has_key('dv'):
+        if 'dv' in self.__dict__:
             z=self.dv
         else:
-            print 'Using OTIS depths to calculate velocity. Set self.dv to change this.'
+            print('Using OTIS depths to calculate velocity. Set self.dv to change this.')
             z=None
             
         h,U,V,residual = readotps.tide_pred_correc(otisfile, ll[:,0], ll[:,1],\
@@ -787,7 +786,7 @@ class Boundary(object):
                 self.uc[:,k,:] += U
                 self.vc[:,k,:] += V
 
-        print 'Finished interpolating OTIS tidal data onto boundary arrays.'
+        print('Finished interpolating OTIS tidal data onto boundary arrays.')
 
         
     def __getitem__(self,y):
@@ -878,9 +877,9 @@ class InitialCond(Grid):
         #...
         tstep = sunhis.getTstep(self.time,self.time)
         sunhis.tstep = [tstep[0]]
-        print 'Setting the intial condition with time step: %s\nfrom the file:%s'\
+        print('Setting the intial condition with time step: %s\nfrom the file:%s'\
             %(datetime.strftime(sunhis.time[tstep[0]],\
-            '%Y-%m-%d %H-%M-%S'),hisfile)
+            '%Y-%m-%d %H-%M-%S'),hisfile))
 
         # Npw grab each variable and save in the IC object
         if seth:
@@ -900,7 +899,7 @@ class InitialCond(Grid):
             self.agec = sunhis.loadData(variable='agec').reshape((1,)+self.agec.shape)       
             self.agealpha = sunhis.loadData(variable='agealpha').reshape((1,)+self.agealpha.shape)       
 
-        print 'Done setting initial condition data from file.'
+        print('Done setting initial condition data from file.')
 
     def oceanmodel2ic(self,ncfile,\
             convert2utm=True,setUV=False,seth=False,zmax=6000.,name='HYCOM'):
@@ -908,7 +907,7 @@ class InitialCond(Grid):
         Interpolate data from a downloaded netcdf file to the initial condition
 
         """
-        print 'Loading initial condition data from ocean model netcdf file:\n\t%s...'%ncfile
+        print('Loading initial condition data from ocean model netcdf file:\n\t%s...'%ncfile)
         dt = timedelta(days=0.5)
         trange = [self.time - dt, self.time + 3*dt]
 
@@ -974,12 +973,12 @@ class InitialCond(Grid):
         """
         Apply a spatial low pass filter to all initial condition fields
         """
-        print 'Spatially filtering initial conditions...'
+        print('Spatially filtering initial conditions...')
 
         self.h[0,:]  = self.spatialfilter(self.h[0,:].ravel(),dx)
 
         for k in range(self.Nkmax):
-            print '\t filtering layer %d...'%k
+            print('\t filtering layer %d...'%k)
             self.uc[:,k,:] = self.spatialfilter(self.uc[:,k,:].ravel(),dx)
             self.vc[:,k,:] = self.spatialfilter(self.vc[:,k,:].ravel(),dx)
             self.S[:,k,:] = self.spatialfilter(self.S[:,k,:].ravel(),dx)
@@ -992,7 +991,7 @@ class InitialCond(Grid):
         # Read the shapefile
         XY,tmp = readShpPoly(shpfile,FIELDNAME=None)
         if len(XY)<1:
-            raise Exception, ' could not find any polygons in shapefile: %s'%shpfile
+            raise Exception(' could not find any polygons in shapefile: %s'%shpfile)
 
         for xpoly in XY:
             xycells = np.asarray([self.xv,self.yv])
@@ -1007,7 +1006,7 @@ class InitialCond(Grid):
         """
         Export the results to a netcdf file
         """
-        from suntans_ugrid import ugrid
+        from .suntans_ugrid import ugrid
         from netCDF4 import Dataset
         
         # Fill in the depths with zero
@@ -1016,7 +1015,7 @@ class InitialCond(Grid):
             self.dv = np.zeros((self.Nc,))
         else:
             self.dv = dv
-        if not self.__dict__.has_key('Nk'):
+        if 'Nk' not in self.__dict__:
             self.Nk = self.Nkmax*np.ones((self.Nc,))
             
         Grid.writeNC(self,outfile)
@@ -1050,7 +1049,7 @@ class InitialCond(Grid):
         nc.variables['agesource'][:]=self.agesource
         nc.close()
                 
-        print 'Initial condition file written to: %s'%outfile
+        print('Initial condition file written to: %s'%outfile)
 
         
 def modifyBCmarker(suntanspath, bcfile, saveplot=False):
@@ -1060,9 +1059,9 @@ def modifyBCmarker(suntanspath, bcfile, saveplot=False):
     The shapefile must contain polygons with the integer-type field "marker"
     """
     
-    print '#######################################################'
-    print '     Modifying the boundary markers for grid in folder:'
-    print '         %s'%suntanspath
+    print('#######################################################')
+    print('     Modifying the boundary markers for grid in folder:')
+    print('         %s'%suntanspath)
 
     # Load the grid into an object
     grd = sunpy.Grid(suntanspath)
@@ -1075,12 +1074,12 @@ def modifyBCmarker(suntanspath, bcfile, saveplot=False):
     if not bcfile==None:
         XY,newmarker = readShpPoly(bcfile,FIELDNAME='marker')
         if len(XY)<1:
-            print 'Error - could not find any polygons with the field name "marker" in shapefile: %s'%bcfile
+            print('Error - could not find any polygons with the field name "marker" in shapefile: %s'%bcfile)
             return
         
         XY,edge_id = readShpPoly(bcfile,FIELDNAME='edge_id')
         if len(XY)<1:
-            print 'Error - could not find any polygons with the field name "edge_id" in shapefile: %s'%bcfile
+            print('Error - could not find any polygons with the field name "edge_id" in shapefile: %s'%bcfile)
             return
     else:
         XY=[]
@@ -1117,7 +1116,7 @@ def modifyBCmarker(suntanspath, bcfile, saveplot=False):
     # Save the new markers to edges.dat
     edgefile = suntanspath+'/edges.dat'
     grd.saveEdges(edgefile)
-    print 'Updated markers written to: %s'%(edgefile)
+    print('Updated markers written to: %s'%(edgefile))
     
     # Plot the markers
     if saveplot:
@@ -1127,10 +1126,10 @@ def modifyBCmarker(suntanspath, bcfile, saveplot=False):
             plt.plot(XY[0][:,0],XY[0][:,1],'m',linewidth=2)
         figfile = suntanspath+'/BoundaryMarkerTypes.pdf'
         plt.savefig(figfile)
-        print 'Marker plot saved to: %s'%(figfile)
+        print('Marker plot saved to: %s'%(figfile))
 
-    print 'Done.'
-    print '#######################################################'
+    print('Done.')
+    print('#######################################################')
     
 
 ###################

@@ -227,7 +227,7 @@ class Grid(object):
             vertspace=readTXT(self.infile+'/vertspace.dat')
         except:
             if self.VERBOSE:
-                print 'Warning could not find vertspace.dat in folder, setting Nkmax=1'
+                print('Warning could not find vertspace.dat in folder, setting Nkmax=1')
             vertspace=0.0
             
         self.setDepth(vertspace)
@@ -250,15 +250,15 @@ class Grid(object):
         nc=self.nc
 
         # Get the dimension sizes
-        for vv in self.griddims.keys():
+        for vv in list(self.griddims.keys()):
            try:
                setattr(self,vv,nc.dimensions[self.griddims[vv]].__len__())
            except:
                if self.VERBOSE:
-                   print 'Cannot find dimension: %s'%self.griddims[vv]
+                   print('Cannot find dimension: %s'%self.griddims[vv])
        
        
-        for vv in self.gridvars.keys():
+        for vv in list(self.gridvars.keys()):
             try:
                 if vv=='def': # Cannot have this attribute name in python!
                     setattr(self,'DEF',nc.variables[self.gridvars[vv]][:])
@@ -266,26 +266,26 @@ class Grid(object):
                     setattr(self,vv,nc.variables[self.gridvars[vv]][:])
             except:
                 if self.VERBOSE:
-                    print 'Cannot find variable: %s'%self.gridvars[vv]
+                    print('Cannot find variable: %s'%self.gridvars[vv])
          
-        if self.__dict__.has_key('Nk'):
+        if 'Nk' in self.__dict__:
             self.Nk-=1 #These need to be zero based
         
-        if not self.__dict__.has_key('nfaces'):
+        if 'nfaces' not in self.__dict__:
             self.MAXFACES = self.cells.shape[1]
             self.nfaces = self.MAXFACES*np.ones((self.Nc,),np.int)
             self.maxfaces = self.MAXFACES
 
         # If edges, grad or neigh have not been stored then calculate them
-        if not self.__dict__.has_key('edges'):
+        if 'edges' not in self.__dict__:
             self.reCalcGrid()
-        elif not self.__dict__.has_key('grad'):
+        elif 'grad' not in self.__dict__:
             self.reCalcGrid()
         #elif not self.__dict__.has_key('neigh'):
         #    self.reCalcGrid()
 
         # Set the mark equal zero if doesn't exist
-        if not self.__dict__.has_key('mark'):
+        if 'mark' not in self.__dict__:
             self.mark = np.zeros((self.Ne))
 
         if type(self.cells) != type(np.ma.MaskedArray()):
@@ -296,10 +296,10 @@ class Grid(object):
         #if type(self.DEF) == type(np.ma.MaskedArray()):
         #    if np.all(self.DEF.mask):
         #        self.calc_def()
-	try:
-	    self.calc_def()
-	except:
- 	    print 'No def array...'
+        try:
+            self.calc_def()
+        except:
+            print('No def array...')
        
     def maskgrid(self):
         """
@@ -313,12 +313,12 @@ class Grid(object):
         self.cells =\
             np.ma.masked_array(self.cells,mask=self.cellmask,fill_value=0)
         
-        if self.__dict__.has_key('face'):
+        if 'face' in self.__dict__:
             self.face[self.cellmask]=0
             self.face =\
                 np.ma.masked_array(self.face,mask=self.cellmask,fill_value=0)
             
-        if self.__dict__.has_key('neigh'):
+        if 'neigh' in self.__dict__:
             self.neigh =\
                 np.ma.masked_array(self.neigh,mask=self.cellmask,fill_value=0)
         
@@ -343,7 +343,7 @@ class Grid(object):
         Method for finding the following arrays: grad,edges,neigh,mark...
         """
         if self.VERBOSE:
-            print 'Re-calculating the grid variables...'
+            print('Re-calculating the grid variables...')
 
         grd = self.convert2hybrid()
 
@@ -380,7 +380,7 @@ class Grid(object):
         """
           Plot the unstructured grid data
         """
-        if self.__dict__.has_key('clim'):
+        if 'clim' in self.__dict__:
             clim = self.clim
         else:
             clim = [self.dv.min(), self.dv.max()]
@@ -394,7 +394,7 @@ class Grid(object):
         """
           Plot the unstructured grid data using vtk libraries
         """
-        if self.__dict__.has_key('clim'):
+        if 'clim' in self.__dict__:
             clim = self.clim
         else:
             clim = [self.dv.min(), self.dv.max()]
@@ -444,7 +444,7 @@ class Grid(object):
         """
         Histogram plot of distances between cell voronoi points
         """
-        if not self.__dict__.has_key('dg'):
+        if 'dg' not in self.__dict__:
             self.calc_dg()
             
         dg = self.dg
@@ -495,7 +495,7 @@ class Grid(object):
         """
         if self.projstr is None and self.utmzone is None:
             if self.VERBOSE:
-                print 'Warning - no cartographic projection specified'
+                print('Warning - no cartographic projection specified')
             lon = self._FillValue*np.ones_like(x)
             lat = self._FillValue*np.ones_like(y)
         else:
@@ -539,9 +539,9 @@ class Grid(object):
         cells[self.cells.mask]=0
 
         xp[:,:self.maxfaces]=xpin[cells]
-        xp[range(self.Nc),self.nfaces]=xpin[cells[:,0]]
+        xp[list(range(self.Nc)),self.nfaces]=xpin[cells[:,0]]
         yp[:,:self.maxfaces]=ypin[cells]
-        yp[range(self.Nc),self.nfaces]=ypin[cells[:,0]]
+        yp[list(range(self.Nc)),self.nfaces]=ypin[cells[:,0]]
 
         #xp[self.cells.mask]==0
         #yp[self.cells.mask]==0
@@ -577,7 +577,7 @@ class Grid(object):
         """
         depths = readTXT(filename)
         if len(depths) != self.Nc:
-            print 'Error - number of points in depth file (%d) does not match Nc (%d)'%(len(depths),self.Nc)
+            print('Error - number of points in depth file (%d) does not match Nc (%d)'%(len(depths),self.Nc))
         else:
             dv=depths[:,2]
 
@@ -629,7 +629,7 @@ class Grid(object):
 #            f.write('%d %d  %d  %d  %d\n'%(e1,e2,m,g1,g2))
 
         # Write an extra column that has the boundary edge segment flag    
-        if self.__dict__.has_key('edge_id'):
+        if 'edge_id' in self.__dict__:
             for e1,e2,m,g1,g2,ef1 in zip(self.edges[:,0],self.edges[:,1],self.mark,self.grad[:,0],self.grad[:,1],self.edge_id):
                 f.write('%d %d  %d  %d  %d  %d\n'%(e1,e2,m,g1,g2,ef1))
         else:
@@ -653,7 +653,7 @@ class Grid(object):
     
         f.close()
 
-        print 'Complete - grid saved to folder: %s'%outpath
+        print('Complete - grid saved to folder: %s'%outpath)
 
 
         
@@ -664,7 +664,7 @@ class Grid(object):
         Uses the scipy KDTree routine
         """
         
-        if not self.__dict__.has_key('kd'):
+        if 'kd' not in self.__dict__:
             self._kd = spatial.cKDTree(np.vstack((self.xv,self.yv)).T)
     
         # Perform query on all of the points in the grid
@@ -676,7 +676,7 @@ class Grid(object):
         """
         Returns the index 
         """
-        if not self.__dict__.has_key('xe'):
+        if 'xe' not in self.__dict__:
             self.calc_edgecoord()
 
         bdyidx = self.mark==markertype
@@ -694,7 +694,7 @@ class Grid(object):
 
         return -1 for out of bounds
         """
-        if not self.__dict__.has_key('_tsearch'):
+        if '_tsearch' not in self.__dict__:
             self._tsearch=GridSearch(self.xp,self.yp,self.cells,nfaces=self.nfaces,\
                 edges=self.edges,mark=self.mark,grad=self.grad,neigh=self.neigh,\
                 xv=self.xv,yv=self.yv)
@@ -707,8 +707,8 @@ class Grid(object):
         Manually calculate the distance between voronoi points, 'dg'
         """
         if self.VERBOSE:
-            print 'Calculating dg...'
-            print np.shape(self.grad)
+            print('Calculating dg...')
+            print(np.shape(self.grad))
         
         grad = self.grad
         Ne = len(grad)
@@ -739,7 +739,7 @@ class Grid(object):
         """
         Calculate the tangential vector for the edges of each cell
         """
-        if not self.__dict__.has_key('_tx'):
+        if '_tx' not in self.__dict__:
             dx = np.zeros(self.cells.shape)    
             dy = np.zeros(self.cells.shape)  
     
@@ -803,7 +803,7 @@ class Grid(object):
         vertspace = np.zeros((Nkmax,))
         
         if r < 1.0 or r > 1.1:
-            print 'r must be between 1.0 and 1.1'
+            print('r must be between 1.0 and 1.1')
             
         if Nkmax == 0:
             vertspace[0] = depthmax
@@ -823,12 +823,12 @@ class Grid(object):
         
         (Stolen from Rusty's TriGrid class)
         """
-        if not self.__dict__.has_key('_pnt2cells'):
+        if '_pnt2cells' not in self.__dict__:
             # build hash table for point->cell lookup
             self._pnt2cells = {}
             for i in range(self.Nc):
                 for j in range(3):
-                    if not self._pnt2cells.has_key(self.cells[i,j]):
+                    if self.cells[i,j] not in self._pnt2cells:
                         #self._pnt2cells[self.cells[i,j]] = set()
                         self._pnt2cells[self.cells[i,j]] = []
                     #self._pnt2cells[self.cells[i,j]].add(i)
@@ -1013,7 +1013,7 @@ class Grid(object):
         
         Nc = cellind.shape[0]
         
-        if not self.__dict__.has_key('_datasparse'):
+        if '_datasparse' not in self.__dict__:
             self._datasparse=[]
             self._Asparse=[]
             for kk in range(self.Nkmax):
@@ -1094,8 +1094,8 @@ class Grid(object):
         dx is the filter length (gaussian simga parameter).
         """
 
-        if not self.__dict__.has_key('_spatialfilter'):
-            print 'Building the filter matrix...'
+        if '_spatialfilter' not in self.__dict__:
+            print('Building the filter matrix...')
             xy = np.vstack((self.xv,self.yv)).T
             self._spatialfilter = ufilter(xy,dx)
 
@@ -1104,7 +1104,7 @@ class Grid(object):
         elif ftype=='high':
             return phi - self._spatialfilter(phi)
         else:
-            raise Exception, 'unknown filter type %s. Must be "low" or "high".'%ftype
+            raise Exception('unknown filter type %s. Must be "low" or "high".'%ftype)
 
     
     def writeNC(self,outfile):
@@ -1122,7 +1122,7 @@ class Grid(object):
         try:
             nc.createDimension('Ne', self.Ne)
         except:
-            print 'No dimension: Ne'
+            print('No dimension: Ne')
         nc.createDimension('Nk', self.Nkmax)
         nc.createDimension('Nkw', self.Nkmax+1)
         nc.createDimension('numsides', self.maxfaces)
@@ -1132,7 +1132,7 @@ class Grid(object):
         # Write the grid variables
         def write_nc_var(var, name, dimensions, attdict, dtype='f8'):
             tmp=nc.createVariable(name, dtype, dimensions)
-            for aa in attdict.keys():
+            for aa in list(attdict.keys()):
                 tmp.setncattr(aa,attdict[aa])
             nc.variables[name][:] = var
     
@@ -1143,15 +1143,15 @@ class Grid(object):
         self.Nk += 1 # Set to one-base in the file (reset to zero-base after)
         self.suntans_mesh=[0]  
         for vv in self.gridvars:
-            if self.__dict__.has_key(vv) and vv != 'time':
+            if vv in self.__dict__ and vv != 'time':
                 if self.VERBOSE:
-                    print 'Writing variables: %s'%vv
+                    print('Writing variables: %s'%vv)
                 write_nc_var(self[vv],vv,ugrid[vv]['dimensions'],ugrid[vv]['attributes'],dtype=ugrid[vv]['dtype'])
             
             # Special treatment for "def"
-            if vv == 'def' and self.__dict__.has_key('DEF'):
+            if vv == 'def' and 'DEF' in self.__dict__:
                 if self.VERBOSE:
-                    print 'Writing variables: %s'%vv
+                    print('Writing variables: %s'%vv)
                 write_nc_var(self['DEF'],vv,ugrid[vv]['dimensions'],ugrid[vv]['attributes'],dtype=ugrid[vv]['dtype'])
 
         nc.close()
@@ -1161,19 +1161,19 @@ class Grid(object):
         
         nc = Dataset(outfile, 'a')
         tmp=nc.createVariable(name, dtype, dimensions,zlib=zlib,complevel=complevel,fill_value=fill_value)
-        for aa in attdict.keys():
+        for aa in list(attdict.keys()):
             tmp.setncattr(aa,attdict[aa])
         #nc.variables[name][:] = var	
         nc.close()
         
     def __del__(self):
-        if self.__dict__.has_key('nc'):
+        if 'nc' in self.__dict__:
             self.nc.close()
         
     def __openNc(self):
         #nc = Dataset(self.ncfile, 'r', format='NETCDF4') 
         if self.VERBOSE:
-            print 'Loading: %s'%self.ncfile
+            print('Loading: %s'%self.ncfile)
         try: 
             self.nc = MFDataset(self.ncfile,aggdim='time')
         except:
@@ -1224,7 +1224,7 @@ class Spatial(Grid):
             # Update tstep 
             self.updateTstep()
         except:
-            print 'No time variable.'
+            print('No time variable.')
         
         # Load the global attributes
         self.loadGlobals()
@@ -1314,14 +1314,14 @@ class Spatial(Grid):
 	
         # Get the indices of the horizontal dimension
         if self.hasDim(variable,self.griddims['Ne']) and self.j is None:
-            j=range(self.Ne)
+            j=list(range(self.Ne))
         elif self.hasDim(variable,self.griddims['Nc']) and self.j is None:
-            j=range(self.Nc)
+            j=list(range(self.Nc))
         else:
-	    if isinstance(self.j, np.ndarray):
-	    	j = [self.j[0]]
-	    else:
-		j = [self.j]
+            if isinstance(self.j, np.ndarray):
+                j = [self.j[0]]
+            else:
+                j = [self.j]
 
 
         nc = self.nc
@@ -1335,7 +1335,7 @@ class Spatial(Grid):
                 #eta = self.loadDataRaw(variable='eta',setunits=False)
                 eta = nc.variables['eta'][self.tstep,j]
                 ctop=self.getctop(eta)
-                klayer = range(0,ctop.max()+1)
+                klayer = list(range(0,ctop.max()+1))
             else:
                 klayer = self.klayer
             
@@ -1410,7 +1410,7 @@ class Spatial(Grid):
             
         ndim = self.nc.variables[variable].ndim
         if not ndim==3:
-            print 'Warning only 3D arrays can be used'
+            print('Warning only 3D arrays can be used')
             return -1
         
         # Load time step by time step
@@ -1471,7 +1471,7 @@ class Spatial(Grid):
         """
         
         vname=[]
-        for vv in self.nc.variables.keys():
+        for vv in list(self.nc.variables.keys()):
             if hasattr(self.nc.variables[vv],'coordinates'):
                 vname.append(vv)
                 
@@ -1497,14 +1497,14 @@ class Spatial(Grid):
         
         Used primarily to contour the data       
         """
-        if not self.__dict__.has_key('_tri'):
+        if '_tri' not in self.__dict__:
             if self.maxfaces==3:
                 self._tri =tri.Triangulation(self.xp,self.yp,self.cells)
             else:
 
                 # Need to compute a delaunay triangulation for mixed meshes
                 if self.VERBOSE:
-                    print 'Computing delaunay triangulation and computing mask...'
+                    print('Computing delaunay triangulation and computing mask...')
                 pts = np.vstack([self.xp,self.yp]).T
                 D = spatial.Delaunay(pts)
                 self._tri =tri.Triangulation(self.xp,self.yp,D.simplices)
@@ -1523,10 +1523,10 @@ class Spatial(Grid):
         
         Used primarily to contour the data       
         """
-        if not self.__dict__.has_key('_triv'):
+        if '_triv' not in self.__dict__:
             # Need to compute a delaunay triangulation for mixed meshes
             if self.VERBOSE:
-                print 'Computing delaunay triangulation and computing mask...'
+                print('Computing delaunay triangulation and computing mask...')
             pts = np.vstack([self.xv,self.yv]).T
             D = spatial.Delaunay(pts)
             self._triv =tri.Triangulation(self.xv,self.yv,D.simplices)
@@ -1567,7 +1567,7 @@ class Spatial(Grid):
             
         if z is None:
             # Load the data if it's needed
-            if not self.__dict__.has_key('data'):
+            if 'data' not in self.__dict__:
                 self.loadData() 
             z=self.data.ravel()
         
@@ -1601,7 +1601,7 @@ class Spatial(Grid):
             
         if z is None:
             # Load the data if it's needed
-            if not self.__dict__.has_key('data'):
+            if 'data' not in self.__dict__:
                 self.loadData() 
             z=self.data.ravel()
 
@@ -1705,7 +1705,7 @@ class Spatial(Grid):
         from mayavi import mlab
         
         # Load the data if it's needed
-        if not self.__dict__.has_key('data'):
+        if 'data' not in self.__dict__:
             self.loadData()
         
         points = np.column_stack((self.xp,self.yp,0.0*self.xp))
@@ -1766,7 +1766,7 @@ class Spatial(Grid):
             self.fig.scene.save(outfile,size=dpi)
             
         if self.VERBOSE:
-            print 'SUNTANS image saved to file:%s'%outfile
+            print('SUNTANS image saved to file:%s'%outfile)
     
     def animate(self,xlims=None, ylims=None,\
             vector_overlay=False, scale=1e-4, subsample=10,\
@@ -1834,7 +1834,7 @@ class Spatial(Grid):
                
         def updateScalar(i):
             if self.VERBOSE:
-                print '\tStep %d of %d...'%(i,len(self.tstep))
+                print('\tStep %d of %d...'%(i,len(self.tstep)))
 
             collection.set_array(np.array(self.data[i,:]))
             collection.set_edgecolors(collection.to_rgba(np.array((self.data[i,:])))) 
@@ -1852,14 +1852,14 @@ class Spatial(Grid):
         Save the animation object to an mp4 movie
         """
 
-        print 'Building animation sequence...'
+        print('Building animation sequence...')
 
         ext = outfile[-4:]
 
         if ext=='.gif':
             self.anim.save(outfile,writer='imagemagick',fps=6)
         elif ext=='.mp4':
-            print 'Saving html5 video...'
+            print('Saving html5 video...')
             # Ensures html5 compatibility
             self.anim.save(outfile,writer='mencoder',fps=6,\
                 bitrate=3600,extra_args=['-ovc','x264']) # mencoder options
@@ -1867,7 +1867,7 @@ class Spatial(Grid):
         else:
             self.anim.save(outfile,writer='mencoder',fps=6,bitrate=3600)
 
-        print 'Complete - animation saved to: %s'%outfile
+        print('Complete - animation saved to: %s'%outfile)
 
 
         #try:
@@ -2009,7 +2009,7 @@ class Spatial(Grid):
         if n1==n2:
             return [n1,n2]
         else:
-            return range(n1,n2)
+            return list(range(n1,n2))
         
     def updateTstep(self):
         """
@@ -2038,11 +2038,12 @@ class Spatial(Grid):
         if isinstance(self.j[0], int):
             return self.j
         else:
-            print 'x/y coordinates input instead of cell index. Finding nearest neighbours.'
+            print('x/y coordinates input instead of cell index. Finding nearest neighbours.')
             dd, j = self.findNearest(self.j)
-            print 'Nearest cell: %d, xv[%d]: %6.10f, yv[%d]: %6.10f'%(j,j,self.xv[j],j,self.yv[j])
+            print('Nearest cell: %d, xv[%d]: %6.10f, yv[%d]: %6.10f'%(j,j,self.xv[j],j,self.yv[j]))
             #self.j = j.copy()
-	    return j
+
+        return j
      
     def hasVar(self,varname):
         """
@@ -2229,7 +2230,7 @@ class Spatial(Grid):
             agealpha=self.loadDataRaw(variable='agealpha')
 
         else:
-            raise Exception ,"variables: 'agec' and 'agealpha' are not present in file."
+            raise Exception("variables: 'agec' and 'agealpha' are not present in file.")
 
 
         mask = agec>=1e-10
@@ -2425,11 +2426,11 @@ class Spatial(Grid):
             dphi_dz = (phi_npm[0:-1,:] - phi_npm[1:,:])/dz2
             
             # Take care of the near bed gradient
-            bedbot = np.ravel_multi_index((self.Nk,range(self.Nc)),(self.Nkmax,self.Nc))
+            bedbot = np.ravel_multi_index((self.Nk,list(range(self.Nc))),(self.Nkmax,self.Nc))
             Nk1=self.Nk-1
             Nk1[Nk1<0]=0
-            bedtop = np.ravel_multi_index((Nk1,range(self.Nc)),(self.Nkmax,self.Nc))
-            bedbot = np.ravel_multi_index((self.Nk,range(self.Nc)),(self.Nkmax,self.Nc))
+            bedtop = np.ravel_multi_index((Nk1,list(range(self.Nc))),(self.Nkmax,self.Nc))
+            bedbot = np.ravel_multi_index((self.Nk,list(range(self.Nc))),(self.Nkmax,self.Nc))
             dphi_dz.flat[bedbot] = (data.flat[bedtop]-data.flat[bedbot]) / dz2.flat[bedbot]
             
             return dphi_dz
@@ -2486,11 +2487,11 @@ class Spatial(Grid):
         ctop = self.getctop(eta)
         #dztop = self.dz[ctop]+eta
         dztop = z[ctop]+eta
-        dzz[ctop,range(self.Nc)]=dztop
+        dzz[ctop,list(range(self.Nc))]=dztop
 
         # Find dzz at the bottom
         dzbot = self.dv - z[self.Nk-1] 
-        dzz[self.Nk,range(self.Nc)]=dzbot
+        dzz[self.Nk,list(range(self.Nc))]=dzbot
 
         # Mask the cells
         Nk=self.Nk+1
@@ -2514,7 +2515,7 @@ class Spatial(Grid):
 
         dzf = np.repeat(self.dz[:,np.newaxis],Ne,axis=1)
 
-        dzf[etop,range(Ne)]=dztop
+        dzf[etop,list(range(Ne))]=dztop
 
         # Mask the cells
         #mask = self.get_zmask(etop,self.Nke)
@@ -2563,7 +2564,7 @@ class Spatial(Grid):
         mask = np.zeros(sz)
 
         nc = ktop.shape[0]
-        cols = [range(ktop[ii],nk[ii]) for ii in range(nc)]
+        cols = [list(range(ktop[ii],nk[ii])) for ii in range(nc)]
 
 
     def get_surfacevar(self,phi,ctop):
@@ -2576,7 +2577,7 @@ class Spatial(Grid):
             #layer
             return phi
         else:
-            j = range(self.Nc)
+            j = list(range(self.Nc))
             return phi[ctop[j],j]
 
     def get_seabedvar(self,phi):
@@ -2585,7 +2586,7 @@ class Spatial(Grid):
         """
         assert phi.shape==(self.Nkmax,self.Nc),'size mismatch'
 
-        j = range(self.Nc)
+        j = list(range(self.Nc))
         return phi[self.Nk[j],j]
 
     def get_edgevar(self,phi,k=0,U=None,method='max'):
@@ -2637,14 +2638,14 @@ class Spatial(Grid):
 
         elif method=='upwind':
             if U is None:
-                raise Exception, 'U must be set to use upwind method'
+                raise Exception('U must be set to use upwind method')
 
             ind = U>0
             nc1[ind]=nc2[ind]
             return phi[nc1]
 
         else:
-            raise Exception, 'Method: %s not implemented.'%method
+            raise Exception('Method: %s not implemented.'%method)
 
     def genTitle(self,tt=None):
         
@@ -2663,7 +2664,7 @@ class Spatial(Grid):
         elif self.klayer[0]>=0:
             zlayer = '%3.1f [m]'%self.z_r[self.klayer[0]]
 
-        if self.__dict__.has_key('time'):
+        if 'time' in self.__dict__:
             tstr = datetime.strftime(self.time[tt],\
                 '%Y-%m-%d %H:%M:%S')
             tstr = 'Time: %s'%tstr
@@ -2688,7 +2689,7 @@ class TimeSeries(timeseries, Spatial):
             self.Z = np.abs(Z)
         else:
             self.Z=Z
-        self.tstep = range(0,len(self.time)) # Load all time steps
+        self.tstep = list(range(0,len(self.time))) # Load all time steps
         
         self.update()
 
@@ -2727,7 +2728,7 @@ class TimeSeries(timeseries, Spatial):
         
         # Update the j position
         dist, j = self.find_nearest(self.XY)
-	self.j = j
+        self.j = j
         
         # Find the klayer
         if isinstance(self.Z,type(np.array(()))):
@@ -2745,7 +2746,7 @@ class TimeSeries(timeseries, Spatial):
                 self.klayer=self.klayer
 
         # Loads in a time series object                     
-	data = self.loadDataRaw().reshape((self.Nt, len(self.klayer)))
+        data = self.loadDataRaw().reshape((self.Nt, len(self.klayer)))
         timeseries.__init__(self, self.time[self.tstep], data)
         
     def contourf(self,clevs=20,**kwargs):
@@ -2902,7 +2903,7 @@ class Profile(object):
         if tmpvar == 'vbar':
             self.variable = 'v'
         if tmpvar in  ['rho','bvf2']:
-            if not nc.variables.has_key('rho'):
+            if 'rho' not in nc.variables:
                 self.variable='S'
             else:
                 self.variable='rho'
@@ -2932,7 +2933,7 @@ class Profile(object):
         #   buoyancy frequency        
         if tmpvar in ['ubar','vbar']:
             self.data=depthave(self.data,self.dz,np.abs(self.dv[self.indices]))
-        if tmpvar in ['rho','bvf2'] and not nc.variables.has_key('rho'):
+        if tmpvar in ['rho','bvf2'] and 'rho' not in nc.variables:
             self.data = linearEOS(self.data,S0=self.S0,beta=self.beta)
         if tmpvar == 'bvf2':
             self.data = calcN2(self.data,self.dz)
@@ -3028,7 +3029,7 @@ class Profile(object):
         Calculates distance along the transect
         """
         
-        print 'Setting x-axis to distance...'
+        print('Setting x-axis to distance...')
         
         x = self.xp[self.indices]
         y = self.yp[self.indices]
@@ -3052,9 +3053,9 @@ class Profile(object):
         """
         Pcolor plot of the given variable (doesn't like time variable)
         """     
-        if not self.__dict__.has_key('xplot'):
+        if 'xplot' not in self.__dict__:
             self.__loadXY()
-        if not self.__dict__.has_key('data'):
+        if 'data' not in self.__dict__:
             self.loadData()
             self.__checkDims()  
         if data == None:
@@ -3071,9 +3072,9 @@ class Profile(object):
         """
         Filled contour plot of the given variable
         """
-        if not self.__dict__.has_key('xplot'):
+        if 'xplot' not in self.__dict__:
             self.__loadXY()
-        if not self.__dict__.has_key('data'):
+        if 'data' not in self.__dict__:
             self.loadData()
             self.__checkDims()  
         if data == None:
@@ -3092,9 +3093,9 @@ class Profile(object):
         """
         Contour plot of the given variable
         """
-        if not self.__dict__.has_key('xplot'):
+        if 'xplot' not in self.__dict__:
             self.__loadXY()
-        if not self.__dict__.has_key('data'):
+        if 'data' not in self.__dict__:
             self.loadData()
             self.__checkDims()  
         if data == None:
@@ -3115,7 +3116,7 @@ class Profile(object):
         
         self.fig.savefig(outfile,dpi=dpi)
          
-        print 'SUNTANS image saved to file:%s'%outfile
+        print('SUNTANS image saved to file:%s'%outfile)
         
     def animate(self,fig=None,ax=None,h=None,cb=None,tsteps=None):
         """
@@ -3176,7 +3177,7 @@ def closePoly(x,y):
     nx = len(x)
     ny = len(y)
     if nx != ny:
-        print "Error: The lengths of vector x and y must be equal"
+        print("Error: The lengths of vector x and y must be equal")
         return
 
     x = np.reshape(x,(nx,1))
@@ -3210,8 +3211,8 @@ def readTXT(fname,sep=None):
     Reads a txt file into an array of floats
     """
     
-    fp = file(fname,'rt')
-    data = np.array([map(float,line.split(sep)) for line in fp])
+    fp = open(fname,'rt')
+    data = np.array([list(map(float,line.split(sep))) for line in fp])
     fp.close()
     
     return data
@@ -3319,7 +3320,7 @@ def edgeplot(xylines,edata,xlim=[0,1],ylim=[0,1],clim=None,**kwargs):
     Ne = xylines[0].shape[0]
 
     # Put this into the format needed by LineCollection
-    linesc = [zip(xylines[0][ii,:],xylines[1][ii,:]) for ii in range(Ne)]
+    linesc = [list(zip(xylines[0][ii,:],xylines[1][ii,:])) for ii in range(Ne)]
 
     collection = LineCollection(linesc,array=edata,**kwargs)
 
@@ -3403,23 +3404,23 @@ def usage():
     """
     Command line usage output
     """
-    print "--------------------------------------------------------------"
-    print "sunpy.py   -h                 # show this help message      "
-    print "         -f suntans.nc        # SUNTANS output netcdf file  "
-    print "         -v varname           # variable name to plot [default: u]      "
-    print "         -k  N                # vertical layer to plot [default: 0]"
-    print "         -t  N                # time step to plot. -1 = last step. [default: 0]"
-    print "         -j  N                # grid cell index to plot (timeseries only) [default: 0]"
-    print '         -c "N N"             # Color bar limits !! IN DOUBLE QUOTES !! [default: None]'
-    print "         -s figure.png        # Save to a figure"
-    print "         --animate            # Animate plot through all time steps"
-    print "         --timeseries         # Plot time series of individual point"
-    print "         --profile            # time-depth contour plot at cell: j"
-    print "         --vtk                # Use the vtk plotting libraries"
-    print "\n Example Usage:"
-    print "--------"
-    print " python sunpy.py -f suntans.nc -v temp -k 5 -t 10 -c '10 29' "
-    print ""
+    print("--------------------------------------------------------------")
+    print("sunpy.py   -h                 # show this help message      ")
+    print("         -f suntans.nc        # SUNTANS output netcdf file  ")
+    print("         -v varname           # variable name to plot [default: u]      ")
+    print("         -k  N                # vertical layer to plot [default: 0]")
+    print("         -t  N                # time step to plot. -1 = last step. [default: 0]")
+    print("         -j  N                # grid cell index to plot (timeseries only) [default: 0]")
+    print('         -c "N N"             # Color bar limits !! IN DOUBLE QUOTES !! [default: None]')
+    print("         -s figure.png        # Save to a figure")
+    print("         --animate            # Animate plot through all time steps")
+    print("         --timeseries         # Plot time series of individual point")
+    print("         --profile            # time-depth contour plot at cell: j")
+    print("         --vtk                # Use the vtk plotting libraries")
+    print("\n Example Usage:")
+    print("--------")
+    print(" python sunpy.py -f suntans.nc -v temp -k 5 -t 10 -c '10 29' ")
+    print("")
 
     
 if __name__ == '__main__':
@@ -3443,9 +3444,9 @@ if __name__ == '__main__':
                                        'timeseries',
                                        'profile',
                                        'vtk'])
-    except getopt.GetoptError,e:
-        print e
-        print "-"*80
+    except getopt.GetoptError as e:
+        print(e)
+        print("-"*80)
         usage()
         exit(1)
 
@@ -3455,7 +3456,7 @@ if __name__ == '__main__':
             exit(1)
         elif opt == '-f':
             ncfile = str(val)
-	    print ncfile
+            print(ncfile)
         elif opt == '-v':
             varname = val
         elif opt == '-t':

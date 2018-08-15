@@ -44,7 +44,7 @@ class suntides(Spatial):
         Spatial.__init__(self,ncfile,**kwargs)
         
         if self.hasVar('eta_amp') or self.hasVar('uc_amp'): # This check needs to be made more robust...
-            print 'Loading existing harmonic data...'
+            print('Loading existing harmonic data...')
             self._loadVars()
             
         else:
@@ -90,12 +90,12 @@ class suntides(Spatial):
                 self.variable=vv
                 
             if ndim  == 2 or self.Nkmax==1:
-                print 'Loading data from %s...'%vv
+                print('Loading data from %s...'%vv)
                 if vv in ['ubar','vbar']:
                     data=self.loadDataBar()
                 else:
                     data=self.loadData()
-                print 'Performing harmonic fit on variable, %s...'%(self.variable)
+                print('Performing harmonic fit on variable, %s...'%(self.variable))
                 self.Amp[vv], self.Phs[vv], self.Mean[vv] =\
                         harmonic_fit(time, data, self.frq, \
                         phsbase=self.reftime,\
@@ -107,9 +107,9 @@ class suntides(Spatial):
             elif ndim == 3:
                 for k in range(self.Nkmax):
                     self.klayer=[k]
-                    print 'Loading data...'
+                    print('Loading data...')
                     data = self.loadData()
-                    print 'Performing harmonic fit on variable, %s, layer = %d of %d...'%(self.variable,self.klayer[0],self.Nkmax)
+                    print('Performing harmonic fit on variable, %s, layer = %d of %d...'%(self.variable,self.klayer[0],self.Nkmax))
                     self.Amp[vv][:,k,:], self.Phs[vv][:,k,:], self.Mean[vv][k,:] =\
                         harmonic_fit(time, data, self.frq, \
                         phsbase=self.reftime,\
@@ -177,7 +177,7 @@ class suntides(Spatial):
         for vv in varlist:
             name = vv+'_amp'
             if self.hasVar(name):
-                print 'Loading %s harmonic data...'%(vv)
+                print('Loading %s harmonic data...'%(vv))
                 self.Amp.update({vv:self.nc.variables[name][:]})
                 
             name = vv+'_phs'
@@ -341,7 +341,7 @@ class suntides(Spatial):
         ell = self.getEllipse(barotropic=barotropic,k=k,con=con)
             
         # Create the ellipse collection
-        indices = range(0,self.Nc,subsample)
+        indices = list(range(0,self.Nc,subsample))
         widths = [ell[0][ii]*scale for ii in indices]
         heights = [ell[1][ii]*scale for ii in indices]
         angles = [ell[2][ii]*180.0/np.pi for ii in indices]
@@ -408,11 +408,11 @@ class suntides(Spatial):
         ax = fig.gca()
 
         # Need to do this to avoid sending different keys to contourf
-        if kwargs.has_key('titlestr'):
+        if 'titlestr' in kwargs:
             titlestr=kwargs.pop('titlestr')
         else:
             titlestr=''
-        if kwargs.has_key('colorbar'):
+        if 'colorbar' in kwargs:
             colorbar=kwargs.pop('colorbar')
         else:
             colorbar=None
@@ -500,7 +500,7 @@ class suntides(Spatial):
         
         # Create the output variables
         for vv in self.varnames:
-            print 'Creating variable: %s'%vv
+            print('Creating variable: %s'%vv)
 
             ndim = self._returnDim(vv)
             if ndim == 2:
@@ -565,7 +565,7 @@ class suntides(Spatial):
             nc.variables[name][:]=self.Var[vv]
         nc.close()        
         
-        print 'Completed writing harmonic output to:\n   %s'%outfile
+        print('Completed writing harmonic output to:\n   %s'%outfile)
 
 
     
@@ -573,7 +573,7 @@ def findCon(name,conList):
     """
     Returns the index of a constituent from a list
     """    
-    return (i for i, j in enumerate(conList) if j == name).next()
+    return next((i for i, j in enumerate(conList) if j == name))
 
 
 def QueryNC(dbfile,staname=None,yearrange=None,cons=None):
@@ -622,7 +622,7 @@ def QueryNC(dbfile,staname=None,yearrange=None,cons=None):
         cons=names
     ind = []
     for nn in cons:
-        ind.append((i for i, j in enumerate(names) if j == nn).next())                
+        ind.append(next((i for i, j in enumerate(names) if j == nn)))                
      
     # Output the query data into a nicer format 
     #amp = [if dd.has_key('ssh_amp'): dd['ssh_amp'][[1,3,8]].ravel() for dd in data]
@@ -633,7 +633,7 @@ def QueryNC(dbfile,staname=None,yearrange=None,cons=None):
     lat = []
     StationName=[]
     for ii,dd in enumerate(data):
-        if dd.has_key('ssh_amp'): 
+        if 'ssh_amp' in dd: 
             amp.append(dd['ssh_amp'][ind].ravel())
             
             if ydim == 'year':
@@ -650,7 +650,7 @@ def QueryNC(dbfile,staname=None,yearrange=None,cons=None):
 
                 
     
-        if dd.has_key('ssh_phs'): 
+        if 'ssh_phs' in dd: 
             phs.append(dd['ssh_phs'][ind].ravel())
         
     amp = np.array(amp)
@@ -672,9 +672,9 @@ def QueryNC(dbfile,staname=None,yearrange=None,cons=None):
     return amp, phs, time, lon, lat, StationName, cons
 
 def usage():
-    print "--------------------------------------------------------------"
-    print "suntides.py   -h                 # show this help message      "
-    print "python suntides.py 'ncfilename.nc' 'outputfile.nc' [-v 'var1 var2 ...] [-f 'K1 O1 M2...']"
+    print("--------------------------------------------------------------")
+    print("suntides.py   -h                 # show this help message      ")
+    print("python suntides.py 'ncfilename.nc' 'outputfile.nc' [-v 'var1 var2 ...] [-f 'K1 O1 M2...']")
     
 if __name__ == '__main__':
     """
@@ -690,9 +690,9 @@ if __name__ == '__main__':
     
     try:
         opts,rest = getopt.getopt(sys.argv[3:],'hv:f:')
-    except getopt.GetoptError,e:
-        print e
-        print "-"*80
+    except getopt.GetoptError as e:
+        print(e)
+        print("-"*80)
         usage()
         exit(1)
 
@@ -712,7 +712,7 @@ if __name__ == '__main__':
     	usage()
 	exit(1)
     
-    print ncfile, outfile, varnames, frqnames
+    print(ncfile, outfile, varnames, frqnames)
     # Call the object
     sun=suntides(ncfile,frqnames=frqnames)
     sun(tstart,tend,varnames=varnames)

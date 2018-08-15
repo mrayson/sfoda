@@ -21,7 +21,7 @@ from matplotlib.collections import PolyCollection
 import os
 from shapely import geometry
 
-from inpolygon import inpolygon
+from .inpolygon import inpolygon
    
 import pdb
 
@@ -419,6 +419,43 @@ def readraster(infile):
 
     return x, y, data
 
+
+def save_raster(output_file, Z, x, y, driver='GTiff'):
+    """
+    Save gridded data to a raster format
+
+    See http://www.gdal.org/formats_list.html for a list of driver codes
+    
+    Popular ones:
+        'GTiff' - geotiff
+        'AAIGrid' - ESRI gridded ascii
+    """
+
+    M,N = Z.shape
+
+    assert x.shape[0] == N
+    assert y.shape[0] == M
+
+    x0 = x[0]
+    y1 = y.max() # Upper left y
+    dx = np.mean(np.diff(x))
+    dy = -np.mean(np.diff(y))
+
+    # Create gtif
+    driver = gdal.GetDriverByName(driver)
+    dst_ds = driver.Create(output_file, N, M, 1, gdal.GDT_Byte )
+
+    # top left x, w-e pixel resolution, rotation, top left y, rotation, n-s pixel resolution
+    dst_ds.SetGeoTransform( [ x0, dx, 0, y1, 0, dy ] )
+
+    # set the reference info 
+    srs = osr.SpatialReference()
+    srs.SetWellKnownGeogCS("WGS84")
+    dst_ds.SetProjection( srs.ExportToWkt() )
+
+    # write the band
+    dst_ds.GetRasterBand(1).WriteArray(Z[::-1,:])
+
 def plotmap(shpfile,color='0.5',fieldname='FID',convert=None,zone=15,\
     scale=1.,offset=0.,subset=1):
     """
@@ -503,7 +540,7 @@ def Contour2Shp(C,outfile,projection='WGS84',zone=15,north=True):
     elif ext.lower()=='kml':
         driver = osgeo.ogr.GetDriverByName('KML')
     else:
-        print 'Error. Unknown file extension: %s'%ext.lower()
+        print('Error. Unknown file extension: %s'%ext.lower())
         return
     
     if os.path.exists(outfile):
@@ -566,7 +603,7 @@ def Contour2Shp(C,outfile,projection='WGS84',zone=15,north=True):
     
     # Close the shape file
     shapeData.Destroy()
-    print 'Complete - shapefile written to:\n      %s'%outfile
+    print('Complete - shapefile written to:\n      %s'%outfile)
  
 def Polygon2GIS(xynodes, shpfile, zone, CS='WGS84', north=True,
         data=None):
@@ -600,7 +637,7 @@ def Polygon2GIS(xynodes, shpfile, zone, CS='WGS84', north=True,
     elif ext.lower()=='kml':
         driver = osgeo.ogr.GetDriverByName('KML')
     else:
-        print 'Error. Unknown file extension: %s'%ext.lower()
+        print('Error. Unknown file extension: %s'%ext.lower())
         return
     
     
@@ -642,7 +679,7 @@ def Polygon2GIS(xynodes, shpfile, zone, CS='WGS84', north=True,
 
     # Close the shape file
     shapeData.Destroy()
-    print 'Complete - file written to:\n      %s'%shpfile
+    print('Complete - file written to:\n      %s'%shpfile)
 
 def shapely2shp(shapelyobject,outfile,atts=None):
     """
@@ -656,7 +693,7 @@ def shapely2shp(shapelyobject,outfile,atts=None):
         elif isinstance(att,str):   
             return ogr.OFTString
         else:
-            raise Exception, 'incompatible type: %s'%(type(att))
+            raise Exception('incompatible type: %s'%(type(att)))
 
     def get_shape_type(obj):
         if isinstance(obj,geometry.Polygon):
@@ -666,10 +703,10 @@ def shapely2shp(shapelyobject,outfile,atts=None):
         elif isinstance(obj,geometry.Point):
             return ogr.wkbPoint
         else:
-            raise Exeption, 'incompatible type: %s'%(type(obj))
+            raise Exeption('incompatible type: %s'%(type(obj)))
 
 
-    print 'Creating shape file: %s'%outfile
+    print('Creating shape file: %s'%outfile)
     checkfile(outfile)
 
     # Make sure the shapelyobject is in a list
@@ -684,11 +721,11 @@ def shapely2shp(shapelyobject,outfile,atts=None):
     layer = ds.CreateLayer('', None, shptype)
 
     if ds==None:
-        raise Exception, 'Cannot create file: %s'%outfile
+        raise Exception('Cannot create file: %s'%outfile)
 
     # Add attributes
     if not atts == None:
-        for vv in atts.keys():
+        for vv in list(atts.keys()):
             ftype = get_field_type(atts[vv][0])
             layer.CreateField(ogr.FieldDefn(vv, ftype))
 
@@ -700,7 +737,7 @@ def shapely2shp(shapelyobject,outfile,atts=None):
         feat = ogr.Feature(defn)
 
         if not atts == None:
-            for vv in atts.keys():
+            for vv in list(atts.keys()):
                 feat.SetField(vv, atts[vv][ii])
 
         # Make a geometry, from Shapely object
@@ -712,12 +749,12 @@ def shapely2shp(shapelyobject,outfile,atts=None):
 
     # Save and close everything
     ds = layer = feat = geom = None
-    print 'Done.'
+    print('Done.')
 
 
 def checkfile(shpfile):
     if os.path.isfile(shpfile):
-        print 'File %s exists. Removing...'%shpfile
+        print('File %s exists. Removing...'%shpfile)
         os.remove(shpfile) 
 
 def contour2shapely(C):

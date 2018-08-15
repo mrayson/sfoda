@@ -99,12 +99,12 @@ class ufilter(object):
             
         """
         # Compute the spatial tree
-        print 'Building KD-Tree...'
+        print('Building KD-Tree...')
         kd = spatial.cKDTree(self.X)
         eps=1e-6
 
         # Initialise the sparse matrix
-        print 'Creating an %d x %d sparse matrix...'%(self.n, self.n)
+        print('Creating an %d x %d sparse matrix...'%(self.n, self.n))
         #self.G = sparse.lil_matrix((self.n,self.n))
         weights = np.zeros((self.n, self.kmax))
         rows = np.zeros((self.n, self.kmax), dtype=np.int)
@@ -118,7 +118,7 @@ class ufilter(object):
             ii+=1
             perccomplete = float(nn)/float(self.n)*100.0
             if perccomplete > printstep0:
-                print '%d %% complete...'%(int(perccomplete))
+                print('%d %% complete...'%(int(perccomplete)))
                 printstep0+=printstep
             #print nn
             # Find all of the points within c * p distance from point
@@ -141,10 +141,10 @@ class ufilter(object):
             mask[nn,0:nnear] = True
 
         # build a sparse matrix here
-        print 'Building the CSR matrix...'
+        print('Building the CSR matrix...')
         self.G = sparse.csr_matrix((weights[mask], (rows[mask],cols[mask])),\
                 shape=(self.n, self.n))
-        print 'Done'
+        print('Done')
 
 
     def BuildFilterMatrix(self):
@@ -154,11 +154,11 @@ class ufilter(object):
             
         """
         # Compute the spatial tree
-        print 'Building KD-Tree...'
+        print('Building KD-Tree...')
         kd = spatial.cKDTree(self.X)
         eps=1e-6
         # Initialise the sparse matrix
-        print 'Creating an %d x %d sparse matrix...'%(self.n, self.n)
+        print('Creating an %d x %d sparse matrix...'%(self.n, self.n))
         self.G = sparse.lil_matrix((self.n,self.n))
         
         printstep = 5 
@@ -168,7 +168,7 @@ class ufilter(object):
             ii+=1
             perccomplete = float(nn)/float(self.n)*100.0
             if perccomplete > printstep0:
-                print '%d %% complete...'%(int(perccomplete))
+                print('%d %% complete...'%(int(perccomplete)))
                 printstep0+=printstep
             #print nn
             # Find all of the points within c * p distance from point
@@ -191,17 +191,17 @@ class ufilter(object):
         Vectorized version of the above
         """
         # Compute the spatial tree
-        print 'Building KD-Tree...'
+        print('Building KD-Tree...')
         kd = spatial.cKDTree(self.X)
         eps=1e-6
 
         # Initialise the sparse matrix
-        print 'Creating an %d x %d sparse matrix...'%(self.n, self.n)
+        print('Creating an %d x %d sparse matrix...'%(self.n, self.n))
         self.G = sparse.lil_matrix((self.n,self.n))
         
         # Find all of the points within c * p distance from point
 
-        print 'Querying matrix...'
+        print('Querying matrix...')
         dx, i = kd.query(self.X+eps,k=self.kmax,distance_upper_bound=self.c*self.p)
         
         ind = np.isinf(dx)

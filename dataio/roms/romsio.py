@@ -26,7 +26,7 @@ from soda.dataio.datadownload.mythredds import MFncdap
 try:
     from octant.slice import isoslice
 except:
-    print 'Warning - could not import octant package.'
+    print('Warning - could not import octant package.')
 
 import pdb
 
@@ -56,7 +56,7 @@ class ROMSGrid(object):
             try:
                 setattr(self,vv,nc.variables[vv][:])
             except:
-                print 'Cannot find variable: %s'%vv
+                print('Cannot find variable: %s'%vv)
 
         nc.close()
         
@@ -114,7 +114,7 @@ class ROMSGrid(object):
                 nc.variables[name].units = units
             nc.variables[name][:] = var
             if verbose:
-                print ' ... wrote ', name
+                print(' ... wrote ', name)
             
         
         # Grid variables
@@ -264,7 +264,7 @@ class ROMS(ROMSGrid):
         try:
             self._loadTime()
         except:
-            print 'No time variable.'
+            print('No time variable.')
                 
         
         # Check the spatial indices of the variable
@@ -285,7 +285,7 @@ class ROMS(ROMSGrid):
         """
         
         self.coordvars=[]
-        for vv in self.nc.variables.keys():
+        for vv in list(self.nc.variables.keys()):
             if hasattr(self.nc.variables[vv],'coordinates'):
                 #print '%s - %s'%(vv,self.nc.variables[vv].long_name)
                 self.coordvars.append(vv)
@@ -321,7 +321,7 @@ class ROMS(ROMSGrid):
         
         if self.ndim == 4 and self.zlayer==True:
             # Slice along z layers
-            print 'Extracting data along z-coordinates...'
+            print('Extracting data along z-coordinates...')
             dataz = np.zeros((len(tstep),)+self.Z.shape+self.X.shape)
             
             for ii,tt in enumerate(tstep):
@@ -411,10 +411,10 @@ class ROMS(ROMSGrid):
         
         sz = var.shape
         if not sz[0] == self.Nz:
-            raise Exception, 'length of dimension 0 must equal %d (currently %d)'%(self.Nz,sz[0])
+            raise Exception('length of dimension 0 must equal %d (currently %d)'%(self.Nz,sz[0]))
         
         if not len(sz)==3:
-            raise Exception, 'only 3-D arrays are supported.'
+            raise Exception('only 3-D arrays are supported.')
           
         if grid == 'rho':
             h = self.h
@@ -442,10 +442,10 @@ class ROMS(ROMSGrid):
         
         sz = var.shape
         if not sz[0] == self.Nz:
-            raise Exception, 'length of dimension 0 must equal %d (currently %d)'%(self.Nz,sz[0])
+            raise Exception('length of dimension 0 must equal %d (currently %d)'%(self.Nz,sz[0]))
         
         if not len(sz)==3:
-            raise Exception, 'only 3-D arrays are supported.'
+            raise Exception('only 3-D arrays are supported.')
           
         if grid == 'rho':
             h = self.h
@@ -511,7 +511,7 @@ class ROMS(ROMSGrid):
         sz = var.shape
         #print sz
         if not sz[0] == self.Nz:
-            raise Exception, 'length of dimension 0 must equal %d (currently %d)'%(self.Nz,sz[0])
+            raise Exception('length of dimension 0 must equal %d (currently %d)'%(self.Nz,sz[0]))
         
        
         h = self.h[self.JRANGE[0]:self.JRANGE[1],self.IRANGE[0]:self.IRANGE[1]].squeeze()            
@@ -699,7 +699,7 @@ class ROMS(ROMSGrid):
         if n1==n2:
             return [n1,n2]
         else:
-            return range(n1,n2)
+            return list(range(n1,n2))
 
     
     def _genTitle(self,tstep):
@@ -720,7 +720,7 @@ class ROMS(ROMSGrid):
         #print 'updating coordinate info...'
         # check if the variable is in the file to begin
         if varname not in self.coordvars:
-            print 'Warning - variable %s not in file'%varname
+            print('Warning - variable %s not in file'%varname)
             varname=self.coordvars[0]
             self.varname=varname
 
@@ -741,11 +741,11 @@ class ROMS(ROMSGrid):
             
         # Check the dimension size
         if self.JRANGE[1] > self[self.xcoord].shape[0]+1:
-            print 'Warning JRANGE outside of size range. Setting equal size.'
+            print('Warning JRANGE outside of size range. Setting equal size.')
             self.JRANGE[1] = self[self.xcoord].shape[0]+1
             
         if self.IRANGE[1] > self[self.xcoord].shape[1]+1:
-            print 'Warning JRANGE outside of size range. Setting equal size.'
+            print('Warning JRANGE outside of size range. Setting equal size.')
             self.IRANGE[1] = self[self.xcoord].shape[1]+1
             
         self.X = self[self.xcoord][self.JRANGE[0]:self.JRANGE[1],self.IRANGE[0]:self.IRANGE[1]]
@@ -800,14 +800,14 @@ class ROMS(ROMSGrid):
             self.Nz = len(self[self.zcoord])
 
             if self.K[0] == -99:
-                self.K = range(0,self.Nz)
+                self.K = list(range(0,self.Nz))
 
             if not len(self.K) == self.Nz:
-                self.K = range(0,self.Nz)
+                self.K = list(range(0,self.Nz))
                 
             if self.zlayer==True: # Load all layers when zlayer is true
                 #self.Z = np.array(self.K)
-                self.K = range(0,self.Nz)
+                self.K = list(range(0,self.Nz))
                 
             if self.zcoord == 's_rho':
                 self.S = self.s_rho[self.K]
@@ -837,7 +837,7 @@ class ROMS(ROMSGrid):
         Load the variable coordinates into a dictionary
         """
         self.varcoords={}
-        for vv in self.nc.variables.keys():
+        for vv in list(self.nc.variables.keys()):
             if hasattr(self.nc.variables[vv],'coordinates'):
                 self.varcoords.update({vv:self.nc.variables[vv].coordinates})
                 
@@ -893,11 +893,11 @@ class ROMSLagSlice(ROMS):
         Load the variable name and interpolate onto all time steps
         """
         # Load the data
-        self.loadData(varname=varname,tstep=range(self.Nt))
+        self.loadData(varname=varname,tstep=list(range(self.Nt)))
 
         # Interpolate onto the time step
         self.slicedata=np.zeros((self.Nt,self.ntrack,self.nwidth))
-        print 'Interpolating slice data...'
+        print('Interpolating slice data...')
         for tt in range(self.Nt):
             #print 'Interpolating step %d of %d...'%(tt,self.Nt)
             self.slicedata[tt,...]=\
@@ -909,13 +909,13 @@ class ROMSLagSlice(ROMS):
         """
         if self.xcoord == 'lon_rho':
             xyout = np.array([self.lonslice.ravel(),self.latslice.ravel()]).T
-            if not self.__dict__.has_key('Frho'):
+            if 'Frho' not in self.__dict__:
                 xy = np.array([self.lon_rho.ravel(),self.lat_rho.ravel()]).T
                 Frho = interpXYZ(xy, xyout)
             F = Frho
         elif self.xcoord=='lon_psi':
             xyout = np.array([self.lonslice.ravel(),self.latslice.ravel()]).T
-            if not self.__dict__.has_key('Fpsi'):
+            if 'Fpsi' not in self.__dict__:
                 xy = np.array([self.lon_psi.ravel(),self.lat_psi.ravel()]).T
                 Fpsi = interpXYZ(xy, xyout)
             F = Fpsi
@@ -944,8 +944,8 @@ class ROMSLagSlice(ROMS):
             (self.track_tsec+dt-self.tsec[tlow])/(self.tsec[thigh]-self.tsec[tlow])
         w1 = np.repeat(w1[...,np.newaxis],self.nwidth,axis=-1)
 
-        return (1.-w1)*self.slicedata[tlow,range(self.ntrack),:] +\
-            w1*self.slicedata[thigh,range(self.ntrack),:]
+        return (1.-w1)*self.slicedata[tlow,list(range(self.ntrack)),:] +\
+            w1*self.slicedata[thigh,list(range(self.ntrack)),:]
             
 
     def project(self,lon,lat):
@@ -1074,13 +1074,13 @@ class ROMSLagSlice(ROMS):
         """
         if self.xcoord == 'lon_rho':
             xyout = np.array([self.lonslice.ravel(),self.latslice.ravel()]).T
-            if not self.__dict__.has_key('Frho'):
+            if 'Frho' not in self.__dict__:
                 xy = np.array([self.lon_rho.ravel(),self.lat_rho.ravel()]).T
                 Frho = interpXYZ(xy, xyout)
             F = Frho
         elif self.xcoord=='lon_psi':
             xyout = np.array([self.lonslice.ravel(),self.latslice.ravel()]).T
-            if not self.__dict__.has_key('Fpsi'):
+            if 'Fpsi' not in self.__dict__:
                 xy = np.array([self.lon_psi.ravel(),self.lat_psi.ravel()]).T
                 Fpsi = interpXYZ(xy, xyout)
             F = Fpsi
@@ -1144,7 +1144,7 @@ class ROMSslice(ROMS):
         Returns all of the data at each point along the slice with the
         starting point for each slice beginning at time.
         """
-        self.tstep = range(self.Nt)
+        self.tstep = list(range(self.Nt))
 
         data = self.__call__(varname)
         
@@ -1181,7 +1181,7 @@ class roms_timeseries(ROMS, timeseries):
         # Initialise the class
         ROMS.__init__(self,ncfile,varname=self.varname,K=[-99])
         
-        self.tstep = range(0,self.Nt) # Load all time steps
+        self.tstep = list(range(0,self.Nt)) # Load all time steps
         
         self.update()
         
@@ -1366,7 +1366,7 @@ class roms_subset(ROMSGrid):
         fname = self.fname[tstep]
         t0 = self.tind[tstep]
         
-        print 'Reading data at time: %s...'%datetime.strftime(self.time[tstep],'%Y-%m-%d %H:%M:%S')        
+        print('Reading data at time: %s...'%datetime.strftime(self.time[tstep],'%Y-%m-%d %H:%M:%S'))        
         
         nc = Dataset(fname)
         
@@ -1433,14 +1433,14 @@ class roms_subset(ROMSGrid):
                 nc.variables[name].units = units
             nc.variables[name][:] = var
             if verbose:
-                print ' ... wrote ', name
+                print(' ... wrote ', name)
                 
         def create_nc_var(name, dimensions, units=None):
             nc.createVariable(name, 'f8', dimensions)
             if units is not None:
                 nc.variables[name].units = units
             if verbose:
-                print ' ... wrote ', name
+                print(' ... wrote ', name)
         
         # Grid variables
         write_nc_var(self.angle, 'angle', ('eta_rho', 'xi_rho'))
@@ -1499,7 +1499,7 @@ class roms_subset(ROMSGrid):
             self.ReadData(ii)
             self.Writedata(ii)
             
-        print '##################\nDone!\n##################'
+        print('##################\nDone!\n##################')
         
 class roms_interp(ROMSGrid):
     """
@@ -1651,27 +1651,27 @@ class roms_interp(ROMSGrid):
         
         # Interpolate temporally
         if self.Nt_roms > 1:
-	    print 'Temporally interpolating ROMS variables...'
+            print('Temporally interpolating ROMS variables...')
             troms = othertime.SecondsSince(self.time)
             tout = othertime.SecondsSince(self.timei)
             if seth:
-                print '\tzeta...'
+                print('\tzeta...')
                 Ft = interpolate.interp1d(troms,zetaroms,axis=0,kind=tinterp,bounds_error=False)
                 zetaout = Ft(tout)
             else:
                 zetaout=-1
 
-            print '\ttemp...'
+            print('\ttemp...')
             Ft = interpolate.interp1d(troms,temproms,axis=0,kind=tinterp,bounds_error=False)
             tempout = Ft(tout)
-            print '\tsalt...'
+            print('\tsalt...')
             Ft = interpolate.interp1d(troms,saltroms,axis=0,kind=tinterp,bounds_error=False)
             saltout = Ft(tout)
             if setUV:
-                print '\tu...'
+                print('\tu...')
                 Ft = interpolate.interp1d(troms,uroms,axis=0,kind=tinterp,bounds_error=False)
                 uout = Ft(tout)
-                print '\tv...'
+                print('\tv...')
                 Ft = interpolate.interp1d(troms,vroms,axis=0,kind=tinterp,bounds_error=False)
                 vout = Ft(tout)
             else:
@@ -1704,8 +1704,8 @@ class roms_interp(ROMSGrid):
         fname = self.fname[tstep]
         t0 = self.tind[tstep]
         
-        print 'Interpolating data at time: %s of %s...'%(datetime.strftime(self.time[tstep],'%Y-%m-%d %H:%M:%S'),\
-        datetime.strftime(self.time[-1],'%Y-%m-%d %H:%M:%S'))
+        print('Interpolating data at time: %s of %s...'%(datetime.strftime(self.time[tstep],'%Y-%m-%d %H:%M:%S'),\
+        datetime.strftime(self.time[-1],'%Y-%m-%d %H:%M:%S')))
         
         nc = Dataset(fname)
         

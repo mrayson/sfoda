@@ -77,7 +77,7 @@ def interpWeatherStations(latlon,tstart,tend,dt,utmzone,dbfile, maxgap=40, showp
     output = {}
     # Read in the semi-processed data
     for vv in varnames:
-        print 'Interpolating variable %s...'%vv
+        print('Interpolating variable %s...'%vv)
         outvar = ['NetCDF_Filename','NetCDF_GroupID','StationName']
         tablename = 'observations'
         condition = 'Variable_Name = "%s"' % vv + \
@@ -130,7 +130,7 @@ def interpWeatherStations(latlon,tstart,tend,dt,utmzone,dbfile, maxgap=40, showp
                     gap = 0   
             #print t1,t2,len(timenow),gapsize
             if gapsize > maxgap:
-                print 'Removing data point - gap size %d is > %d'%(gapsize,maxgap)
+                print('Removing data point - gap size %d is > %d'%(gapsize,maxgap))
                 data.pop(ii)
             else:
                 ii+=1
@@ -212,7 +212,7 @@ def dataQC(data,nctime,varnames):
     ii=-1       
     for dd in data:
         ii+=1
-        for v in dd.keys():
+        for v in list(dd.keys()):
             if v in varnames:        
                 if np.size(dd[v]['Data']) < 1:
                     data[ii].pop(v)
@@ -221,7 +221,7 @@ def dataQC(data,nctime,varnames):
     ii=-1
     for dd in data:
         ii+=1
-        for v in dd.keys():
+        for v in list(dd.keys()):
             if v in varnames:           
                 ind = np.isfinite(dd[v]['Data'])
                 if ind.sum() < 2:
@@ -231,7 +231,7 @@ def dataQC(data,nctime,varnames):
     ii=-1   
     for dd in data:
         ii+=1
-        for v in dd.keys():
+        for v in list(dd.keys()):
             if v in varnames:
                 ind = np.isfinite(dd[v]['Data'])
                 timenow = np.array(dd[v]['Time'])
@@ -252,17 +252,17 @@ def returnTime(timestart,timeend,dt):
 def write2NC(ncfile,coords,output,nctime):
 
     """ Writes the data to a netcdf file"""
-    print 'Writing to netcdf file: %s',ncfile
+    print('Writing to netcdf file: %s',ncfile)
     # Create an output netcdf file
     #nc = Dataset(ncfile, 'w', format='NETCDF4_CLASSIC')
     nc = Dataset(ncfile, 'w', format='NETCDF4')
     
     # Define the dimensions
     nc.createDimension('nt',0)
-    for vv in output.keys():
+    for vv in list(output.keys()):
         dimname = 'N'+vv
         dimlength = np.size(coords['x_'+vv])
-        print '%s, %d' % (dimname, dimlength)
+        print('%s, %d' % (dimname, dimlength))
         nc.createDimension(dimname,dimlength)
         
     # Create the coordinate variables
@@ -271,7 +271,7 @@ def write2NC(ncfile,coords,output,nctime):
     tmpvar[:] = nctime
     tmpvar.long_name = 'time'
     tmpvar.units = 'seconds since 1990-01-01 00:00:00'
-    for vv in output.keys():
+    for vv in list(output.keys()):
         dimname = 'N'+vv
         varx = 'x_'+vv
         vary = 'y_'+vv
@@ -292,7 +292,7 @@ def write2NC(ncfile,coords,output,nctime):
         tmpvarz.setncattr('units','m')
         
     # Create the main variables
-    for vv in output.keys():
+    for vv in list(output.keys()):
         dimname = 'N'+vv
         varx = 'x_'+vv
         vary = 'y_'+vv
@@ -300,14 +300,14 @@ def write2NC(ncfile,coords,output,nctime):
         # Write the data
         tmpvar[:] = output[vv]['Data']
         # Write the attributes
-        for aa in output[vv].keys():
+        for aa in list(output[vv].keys()):
             if aa != 'Data':
                 tmpvar.setncattr(aa,output[vv][aa])
         # Create the all important coordinate attribute
         tmpvar.setncattr('coordinates',varx+','+vary)
         
     nc.close()
-    print 'Done.'
+    print('Done.')
     return
 
 def write2CSV(latlon,timestart,timeend,dt,localdir,csvfile):
@@ -333,7 +333,7 @@ def write2CSV(latlon,timestart,timeend,dt,localdir,csvfile):
                 lon = dd['Longitude']
                 lat = dd['Latitude']
                 varname = dd[vv]['Longname']
-                if dd[vv].has_key('Height'):
+                if 'Height' in dd[vv]:
                     ele = dd[vv]['Height']
                 else:
                     ele = 0.0
@@ -369,7 +369,7 @@ def write2SHP(latlon,timestart,timeend,dt,localdir,shpfile):
                 lon = dd['Longitude']
                 lat = dd['Latitude']
                 varname = dd[vv]['Longname']
-                if dd[vv].has_key('Height'):
+                if 'Height' in dd[vv]:
                     ele = dd[vv]['Height']
                 else:
                     ele = 0.0
@@ -436,10 +436,10 @@ def narr2suntans(outfile,tstart,tend,bbox,utmzone):
     coords={}
     
     # Get all data
-    narrvars = [vv for vv in varlookup.itervalues()]
+    narrvars = [vv for vv in varlookup.values()]
     data = narr(narrvars) # This stores all of the data in a dictionary    
     
-    for vv in varlookup.keys():
+    for vv in list(varlookup.keys()):
 
         # Convert the units
         vnarr = varlookup[vv]
@@ -491,7 +491,7 @@ def narr2suntansrad(outfile,tstart,tend,bbox,utmzone):
     # Loop through each variable and store in a dictionary
     output = {}
     coords={}
-    for vv in varlookup.keys():
+    for vv in list(varlookup.keys()):
         
         data = narr(varlookup[vv])
         

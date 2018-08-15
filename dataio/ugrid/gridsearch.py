@@ -56,7 +56,7 @@ class GridSearch(HybridGrid):
         
         # Step 1) Find the nearest node
         if self.verbose:
-            print 'Finding nearest nodes...'
+            print('Finding nearest nodes...')
         self.xpt = xin
         self.ypt = yin
         
@@ -121,11 +121,10 @@ class GridSearch(HybridGrid):
             
   
     def move_inside(self,cell,x,y,DINSIDE=5.0):
-    	"""
+        """
         Moves a point inside a grid by finding the closest point along an edge
         """
-
-        ind = cell==-1
+        ind =  cell == -1
         if not ind.any():
             return x,y,cell
         
@@ -215,13 +214,13 @@ class GridSearch(HybridGrid):
         #ynew[ind2]=P3.y[ind2]+0.1
 
 
-    #	#plt.figure()
-    #	#plt.plot(P1.x,P1.y,'bo')
-    #	#plt.plot(P2.x,P2.y,'bo')
-    #	#plt.plot(P3.x,P3.y,'go')
-    #	#plt.plot(xnew,ynew,'rx')
-    #	#plt.show()
-    #	#pdb.set_trace()
+        #	#plt.figure()
+        #	#plt.plot(P1.x,P1.y,'bo')
+        #	#plt.plot(P2.x,P2.y,'bo')
+        #	#plt.plot(P3.x,P3.y,'go')
+        #	#plt.plot(xnew,ynew,'rx')
+        #	#plt.show()
+        #	#pdb.set_trace()
 
         #cellnew = self.tsearch(xnew,ynew)
 
@@ -246,7 +245,7 @@ class GridSearch(HybridGrid):
         # Step 2) Find the cells surrounding each node and check if the point is inside each one       
         cellind = -1*np.ones((Np,),dtype=np.int32)
         if self.verbose:
-            print 'Finding cells...'
+            print('Finding cells...')
         for nn in range(Np):
             #print '\t%d of %d'%(nn,Np)
             cell =  self.pnt2cells(node[nn])
@@ -290,18 +289,18 @@ class GridSearch(HybridGrid):
         
         (Stolen from Rusty's TriGrid class)
         """
-        if not self.__dict__.has_key('_mypnt2cells'):
+        if '_mypnt2cells' not in self.__dict__:
             # build hash table for point->cell lookup
             self._mypnt2cells = {}
             for i in range(self.Nc):
                 for j in range(self.nfaces[i]):
-                    if not self._mypnt2cells.has_key(self.cells[i,j]):
+                    if self.cells[i,j] not in self._mypnt2cells:
                         #self._pnt2cells[self.cells[i,j]] = set()
                         self._mypnt2cells[self.cells[i,j]] = []
                     #self._pnt2cells[self.cells[i,j]].add(i)
                     self._mypnt2cells[self.cells[i,j]].append(i)
 
-        if self._mypnt2cells.has_key(pnt_i):
+        if pnt_i in self._mypnt2cells:
             return self._mypnt2cells[pnt_i]
         else:
             return [-1]
@@ -313,7 +312,7 @@ class GridSearch(HybridGrid):
         Uses the scipy KDTree routine
         """
         
-        if not self.__dict__.has_key('kd'):
+        if 'kd' not in self.__dict__:
             self.kd = cKDTree(np.vstack((self.xp,self.yp)).T)
     
         # Perform query on all of the points in the grid
@@ -328,7 +327,7 @@ class GridSearch(HybridGrid):
         Uses the scipy KDTree routine
         """
         
-        if not self.__dict__.has_key('kde'):
+        if 'kde' not in self.__dict__:
             self.kde = cKDTree(np.vstack((self.xe,self.ye)).T)
     
         # Perform query on all of the points in the grid
@@ -427,9 +426,9 @@ class GridSearch(HybridGrid):
         cells[self.cells.mask]=0
 
         xp[:,:self.maxfaces]=self.xp[cells]
-        xp[range(self.Nc),self.nfaces]=self.xp[cells[:,0]]
+        xp[list(range(self.Nc)),self.nfaces]=self.xp[cells[:,0]]
         yp[:,:self.maxfaces]=self.yp[cells]
-        yp[range(self.Nc),self.nfaces]=self.yp[cells[:,0]]
+        yp[list(range(self.Nc)),self.nfaces]=self.yp[cells[:,0]]
 
         #xp[self.cells.mask]==0
         #yp[self.cells.mask]==0

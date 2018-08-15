@@ -289,7 +289,7 @@ class SunPlotPy(Spatial, QMainWindow):
         #self.show_edge_check.toggle()
         self.show_edge_check.stateChanged.connect(self.on_show_edges)
 
-        cmaps = matplotlib.cm.datad.keys()
+        cmaps = list(matplotlib.cm.datad.keys())
         cmaps.sort()
         self.colormap_list = QComboBox()
         self.colormap_list.clear()
@@ -368,7 +368,7 @@ class SunPlotPy(Spatial, QMainWindow):
             self.climlow.setText('%3.1f'%self.clim[0])
             self.climhigh.setText('%3.1f'%self.clim[1])
          
-        if self.__dict__.has_key('collection'):
+        if 'collection' in self.__dict__:
             #self.collection.remove()
             self.axes.collections.remove(self.collection)
         else:
@@ -385,7 +385,7 @@ class SunPlotPy(Spatial, QMainWindow):
                 self.collection.set_edgecolors(self.collection.to_rgba(np.array((self.data[:])))) 
         elif self.collectiontype=='edges':
             xylines = [self.xp[self.edges],self.yp[self.edges]]
-            linesc = [zip(xylines[0][ii,:],xylines[1][ii,:]) for ii in range(self.Ne)]
+            linesc = [list(zip(xylines[0][ii,:],xylines[1][ii,:])) for ii in range(self.Ne)]
             self.collection = LineCollection(linesc,array=np.array(self.data[:]),cmap=self.cmap)
 
         self.collection.set_clim(vmin=self.clim[0],vmax=self.clim[1])
@@ -397,12 +397,12 @@ class SunPlotPy(Spatial, QMainWindow):
 
         # create a colorbar
 
-        if not self.__dict__.has_key('cbar'):
+        if 'cbar' not in self.__dict__:
             self.cbar = self.fig.colorbar(self.collection)
             #SetAxColor(self.cbar.ax.axes,self.textcolor,self.bgcolor)
         else:
             #pass
-            print 'Updating colorbar...'
+            print('Updating colorbar...')
             #self.cbar.check_update(self.collection)
             self.cbar.on_mappable_changed(self.collection)
 
@@ -514,7 +514,7 @@ class SunPlotPy(Spatial, QMainWindow):
 
 
     def on_select_depth(self, event):
-        print event
+        print(event)
         kindex = event
         if not self.klayer[0]==kindex:
             # Check if its the seabed or surface value
@@ -539,9 +539,9 @@ class SunPlotPy(Spatial, QMainWindow):
             return
 
         self.statusBar().showMessage("Opening SUNTANS file: %s" % path)
-    	try:
+        try:
     	    Spatial.__init__(self, path, _FillValue=self._FillValue)
-    	except:
+        except:
     	    Spatial.__init__(self, path, _FillValue=-999999)
         startvar='dv'
 
@@ -552,7 +552,7 @@ class SunPlotPy(Spatial, QMainWindow):
         self.variable_list.clear()
         self.variable_list.addItems(vnames)
         # Update the time drop down list
-        if self.__dict__.has_key('time'):
+        if 'time' in self.__dict__:
             self.timestr = [datetime.strftime(tt,'%d-%b-%Y %H:%M:%S') for tt in self.time]
         else:
             # Assume that it is a harmonic-type file
@@ -571,7 +571,7 @@ class SunPlotPy(Spatial, QMainWindow):
         
         dir_ = QFileDialog.getExistingDirectory(None, 'Select a SUNTANS grid folder:',\
                 '~/', QFileDialog.ShowDirsOnly)
-        print dir_
+        print(dir_)
         
         if dir_ is not None:
             path = dir_
@@ -581,7 +581,7 @@ class SunPlotPy(Spatial, QMainWindow):
             Grid.__init__(self,path)
 
             # Plot the Grid
-            if self.__dict__.has_key('collection'):
+            if 'collection' in self.__dict__:
                 self.axes.collections.remove(self.collection)
 
             self.axes,self.collection = self.plotmesh(ax=self.axes,edgecolors='y')
@@ -713,7 +713,7 @@ class SunPlotPy(Spatial, QMainWindow):
         
         dir_ = QFileDialog.getSaveFileName(None, 'Save animation to file:',\
                 '~/', filters)
-        print dir_
+        print(dir_)
         
         #dlg = wx.FileDialog(
         #    self, 
@@ -760,7 +760,7 @@ class SunPlotPy(Spatial, QMainWindow):
             if ext=='.gif':
                 self.anim.save(outfile,writer='imagemagick',fps=6)
             elif ext=='.mp4':
-                print 'Saving html5 video...'
+                print('Saving html5 video...')
                 # Ensures html5 compatibility
                 self.anim.save(outfile,fps=6,\
                     writer='ffmpeg',\
@@ -775,8 +775,8 @@ class SunPlotPy(Spatial, QMainWindow):
             self.tstep=self.tindex
             self.loadData()
             self.update_figure()
-            print 'Finished saving animation to %s'%outfile
-            print 72*'#'
+            print('Finished saving animation to %s'%outfile)
+            print(72*'#')
 
             #if not self.plot_type=='particles':
             #    self.loadData()

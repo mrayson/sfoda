@@ -52,7 +52,7 @@ class kriging(object):
                 k=self.NNear)
         
         self.Nc = np.size(self.ind,axis=0)
-        print '%d interpolation points.'%self.Nc
+        print('%d interpolation points.'%self.Nc)
 
         #get_weights = np.vectorize(self.get_weights)
         W = [self.get_weights(dist[ii,:], self.XYin[self.ind[ii,:],0],\
