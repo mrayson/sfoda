@@ -8,7 +8,29 @@ import numpy as np
 
 import pdb
 
-def filt_gaps(y, mask, dt, tau):
+def _filt(yo, mask, dt, tau):
+    n = yo.size
+    yf = np.zeros_like(yo)
+
+    if ~mask[0]:
+        yf[0] = yo[0]
+    else:
+        # Set the initial value as the mean
+        yf[0] = np.nanmean(yo[~mask])
+
+    cff = dt/tau
+    ytmp = yf[0]
+    for ii in range(0,n-1):
+        if ~mask[ii+1]:
+            yf[ii+1] = yf[ii] + cff*(yo[ii+1] - yf[ii])
+            ytmp = yo[ii+1]
+        else:
+            yf[ii+1] = yf[ii] + cff*(ytmp - yf[ii])
+
+    return yf
+
+
+def filt_gaps(y, mask, dt, tau, order=1):
     """
     Simple unit impulse low-pass filter 
 
@@ -16,26 +38,15 @@ def filt_gaps(y, mask, dt, tau):
     
     Returns a filtered vector with no gaps
     """
-    
-    n = y.size
-    yf = np.zeros_like(y)
 
-    if ~mask[0]:
-        yf[0] = y[0]
-    else:
-        # Set the initial value as the mean
-        yf[0] = np.nanmean(y[~mask])
-
-    cff = dt/tau
-    ytmp = yf[0]
-    for ii in range(0,n-1):
-        if ~mask[ii+1]:
-            yf[ii+1] = yf[ii] + cff*(y[ii+1] - yf[ii])
-            ytmp = y[ii+1]
+    for kk in range(order):
+        if kk == 0:
+            yf0 = _filt(y,mask,dt,tau/order)
         else:
-            yf[ii+1] = yf[ii] + cff*(ytmp - yf[ii])
-
-    return yf
+            yf0 = _filt(yf0, np.zeros_like(mask), dt, tau/order)
+    
+    return yf0
+        
  
 
 def powerspec2D(phi,dx=1.,dz=1.,window=np.hanning,quadrant=0):

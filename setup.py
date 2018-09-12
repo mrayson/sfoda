@@ -34,6 +34,14 @@ extensions =[
 ]
 
 setup(
-    name = "SODA utilities",
+    name = "soda",
+    packages=[\
+        'soda',
+        'soda.utils',
+        #'soda.utils','soda.dataio',\
+        #'soda.dataio.ugrid','soda.dataio.suntans','soda.dataio.roms',\
+        #'soda.dataio.conversion','soda.dataio.datadownload',\
+        ],
+    package_dir={'soda':''},
     ext_modules = cythonize(extensions, language_level=3)
 )

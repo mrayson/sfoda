@@ -10,8 +10,8 @@ def dict2sql(dbfile, myDict, table):
     Converts a dictionary to an sql database table
     """
     if os.path.exists(dbfile):
-	print('Deleting old db file.')
-	os.unlink(dbfile)
+        print('Deleting old db file.')
+        os.unlink(dbfile)
 
     conn = sqlite3.connect(dbfile)
     cursor = conn.cursor()
@@ -24,22 +24,22 @@ def dict2sql(dbfile, myDict, table):
     tabletypes = []
     tablefmt = []
     for vv in list(myDict.values())[0].keys():
-	#print myDict.values()[0][vv], type(myDict.values()[0][vv])
-	if isinstance(list(myDict.values())[0][vv], str) \
-	    or isinstance(list(myDict.values())[0][vv], np.str):
-	    tabletypes += ['text']
-	    tablefmt += ['"%s"']
-	else:
-	    tabletypes += ['real']
-	    tablefmt += ['%f']
+        #print myDict.values()[0][vv], type(myDict.values()[0][vv])
+        if isinstance(list(myDict.values())[0][vv], str) \
+            or isinstance(list(myDict.values())[0][vv], np.str):
+            tabletypes += ['text']
+            tablefmt += ['"%s"']
+        else:
+            tabletypes += ['real']
+            tablefmt += ['%f']
 	
-	tablefields += [vv]
+        tablefields += [vv]
 
-    tablestr='('
-    for ff,tt,fmt in zip(tablefields,tabletypes,tablefmt):
-        tablestr += ff+' '+tt+','
-    tablestr = tablestr[:-1] + ')'
-    dbtuple = '('+', '.join(tablefmt)+')'
+        tablestr='('
+        for ff,tt,fmt in zip(tablefields,tabletypes,tablefmt):
+            tablestr += ff+' '+tt+','
+        tablestr = tablestr[:-1] + ')'
+        dbtuple = '('+', '.join(tablefmt)+')'
     
     createstr = 'CREATE TABLE %s %s' % (table,tablestr)
     cursor.execute(createstr)
@@ -47,8 +47,9 @@ def dict2sql(dbfile, myDict, table):
     # Insert the values
     for kk in list(myDict.keys()):
         dbstr = dbtuple%tuple(myDict[kk].values())		
-	sqlstr = 'INSERT INTO %s VALUES %s'%(table,dbstr)
-	#print sqlstr
+
+        sqlstr = 'INSERT INTO %s VALUES %s'%(table,dbstr)
+        #print sqlstr
         cursor.execute(sqlstr)
     
     conn.commit()

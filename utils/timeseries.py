@@ -159,7 +159,7 @@ class timeseries(object):
     
         return Pyy,frq,tmid
         
-    def filt(self, cutoff_dt, btype='low', order=3, axis=-1):
+    def filt(self, cutoff_dt, btype='low', order=3, axis=-1, lfilter=False):
         """
         Butterworth filter the time series
         
@@ -181,12 +181,15 @@ class timeseries(object):
         
         # filtfilt only likes to operate along the last axis
         ytmp = np.swapaxes(self.y,-1,axis)
-        ytmp = signal.filtfilt(b, a, ytmp, axis=-1)
+        if lfilter:
+            zi = signal.lfilter_zi(b,a)
+            ytmp,_ = signal.lfilter(b, a, ytmp, axis=-1, zi=zi*ytmp[...,0])
+        else:
+            ytmp = signal.filtfilt(b, a, ytmp, axis=-1)
 
         return np.swapaxes(ytmp,axis,-1)
-        #return signal.filtfilt(b, a, self.y, axis=axis)
 
-    def filt_uneven(self, cutoff_dt, axis=-1):
+    def filt_uneven(self, cutoff_dt, axis=-1, order=1):
         """
         Lowpass filter with gaps in the output
         
@@ -200,14 +203,15 @@ class timeseries(object):
         assert ndim <= 2
         
         if ndim == 1:
-            return filt_gaps(self.y.data, self.y.mask, self.dt, cutoff_dt)
+            return filt_gaps(self.y.data, self.y.mask, self.dt, cutoff_dt, order=order)
         else:
             # operate along the last axis
             ytmp = np.swapaxes(self.y,-1,axis)
             yf = np.zeros_like(ytmp)
             nk = ytmp.shape[0]
             for kk in range(nk):
-                yf[kk,:] = filt_gaps(ytmp.data[kk,:], ytmp.mask[kk,:], self.dt, cutoff_dt)
+                yf[kk,:] = filt_gaps(ytmp.data[kk,:], ytmp.mask[kk,:],\
+                    self.dt, cutoff_dt, order=order)
 
             return np.swapaxes(yf,axis,-1)
 
