@@ -15,6 +15,63 @@ from . import othertime
 
 import pdb
 
+def _build_lsq_A(t,frq):
+        """
+        Construct matrix A
+        """
+        nt=t.shape[0]
+        nf=frq.shape[0]
+        nff=nf*2+1
+        A=np.ones((nt,nff))
+        for ff in range(0,nf):
+            A[:,ff*2+1]=np.cos(frq[ff]*t)
+            A[:,ff*2+2]=np.sin(frq[ff]*t)
+            
+        return A
+    
+
+def harmonic_fit_array(t, X, frq, axis=0):
+    """
+    Least-squares harmonic fit on an array
+
+    X - vector [Nt] or array [Nt, (size)]
+    t - floating point time vector [Nt]
+    frq - frequency vector [Ncon]
+        
+    Return a single array, R,  where
+        R[:,0] - mean
+        R[:,1::2] - Real amplitude
+        R[:,2::2] - Imag amplitude
+
+    """
+    # Check the inputs
+    frq = np.array(frq)
+    Nfrq = frq.shape[0]
+    
+    # Reshape the array sizes
+    X = X.swapaxes(0, axis)
+    sz = X.shape
+    lenX = int(np.prod(sz[1:]))
+    
+    if not len(t) == sz[0]:
+        raise 'length of t (%d) must equal dimension of X (%s)'%(len(t),sz[0])
+    
+    # Need to reshape so rows contain time and other dimensions are along the columns
+    X = np.reshape(X,(sz[0],lenX))
+    
+    # Least-squares matrix approach
+    A = _build_lsq_A(t,frq)
+
+    # Do the least-squares fit...
+    b = np.linalg.lstsq(A,y)
+   
+    # reshape the array back to its original dimensions
+    b = np.reshape(b,(2*Nfrq+1,)+sz[1:])
+    
+    # Output back along the original axis
+    return b.swapaxes(axis,0)
+    
+
 def harmonic_fit(dtime, X, frq, mask=None, axis=0, phsbase=None):
     """
     Least-squares harmonic fit on an array, X, with frequencies, frq. 
