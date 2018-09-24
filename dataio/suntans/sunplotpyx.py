@@ -56,6 +56,13 @@ from soda.dataio.suntans.sunxray import Sunxray, Sundask
 from datetime import datetime
 import numpy as np
 
+# Dask stuff
+#from dask.distributed import Client, LocalCluster, worker, progress, wait
+#
+## Try and connect to a scheduler previously launched
+#print('Connecting to dask scheduler...')
+#client = Client(scheduler_file="~/scheduler.json", asynchronous=False)
+
 # Use cmocean colormaps (these are awesome!!)
 #try:
 #    from cmocean import cm
@@ -513,7 +520,7 @@ class SunPlotPyX(Sundask, QMainWindow):
         # update the spatial object and load the data
         self.variable = vname
         #self.loadData(variable=self.variable)
-        self.data = self.load(self.variable, self.tstep, self.klayer)
+        self.data = self.load_data(self.variable, tstep=self.tstep, klayer=self.klayer[0])
         #self.data = data.values.ravel()
 
         # Check if the variable has a depth coordinate
@@ -541,7 +548,7 @@ class SunPlotPyX(Sundask, QMainWindow):
         #if self.plot_type=='hydro':
         if not self.tstep==self.tstepold:
             self.tstepold = self.tstep*1
-            self.data = self.load(self.variable, self.tstep, self.klayer)
+            self.data = self.load_data(self.variable, tstep=self.tstep, klayer=self.klayer[0])
             #self.data = data.values.ravel()
             #self.flash_status_message("Selecting variable: %s..."%event.GetString())
 
@@ -561,7 +568,7 @@ class SunPlotPyX(Sundask, QMainWindow):
             if kindex>=self.Nkmax:
                 kindex=event.GetString()
             self.klayer = [kindex]
-            self.data = self.load(self.variable, self.tstep, self.klayer)
+            self.data = self.load_data(self.variable, tstep=self.tstep, klayer=self.klayer[0])
             #self.data = data.values.ravel()
             #self.flash_status_message("Selecting depth: %s..."%event.GetString())
 
@@ -582,6 +589,8 @@ class SunPlotPyX(Sundask, QMainWindow):
         fileparts = path[0].split('.')
         filecard = '%s.nc.*'%fileparts[-3]
 
+        print(fileparts)
+        print(filecard)
         self.on_open_file([filecard], newfile=False)
 
 
@@ -605,7 +614,8 @@ class SunPlotPyX(Sundask, QMainWindow):
 
         Sundask.__init__(self, path[0], )
 
-        self.Nkmax = self.loadfull('Nk').max()-1
+        print('hellooo')
+        self.Nkmax = self.load_data('Nk').max()-1
 
         self.statusBar().clearMessage()
 
@@ -629,7 +639,7 @@ class SunPlotPyX(Sundask, QMainWindow):
 
         # Draw the depth
         if self.variable in vnames:
-            self.data = self.loadfull(self.variable)
+            self.data = self.load_data(self.variable)
             self.create_figure()
 
     def on_load_grid(self, event):
@@ -803,7 +813,7 @@ class SunPlotPyX(Sundask, QMainWindow):
 
             def updateScalar(i):
                 self.tstep=[i]
-                self.data = self.load(self.variable, self.tstep, self.klayer)
+                self.data = self.load_data(self.variable, tstep=self.tstep, klayer=self.klayer[0])
                 #self.data = data.values.ravel()
                 #self.loadData()
                 self.update_figure()
@@ -838,7 +848,7 @@ class SunPlotPyX(Sundask, QMainWindow):
             # Return the figure back to its status
             del self.anim
             #self.loadData()
-            self.data = self.load(self.variable, self.tstep, self.klayer)
+            self.data = self.load_data(self.variable, tstep=self.tstep, klayer=self.klayer[0])
             #self.data = data.values.ravel()
             self.update_figure()
             print('Finished saving animation to %s'%outfile)
