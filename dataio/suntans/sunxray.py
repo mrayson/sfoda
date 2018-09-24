@@ -3,14 +3,13 @@ Lightweight SUNTANS class that takes advantage of other unstructured grid
 classes and xray/dask.
 """
 
-import xray
+import xarray as xr
 
-import matplotlib.pyplot as plt
 import numpy as np
 
-import glob
 import dask.array as da
 import dask
+import glob
 
 import pdb
 
@@ -89,7 +88,7 @@ class Sunxray(UPlot):
         return vname
 
 
-    def load(self, varname, tstep, klayer):
+    def load_step(self, varname, tstep=slice(None,), klayer=slice(None,)):
         """
         Load the data from the xray.Dataset object
         """
@@ -109,52 +108,187 @@ class Sunxray(UPlot):
         return self._ds.__repr__()
 
 
-class Sundask(Sunxray):
+class Sundask(UPlot):
     """
     Parallel SUNTANS reader
-
     Goal is to have the same functionality to the user as Sunxray
     i.e. not worry about the parallel io, dask, etc
     """
 
-    def __init__(self, ncfiles, loadgrid=True, **kwargs):
+    def __init__(self, ncfiles, **kwargs):
 
-        print(ncfiles)
 
-        # Get the files from the first file
-        filenames = sorted(glob.glob(ncfiles))
-        
-        #for ff in filenames:
-        #    print ff
         # Load all of the files into list as xray objects
-        self._myfiles = [Sunxray(url, lazy=True, **kwargs) \
-                for url in filenames]
+        #self._myfiles = [Sunxray(url, lazy=True) for url in filenames]
+        filenames = sorted(glob.glob(ncfiles))
+
+        def openfile(url):
+            try:
+                #print(url)
+                # Chunking is necessary to use dask
+                ds = xr.open_dataset(url, chunks={'Nk':-1,'Nc':-1,'time':-1})
+                #ds = xr.open_dataset(url,)
+
+            except:
+                print('Failed to open file %s'%url)
+            
+            return ds
+        
+        self._myfiles = [openfile(url) \
+            for url in filenames]
+
+        #self._myfiles=[]
+        #for url in filenames:
+        #    print(url)
+        #    try:
+        #        self._myfiles.append(xr.open_dataset(url, chunks={'Nk':-1,'Nc':-1,'time':-1}))
+        #    except:
+        #        print('File %s failed!!'%url)
 
         # Keep this for compatibility with methods from the superclass
-        self._ds = self._myfiles[0]._ds
+        self._ds = self._myfiles[0]
 
-        # Load the grid variables and re-sort
-        if loadgrid:
-            # Each files stores all node coordinates (luckily)
-            xp = self._myfiles[0].loadfull('xp')
-            yp = self._myfiles[0].loadfull('yp')
+        self.Nt = self._ds.time.shape[0]
 
-            # Load the actual data
-            cells = self.loadfull('cells').compute()
-            nfaces = self.loadfull('nfaces').compute()
+        # Load the grid variables 
 
-            ### Grid does not need re-sorting...
+        ### Grid does not need re-sorting... but we need ghost points
+        self.ghost = self.find_ghosts()
+        
+        # Each files stores all node coordinates (luckily)
+        xp = self._myfiles[0]['xp']
+        yp = self._myfiles[0]['yp']
 
-            # Finish initializing the class
-            UPlot.__init__(self, xp, yp, cells, nfaces=nfaces,\
-                _FillValue=-999999,\
-                    **kwargs)
+        # Load the actual data
+        cells = self.stack_var_2d('cells', axis=0)[self.ghost,...].compute()
+        nfaces = self.stack_var_2d('nfaces', axis=0)[self.ghost].compute()
+        
+        # Finish initializing the class
+        UPlot.__init__(self, xp, yp, cells, nfaces=nfaces,\
+            _FillValue=-999999,\
+                **kwargs)
 
-            self.xlims = [xp.min(), xp.max()]
-            self.ylims = [yp.min(), yp.max()]
+        # Optional variables (not necessary but nice)
+        self.xv  = self.stack_var_2d('xv', axis=0)[self.ghost].compute() 
+        self.yv  = self.stack_var_2d('yv', axis=0)[self.ghost].compute() 
+        self.dv  = self.stack_var_2d('dv', axis=0)[self.ghost].compute() 
+        self.Nk  = self.stack_var_2d('Nk', axis=0)[self.ghost].compute() 
+
+        self.xlims = [xp.min(), xp.max()]
+        self.ylims = [yp.min(), yp.max()]
+
+    def list_coord_vars(self):
+        """
+        List all of the variables that have the 'mesh' attribute
+        """
+        vname=[]
+        for vv in self._ds.variables.keys():
+            # "mesh" attribute is standard in the ugrid convention
+            if hasattr(self._ds[vv], 'mesh'):
+                vname.append(vv)
+                
+        return vname
 
 
+    def has_dim(self,varname, dimname):
+        """
+        Tests if a variable contains a dimension
+        """
 
+        dimensions = self._ds[varname].dims
+        
+        return dimname in dimensions
+
+    def find_ghosts(self):
+        # find ghost cells in each dataset
+        mnptr = self.stack_var_2d('mnptr',axis=0).compute()
+        cells_unique = np.unique(mnptr)
+        #Nc = cells_unique.shape[0]
+        Nc = mnptr.shape[0]
+        allghost = np.ones((Nc,),dtype=np.bool)
+        allcells = set()
+
+        for ii,cc in enumerate(mnptr):
+            if cc in allcells:
+                allghost[ii] = False
+            else:
+                allcells.add(cc)
+                
+        return allghost
+    
+    def find_ghosts_old(self):
+        # find ghost cells in each dataset
+        allcells = set()
+        allghost = np.array((0,),dtype=np.bool)
+
+        for myfile in self._myfiles:
+            #positions = [myfile['mnptr'].values for myfile in myfiles]
+            myghost = np.ones((myfile.dims['Nc'],), dtype=np.bool)
+            for ii, cc in enumerate(myfile['mnptr'].values):
+                if cc in allcells:
+                    myghost[ii] = False
+                else:
+                    allcells.add(cc)
+
+            #allghost.append(myghost)
+            #allghost = np.hstack([np.array(myghost),allghost])
+            allghost = np.hstack([allghost,np.array(myghost)])
+
+
+        return allghost
+
+
+    ### Loading functions
+    def load_data(self, varname, tstep=slice(None,), klayer=slice(None,)):
+        """
+        Load the data from the xray.Dataset object
+        """
+        data = self.get_data(varname, tstep=tstep, klayer=klayer)
+        return data.compute()[...,self.ghost]
+    
+    def get_data(self, varname, tstep=slice(None,), klayer=slice(None,)):
+        """
+        Get the data from the xray.Dataset object
+        
+        This does not load the actual data into memory see: `load_data`
+        """
+        myvar = self._myfiles[0][varname]
+        ndim = myvar.ndim
+        arrays=[]
+        if ndim==1:
+            for ii, data in enumerate(self._myfiles):
+                mydata = data[varname].data[:]
+                arrays.append(mydata)
+        if ndim==2:
+            for ii, data in enumerate(self._myfiles):
+                mydata = data[varname].data[tstep,:]
+                arrays.append(mydata)
+        elif ndim==3:   
+            for ii, data in enumerate(self._myfiles):
+                mydata = data[varname].data[tstep,klayer,:]
+                arrays.append(mydata)
+        
+        # Stack all small Dask arrays into one
+        return dask.array.concatenate(arrays, axis=-1)#[...,ghost]
+    
+    def stack_var_3d(self, varname, klayer, axis=-1):
+        arrays=[]
+        for ii, data in enumerate(self._myfiles):
+            mydata = data[varname].data[:,klayer,:]
+            arrays.append(mydata)
+
+        return dask.array.concatenate(arrays, axis=axis)
+
+    def stack_var_2d(self, varname, axis=-1):
+        arrays=[]
+        for ii, data in enumerate(self._myfiles):
+            mydata = data[varname].data[:]
+            arrays.append(mydata)
+
+        return dask.array.concatenate(arrays, axis=axis)
+    
+    #####
+    # Old
     def loadfull(self, varname, axis=0):
         """
         Load a full array (no indexing) into a dask array
@@ -176,7 +310,7 @@ class Sundask(Sunxray):
                       ) for sun, lazy_value in zip(all_files, lazy_data)]
 
         # Stack all small Dask arrays into one
-        return da.concatenate(arrays, axis=axis)
+        return dask.array.concatenate(arrays, axis=axis)
 
     def load(self, varname, tstep, klayer):
         """
@@ -188,8 +322,89 @@ class Sundask(Sunxray):
             return myvar[:].compute()
         if ndim==2:
             return myvar[tstep,:].compute().ravel()
-        elif ndim==3:
+        elif ndim==3:   
             return myvar[tstep,klayer,:].compute().ravel()
+        
 
-
-
+#class Sundask(Sunxray):
+#    """
+#    Parallel SUNTANS reader
+#
+#    Goal is to have the same functionality to the user as Sunxray
+#    i.e. not worry about the parallel io, dask, etc
+#    """
+#
+#    def __init__(self, ncfiles, loadgrid=True, **kwargs):
+#
+#        print ncfiles
+#
+#        # Get the files from the first file
+#        filenames = sorted(glob.glob(ncfiles))
+#        
+#        #for ff in filenames:
+#        #    print ff
+#        # Load all of the files into list as xray objects
+#        self._myfiles = [Sunxray(url, lazy=True, **kwargs) \
+#                for url in filenames]
+#
+#        # Keep this for compatibility with methods from the superclass
+#        self._ds = self._myfiles[0]._ds
+#
+#        # Load the grid variables and re-sort
+#        if loadgrid:
+#            # Each files stores all node coordinates (luckily)
+#            xp = self._myfiles[0].loadfull('xp')
+#            yp = self._myfiles[0].loadfull('yp')
+#
+#            # Load the actual data
+#            cells = self.loadfull('cells').compute()
+#            nfaces = self.loadfull('nfaces').compute()
+#
+#            ### Grid does not need re-sorting...
+#
+#            # Finish initializing the class
+#            UPlot.__init__(self, xp, yp, cells, nfaces=nfaces,\
+#                _FillValue=-999999,\
+#                    **kwargs)
+#
+#            self.xlims = [xp.min(), xp.max()]
+#            self.ylims = [yp.min(), yp.max()]
+#
+#
+#
+#    def loadfull(self, varname, axis=0):
+#        """
+#        Load a full array (no indexing) into a dask array
+#        """
+#
+#        def localload(ds, varname):
+#            return ds[varname][:].values
+#
+#        loadfull_d = dask.delayed(localload, pure=True) 
+#        all_files = self._myfiles
+#
+#        # Lazily evaluate loadfull on each file
+#        lazy_data = [loadfull_d(url._ds, varname) for url in all_files]
+#
+#        # Construct a Dask array
+#        arrays = [da.from_delayed(lazy_value,           
+#                      dtype=sun._ds[varname].dtype,   # for every lazy value
+#                      shape=sun._ds[varname].shape,
+#                      ) for sun, lazy_value in zip(all_files, lazy_data)]
+#
+#        # Stack all small Dask arrays into one
+#        return da.concatenate(arrays, axis=axis)
+#
+#    def load(self, varname, tstep, klayer):
+#        """
+#        Load the data from the xray.Dataset object
+#        """
+#        myvar = self.loadfull(varname, axis=-1)
+#        ndim = myvar.ndim
+#        if ndim==1:
+#            return myvar[:].compute()
+#        if ndim==2:
+#            return myvar[tstep,:].compute().ravel()
+#        elif ndim==3:
+#            return myvar[tstep,klayer,:].compute().ravel()
+#

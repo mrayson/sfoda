@@ -39,8 +39,8 @@ class Plot(HybridGrid):
         if ax==None:
             ax = fig.gca()
     
-        xlim=self.xlims()
-        ylim=self.ylims()
+        xlim=self.get_xlims()
+        ylim=self.get_ylims()
         collection = PolyCollection(self.xy(), facecolors=facecolors,\
             linewidths=linewidths, **kwargs)
         
@@ -64,8 +64,8 @@ class Plot(HybridGrid):
         #    self.clim = [z.min(),z.max()]
         # Set the xy limits
         if xlims is None or ylims is None:
-            xlims=self.xlims()
-            ylims=self.ylims()
+            xlims=self.get_xlims()
+            ylims=self.get_ylims()
         
         collection = PolyCollection(self.xy(),closed=False,**kwargs)
         collection.set_array(z)
@@ -131,12 +131,12 @@ class Plot(HybridGrid):
     ##########
     # Private routines
     ##########
-    def xlims(self):
+    def get_xlims(self):
         if self._xlims is None:
             self._xlims = [self.xp.min(),self.xp.max()]
         return self._xlims
 
-    def ylims(self):
+    def get_ylims(self):
         if self._ylims is None:
             self._ylims = [self.yp.min(),self.yp.max()]
         return self._ylims
