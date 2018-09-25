@@ -4,11 +4,13 @@ classes and xray/dask.
 """
 
 import xarray as xr
+from netCDF4 import Dataset
 
 import numpy as np
 
 import dask.array as da
 import dask
+from dask import delayed
 import glob
 
 import pdb
@@ -115,12 +117,14 @@ class Sundask(UPlot):
     i.e. not worry about the parallel io, dask, etc
     """
 
-    def __init__(self, ncfiles, **kwargs):
+    client = None
 
+    def __init__(self, ncfiles, **kwargs):
+        self.__dict__.update(kwargs)
 
         # Load all of the files into list as xray objects
         #self._myfiles = [Sunxray(url, lazy=True) for url in filenames]
-        filenames = sorted(glob.glob(ncfiles))
+        self.filenames = sorted(glob.glob(ncfiles))
 
         def openfile(url):
             try:
@@ -135,7 +139,7 @@ class Sundask(UPlot):
             return ds
         
         self._myfiles = [openfile(url) \
-            for url in filenames]
+            for url in self.filenames]
 
         #self._myfiles=[]
         #for url in filenames:
@@ -287,7 +291,39 @@ class Sundask(UPlot):
 
         return dask.array.concatenate(arrays, axis=axis)
     
-    #####
+    #########
+    # Apply functions
+    def apply_func(self, func, varname, *args, **kwargs):
+        """
+        Apply the function to each block of data (doesn't use xarray)
+
+        See here:
+                http://dask.pydata.org/en/latest/delayed-best-practices.html
+        """
+        @delayed
+        def load_single_nc(ncfile, varname):
+            with Dataset(ncfile) as nc:
+                # Load the data
+                X = nc.variables[varname][:]
+                X[np.isnan(X)] = 0.
+            return X
+
+        @delayed
+        def lazy_func(func, X, *args, **kwargs):
+            return func(X, *args, **kwargs)
+
+        def f(func, ncfiles, varname, *args, **kwargs):
+            output = []
+            for ncfile in ncfiles:
+                X = load_single_nc(ncfile, varname)
+                output.append(lazy_func(func, X, *args, **kwargs))
+
+            return output
+
+        stack = dask.persist(f(func, self.filenames, varname, *args, **kwargs))
+        return np.concatenate([ii.compute() for ii in stack[0]], axis=-1)[...,self.ghost]
+
+    #########
     # Old
     def loadfull(self, varname, axis=0):
         """

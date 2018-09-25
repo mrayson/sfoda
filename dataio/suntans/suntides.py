@@ -31,6 +31,7 @@ class suntides(Spatial):
     
     frqnames = None
     baseyear = 1990 # All phases are referenced to the 1st of the 1st of this year
+    fit_all_k = False
     
     def __init__(self,ncfile,**kwargs):
         """
@@ -105,29 +106,48 @@ class suntides(Spatial):
                 self.Var[vv] = np.var(data, axis=0)
 
             elif ndim == 3:
-                for k in range(self.Nkmax):
-                    self.klayer=[k]
-                    print('Loading data...')
-                    data = self.loadData()
-                    print('Performing harmonic fit on variable, %s, layer = %d of %d...'%(self.variable,self.klayer[0],self.Nkmax))
-                    self.Amp[vv][:,k,:], self.Phs[vv][:,k,:], self.Mean[vv][k,:] =\
-                        harmonic_fit(time, data, self.frq, \
-                        phsbase=self.reftime,\
-                        #phsbase=None,
-                        )
-
-
-                    # Preserve the mask
-                    if isinstance(data, np.ma.MaskedArray):
-                        #mask = data[0,:] == self._FillValue
-                        mask = data.mask[0,:]
-                        self.Mean[vv][k,mask] = self._FillValue
-                        for ff in range(len(self.frq)):
-                            self.Amp[vv][ff,k,mask] = self._FillValue
-                            self.Phs[vv][ff,k,mask] = self._FillValue
-
+                if self.fit_all_k == False:
+                    self.harmonic_fit_k()
+                else:
+                    self.klayer=[-99]
+                    print('Loading 3D data from %s...'%vv)
+                    data=self.loadData()
+                    print('Performing harmonic fit on variable, %s... (all depths)'%(self.variable))
+                    self.Amp[vv], self.Phs[vv], self.Mean[vv] =\
+                            harmonic_fit(time, data, self.frq, \
+                            phsbase=self.reftime,\
+                            #phsbase=None,\
+                            )
                     # Compute the variance of the original signal
-                    self.Var[vv][k,:] = np.var(data, axis=0)
+                    self.Var[vv] = np.var(data, axis=0)
+
+                    
+
+
+    def harmonic_fit_k(self):
+        for k in range(self.Nkmax):
+            self.klayer=[k]
+            print('Loading data...')
+            data = self.loadData()
+            print('Performing harmonic fit on variable, %s, layer = %d of %d...'%(self.variable,self.klayer[0],self.Nkmax))
+            self.Amp[vv][:,k,:], self.Phs[vv][:,k,:], self.Mean[vv][k,:] =\
+                harmonic_fit(time, data, self.frq, \
+                phsbase=self.reftime,\
+                #phsbase=None,
+                )
+
+
+            # Preserve the mask
+            if isinstance(data, np.ma.MaskedArray):
+                #mask = data[0,:] == self._FillValue
+                mask = data.mask[0,:]
+                self.Mean[vv][k,mask] = self._FillValue
+                for ff in range(len(self.frq)):
+                    self.Amp[vv][ff,k,mask] = self._FillValue
+                    self.Phs[vv][ff,k,mask] = self._FillValue
+
+            # Compute the variance of the original signal
+            self.Var[vv][k,:] = np.var(data, axis=0)
 
                     
     def _prepDict(self,varnames):
@@ -706,11 +726,11 @@ if __name__ == '__main__':
             varnames = val.split()
     
     try:
-	ncfile = sys.argv[1]
-	outfile = sys.argv[2]
+        ncfile = sys.argv[1]
+        outfile = sys.argv[2]
     except:
-    	usage()
-	exit(1)
+        usage()
+        exit(1)
     
     print(ncfile, outfile, varnames, frqnames)
     # Call the object

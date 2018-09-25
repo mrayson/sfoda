@@ -30,7 +30,7 @@ def _build_lsq_A(t,frq):
         return A
     
 
-def harmonic_fit_array(t, X, frq, axis=0):
+def harmonic_fit_array(X, t, frq, axis=0):
     """
     Least-squares harmonic fit on an array
 
@@ -63,13 +63,13 @@ def harmonic_fit_array(t, X, frq, axis=0):
     A = _build_lsq_A(t,frq)
 
     # Do the least-squares fit...
-    b = np.linalg.lstsq(A,y)
+    b = np.linalg.lstsq(A,X)
    
     # reshape the array back to its original dimensions
-    b = np.reshape(b,(2*Nfrq+1,)+sz[1:])
+    output = np.reshape(b[0],(2*Nfrq+1,)+sz[1:])
     
     # Output back along the original axis
-    return b.swapaxes(axis,0)
+    return output.swapaxes(axis,0)
     
 
 def harmonic_fit(dtime, X, frq, mask=None, axis=0, phsbase=None):
