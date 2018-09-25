@@ -864,10 +864,8 @@ class HybridGrid(object):
         xadj[1:] = np.cumsum(nneigh)
 
         return xadj.astype(np.int32), adjncy.astype(np.int32)
- 
 
 
-             
     ######################
     # TriGrid functions  #
     # (with adjustments) #

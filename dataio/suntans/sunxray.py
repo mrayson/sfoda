@@ -118,6 +118,7 @@ class Sundask(UPlot):
     """
 
     client = None
+    _fill_value = 999999
 
     def __init__(self, ncfiles, **kwargs):
         self.__dict__.update(kwargs)
@@ -165,6 +166,8 @@ class Sundask(UPlot):
 
         # Load the actual data
         cells = self.stack_var_2d('cells', axis=0)[self.ghost,...].compute()
+        cells[cells == self._fill_value] = -1
+
         nfaces = self.stack_var_2d('nfaces', axis=0)[self.ghost].compute()
         
         # Finish initializing the class

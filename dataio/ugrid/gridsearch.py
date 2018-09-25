@@ -423,7 +423,7 @@ class GridSearch(HybridGrid):
         yp = np.zeros((self.Nc,self.maxfaces+1))
         
         cells=self.cells.copy()
-        cells[self.cells.mask]=0
+        #cells[self.cells.mask]=0
 
         xp[:,:self.maxfaces]=self.xp[cells]
         xp[list(range(self.Nc)),self.nfaces]=self.xp[cells[:,0]]

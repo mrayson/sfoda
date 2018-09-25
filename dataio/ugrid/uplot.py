@@ -1,11 +1,14 @@
 """
 Unstructured grid plotting module
 """
-from .hybridgrid import HybridGrid
+from .hybridgrid import HybridGrid, circumcenter
+from .gridsearch import GridSearch
 
 import numpy as np
 from matplotlib.collections import PolyCollection, LineCollection
 import matplotlib.pyplot as plt
+from matplotlib import tri
+from scipy import spatial
 
 import pdb
 
@@ -26,6 +29,8 @@ class Plot(HybridGrid):
     def __init__(self, xp, yp, cells, **kwargs):
 
         HybridGrid.__init__(self, xp, yp, cells, lightmode=True, **kwargs)
+        # Calculate the area
+        self.Ac = self.calc_area()
 
 
     ############
@@ -127,6 +132,42 @@ class Plot(HybridGrid):
         
         return fig, ax, collection, axcb
 
+    def contourf(self, z, clevs=20, \
+        xlims=None, ylims=None, colorbar=True, filled=True,\
+        **kwargs):
+        """
+        Filled contour plot
+        """
+        self.build_tri()
+       
+        fig = plt.gcf()
+        ax = fig.gca()
+
+        # data must be on nodes for tricontourf
+        zdata = self.cell2node(z)
+        zdata[np.isnan(zdata)] = 0.
+
+        if isinstance(clevs,int): # is integer
+            V = np.linspace(self.clim[0],self.clim[1],clevs)
+        else:
+            V = clevs
+            
+        if filled:
+            camp = ax.tricontourf(self._tri, zdata, V, **kwargs)
+        else:
+            camp = ax.tricontour(self._tri, zdata, V, **kwargs)
+                
+        ax.set_aspect('equal')
+        ax.set_xlim(xlims)
+        ax.set_ylim(ylims)
+        
+        if filled and colorbar:
+            axcb = fig.colorbar(camp)
+        else:
+            axcb = None
+        
+        return fig, ax, camp, axcb
+
  
     ##########
     # Private routines
@@ -156,5 +197,63 @@ class Plot(HybridGrid):
 
 
         return self._xy
+    def build_tri(self):
+        """
+        Create a matplotlib triangulation object from the grid
+        
+        Used primarily to contour the data       
+        """
+        if '_tri' not in self.__dict__:
+            maxfaces = self.nfaces.max()
+            if maxfaces==3:
+                self._tri =tri.Triangulation(self.xp,self.yp,self.cells)
+
+            else:
+
+                # Need to compute a delaunay triangulation for mixed meshes
+                pts = np.vstack([self.xp,self.yp]).T
+                D = spatial.Delaunay(pts)
+                self._tri =tri.Triangulation(self.xp,self.yp,D.simplices)
+
+                # Compute a mask by removing triangles outside of the polygon
+                xy = D.points
+                cells=D.simplices
+                xv,yv = circumcenter(xy[cells[:,0],0],\
+                    xy[cells[:,0],1],\
+                    xy[cells[:,1],0],\
+                    xy[cells[:,1],1],\
+                    xy[cells[:,2],0],\
+                    xy[cells[:,2],1])
+                mask = self.find_cell(xv,yv)
+                self._tri.set_mask(mask==-1)
+
+    def find_cell(self,x,y):
+        """
+        Return the cell index that x and y lie inside of 
+
+        return -1 for out of bounds
+        """
+        if '_tsearch' not in self.__dict__:
+            self._tsearch=GridSearch(self.xp,self.yp,self.cells,nfaces=self.nfaces,\
+                edges=self.edges,mark=self.mark,grad=self.grad,neigh=self.neigh,\
+                xv=self.xv,yv=self.yv)
+        
+        return self._tsearch(x,y)
+
+    def cell2node(self,cell_scalar):
+        """
+        Map a cell-based scalar onto a node
+        
+        This is calculated via a mean of the cells connected to a node(point)
+        """
+        # Area weighted interpolation
+        node_scalar = [np.sum(cell_scalar[list(self.pnt2cells(ii))] * \
+                self.Ac[list(self.pnt2cells(ii))]) / \
+                np.sum( self.Ac[list(self.pnt2cells(ii))])\
+                    for ii in range(self.Np)]
+        return np.array(node_scalar)
+
+
+
 
 

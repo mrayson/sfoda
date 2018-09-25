@@ -119,8 +119,8 @@ def make_edges_from_cells(ndarray[int32_t,ndim=2] cells,
         # the first neighbor: need another cell that has
         # both self.cells[i,0] and self.cells[i,1] in its
         # list.
-        if i%1000==0:
-            print(i,nc)
+        #if i%1000==0:
+        #    print(i,nc)
 
         my_set = set([i])
         #n = [-1,-1,-1]

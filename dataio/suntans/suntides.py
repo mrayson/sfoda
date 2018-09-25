@@ -32,6 +32,7 @@ class suntides(Spatial):
     frqnames = None
     baseyear = 1990 # All phases are referenced to the 1st of the 1st of this year
     fit_all_k = False
+    verbose = True
     
     def __init__(self,ncfile,**kwargs):
         """
@@ -42,10 +43,11 @@ class suntides(Spatial):
         
         self.__dict__.update(kwargs)
         
-        Spatial.__init__(self,ncfile,**kwargs)
+        Spatial.__init__(self,ncfile, VERBOSE=self.verbose,**kwargs)
         
         if self.hasVar('eta_amp') or self.hasVar('uc_amp'): # This check needs to be made more robust...
-            print('Loading existing harmonic data...')
+            if self.verbose:
+                print('Loading existing harmonic data...')
             self._loadVars()
             
         else:
@@ -91,12 +93,14 @@ class suntides(Spatial):
                 self.variable=vv
                 
             if ndim  == 2 or self.Nkmax==1:
-                print('Loading data from %s...'%vv)
+                if self.verbose:
+                    print('Loading data from %s...'%vv)
                 if vv in ['ubar','vbar']:
                     data=self.loadDataBar()
                 else:
                     data=self.loadData()
-                print('Performing harmonic fit on variable, %s...'%(self.variable))
+                if self.verbose:
+                    print('Performing harmonic fit on variable, %s...'%(self.variable))
                 self.Amp[vv], self.Phs[vv], self.Mean[vv] =\
                         harmonic_fit(time, data, self.frq, \
                         phsbase=self.reftime,\
@@ -110,9 +114,11 @@ class suntides(Spatial):
                     self.harmonic_fit_k()
                 else:
                     self.klayer=[-99]
-                    print('Loading 3D data from %s...'%vv)
+                    if self.verbose:
+                        print('Loading 3D data from %s...'%vv)
                     data=self.loadData()
-                    print('Performing harmonic fit on variable, %s... (all depths)'%(self.variable))
+                    if self.verbose:
+                        print('Performing harmonic fit on variable, %s... (all depths)'%(self.variable))
                     self.Amp[vv], self.Phs[vv], self.Mean[vv] =\
                             harmonic_fit(time, data, self.frq, \
                             phsbase=self.reftime,\
@@ -127,9 +133,11 @@ class suntides(Spatial):
     def harmonic_fit_k(self):
         for k in range(self.Nkmax):
             self.klayer=[k]
-            print('Loading data...')
+            if self.verbose:
+                print('Loading data...')
             data = self.loadData()
-            print('Performing harmonic fit on variable, %s, layer = %d of %d...'%(self.variable,self.klayer[0],self.Nkmax))
+            if self.verbose:
+                print('Performing harmonic fit on variable, %s, layer = %d of %d...'%(self.variable,self.klayer[0],self.Nkmax))
             self.Amp[vv][:,k,:], self.Phs[vv][:,k,:], self.Mean[vv][k,:] =\
                 harmonic_fit(time, data, self.frq, \
                 phsbase=self.reftime,\
@@ -197,7 +205,8 @@ class suntides(Spatial):
         for vv in varlist:
             name = vv+'_amp'
             if self.hasVar(name):
-                print('Loading %s harmonic data...'%(vv))
+                if self.verbose:
+                    print('Loading %s harmonic data...'%(vv))
                 self.Amp.update({vv:self.nc.variables[name][:]})
                 
             name = vv+'_phs'
@@ -520,7 +529,8 @@ class suntides(Spatial):
         
         # Create the output variables
         for vv in self.varnames:
-            print('Creating variable: %s'%vv)
+            if self.verbose:
+                print('Creating variable: %s'%vv)
 
             ndim = self._returnDim(vv)
             if ndim == 2:
@@ -585,7 +595,8 @@ class suntides(Spatial):
             nc.variables[name][:]=self.Var[vv]
         nc.close()        
         
-        print('Completed writing harmonic output to:\n   %s'%outfile)
+        if self.verbose:
+            print('Completed writing harmonic output to:\n   %s'%outfile)
 
 
     
