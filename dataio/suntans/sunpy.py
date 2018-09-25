@@ -60,6 +60,8 @@ suntans_gridvars = {'xp':'xp',\
                     #'gradf':'gradf',\
                     'mark':'mark',\
                     'normal':'normal',\
+                    'mnptr':'mnptr',\
+                    'eptr':'eptr',\
                     'n1':'n1',\
                     'n2':'n2',\
                     'df':'df',\

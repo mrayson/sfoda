@@ -157,6 +157,18 @@ attributes = {'long_name':'Dot product of unique normal with outward normal of e
 dtype = 'i4'		
 ugrid.update({vname:{'dimensions':dimensions,'attributes':attributes,'dtype':dtype,'zlib':False}})
 
+vname = 'mnptr'
+dimensions = ('Nc',)
+attributes = {'long_name':'Global grid cell index number'}
+dtype = 'i4'		
+ugrid.update({vname:{'dimensions':dimensions,'attributes':attributes,'dtype':dtype,'zlib':False}})
+
+vname = 'eptr'
+dimensions = ('Ne',)
+attributes = {'long_name':'Global grid edge index number'}
+dtype = 'i4'		
+ugrid.update({vname:{'dimensions':dimensions,'attributes':attributes,'dtype':dtype,'zlib':False}})
+
 vname = 'n1'
 dimensions = ('Ne',)
 attributes = {'long_name':'x-component of the edge normal',\

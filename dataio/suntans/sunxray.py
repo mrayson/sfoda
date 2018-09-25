@@ -117,6 +117,7 @@ class Sundask(UPlot):
     i.e. not worry about the parallel io, dask, etc
     """
 
+    timedim = 'time'
     client = None
     _fill_value = 999999
 
@@ -126,12 +127,14 @@ class Sundask(UPlot):
         # Load all of the files into list as xray objects
         #self._myfiles = [Sunxray(url, lazy=True) for url in filenames]
         self.filenames = sorted(glob.glob(ncfiles))
+        print('Time dimension %s'%self.timedim)
 
         def openfile(url):
             try:
                 #print(url)
                 # Chunking is necessary to use dask
-                ds = xr.open_dataset(url, chunks={'Nk':-1,'Nc':-1,'time':-1})
+                #ds = xr.open_dataset(url, chunks={'Nk':-1,'Nc':-1,'time':-1})
+                ds = xr.open_dataset(url, chunks={'Nk':-1,'Nc':-1, self.timedim:-1})
                 #ds = xr.open_dataset(url,)
 
             except:
@@ -153,7 +156,7 @@ class Sundask(UPlot):
         # Keep this for compatibility with methods from the superclass
         self._ds = self._myfiles[0]
 
-        self.Nt = self._ds.time.shape[0]
+        self.Nt = self._ds[self.timedim].shape[0]
 
         # Load the grid variables 
 
