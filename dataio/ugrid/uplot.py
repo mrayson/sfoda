@@ -132,20 +132,20 @@ class Plot(HybridGrid):
         
         return fig, ax, collection, axcb
 
-    def contourf(self, z, clevs=20, \
+    def contourf(self, zdata, clevs=20, \
         xlims=None, ylims=None, colorbar=True, filled=True,\
         **kwargs):
         """
         Filled contour plot
         """
-        self.build_tri()
+        self.build_tri_voronoi()
        
         fig = plt.gcf()
         ax = fig.gca()
 
         # data must be on nodes for tricontourf
-        zdata = self.cell2node(z)
-        zdata[np.isnan(zdata)] = 0.
+        #zdata = self.cell2node(z)
+        #zdata[np.isnan(zdata)] = 0.
 
         if isinstance(clevs,int): # is integer
             V = np.linspace(self.clim[0],self.clim[1],clevs)
@@ -153,9 +153,9 @@ class Plot(HybridGrid):
             V = clevs
             
         if filled:
-            camp = ax.tricontourf(self._tri, zdata, V, **kwargs)
+            camp = ax.tricontourf(self._triv, zdata, V, **kwargs)
         else:
-            camp = ax.tricontour(self._tri, zdata, V, **kwargs)
+            camp = ax.tricontour(self._triv, zdata, V, **kwargs)
                 
         ax.set_aspect('equal')
         ax.set_xlim(xlims)
@@ -197,11 +197,12 @@ class Plot(HybridGrid):
 
 
         return self._xy
+
     def build_tri(self):
         """
         Create a matplotlib triangulation object from the grid
         
-        Used primarily to contour the data       
+        Used primarily to contour the data (but also for interpolation)      
         """
         if '_tri' not in self.__dict__:
             maxfaces = self.nfaces.max()
@@ -227,6 +228,28 @@ class Plot(HybridGrid):
                 mask = self.find_cell(xv,yv)
                 self._tri.set_mask(mask==-1)
 
+    def build_tri_voronoi(self):
+        """
+        Create a matplotlib triangulation object from the grid voronoi points
+        
+        Used primarily to for interpolation      
+        """
+        if '_triv' not in self.__dict__:
+            # Need to compute a delaunay triangulation for mixed meshes
+            if self.VERBOSE:
+                print('Computing delaunay triangulation and computing mask...')
+            pts = np.vstack([self.xv,self.yv]).T
+            D = spatial.Delaunay(pts)
+            self._triv =tri.Triangulation(self.xv,self.yv,D.simplices)
+
+            # Compute a mask by removing triangles outside of the polygon
+            xy = D.points
+            cells=D.simplices
+            xv,yv = circumcenter(xy[cells[:,0],0],xy[cells[:,0],1],\
+                xy[cells[:,1],0],xy[cells[:,1],1],xy[cells[:,2],0],xy[cells[:,2],1])
+            mask = self.find_cell(xv,yv)
+            self._triv.set_mask(mask==-1)
+
     def find_cell(self,x,y):
         """
         Return the cell index that x and y lie inside of 
@@ -239,6 +262,21 @@ class Plot(HybridGrid):
                 xv=self.xv,yv=self.yv)
         
         return self._tsearch(x,y)
+
+    def interpolate(self, z, x, y,  kind='linear'):
+        """
+        Interpolate data in 'z' on current grid onto points 'x' and 'y'
+
+        kind = 'linear' or 'cubic'
+        """
+        self.build_tri_voronoi()
+
+        if kind == 'linear':
+            F = tri.LinearTriInterpolator(self._triv, z)
+        elif kind == 'cubic':
+            F = tri.CubicTriInterpolator(self._triv, z)
+
+        return F(x, y)
 
     def cell2node(self,cell_scalar):
         """

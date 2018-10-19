@@ -14,7 +14,7 @@ from scipy import sparse
 import operator as op
 import matplotlib.pyplot as plt
 
-from soda.dataio.ugrid import ugridutils
+from . import ugridutils
 #from soda.dataio.ugrid import newugridutils as ugridutils
 import pdb
 
@@ -663,6 +663,24 @@ class HybridGrid(object):
             orthoang[i]=maxangle
         
         return orthoang
+
+    ###########################
+    # Searching functions (from sunpy.py)
+    ###########################
+    def find_cell(self,x,y):
+        """
+        Return the cell index that x and y lie inside of 
+
+        return -1 for out of bounds
+        """
+        if '_tsearch' not in self.__dict__:
+            self._tsearch=GridSearch(self.xp,self.yp,self.cells,nfaces=self.nfaces,\
+                edges=self.edges,mark=self.mark,grad=self.grad,neigh=self.neigh,\
+                xv=self.xv,yv=self.yv)
+        
+        return self._tsearch(x,y)
+
+
         
     ###########################
     # Input output functions
