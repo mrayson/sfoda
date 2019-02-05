@@ -856,6 +856,7 @@ class timeseries(object):
         """
         y0 = np.zeros_like(y)
         indent = (windowsize-np.mod(windowsize,2))/2
+        indent = int(indent)
         
         if np.mod(windowsize,2)==1:
             y0[...,indent:-indent]=ytmp

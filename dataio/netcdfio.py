@@ -304,7 +304,8 @@ def createObsDB(dbfile):
     #   See this banter here:
     #       https://groups.google.com/forum/#!topic/spatialite-users/o0jUwMUqx_g
     conn.enable_load_extension(True) 
-    conn.execute("SELECT load_extension('mod_spatialite')") 
+    #conn.execute("SELECT load_extension('mod_spatialite')") 
+    conn.execute("SELECT load_extension('%s/mod_spatialite')"%mysqldir) 
     
 
 
