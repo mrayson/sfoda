@@ -11,6 +11,7 @@ See this site for building on windows-64:
 try:
     from setuptools import setup
     from setuptools import Extension
+    from setuptools.dist import Distribution
 except ImportError:
     from distutils.core import setup
     from distutils.extension import Extension
@@ -27,12 +28,12 @@ class BinaryDistribution(Distribution):
 os.environ["CC"]='cc'
 
 extensions =[
-    Extension("ugridutils",["dataio/ugrid/ugridutils.pyx"],
+    Extension("ugridutils",["soda/dataio/ugrid/ugridutils.pyx"],
         include_dirs=[numpy.get_include()],
         extra_compile_args=
             ['-shared', '-pthread', '-fPIC', '-fwrapv', '-O2', '-Wall',
             '-fno-strict-aliasing'],),
-    Extension("searchutils",["dataio/ugrid/searchutils.pyx"],
+    Extension("searchutils",["soda/dataio/ugrid/searchutils.pyx"],
         include_dirs=[numpy.get_include()],
         extra_compile_args=['-O3','-ffast-math','-march=native','-fopenmp'],
         extra_link_args=['-fopenmp'],),
@@ -41,21 +42,21 @@ extensions =[
 setup(
     name = "soda",
     packages=[\
-        #    'soda',
+        'soda',
         #    'soda.utils',
         'soda.utils','soda.dataio',\
         'soda.dataio.ugrid','soda.dataio.suntans','soda.dataio.roms',\
         'soda.dataio.conversion','soda.dataio.datadownload',\
         ],
     #package_dir={'soda':''},
-    ext_modules = cythonize(extensions, language_level=3)
+    ext_modules = cythonize(extensions, language_level=3),
     version='latest',
     description='Serious Ocean Data Analysis',
     author='Matt Rayson',
     author_email='matt.rayson@uwa.edu.au',
     #packages=find_packages(exclude=["*.tests", "*.tests.*", "tests.*", "tests"]),
     install_requires=['numpy','scipy','matplotlib','netcdf4','xarray',
-      'shapely','pyproj','gdal','dask','yaml'],
+      'shapely','pyproj','gdal','dask'],
     license='LICENSE',
     include_package_data=True,
     distclass=BinaryDistribution,
