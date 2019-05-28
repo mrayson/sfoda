@@ -25,7 +25,7 @@ import sqlite3 as db
 from datetime import datetime
 import matplotlib.pyplot as plt
 
-import xray
+import xarray as xray
 import yaml
 import os
 import soda
