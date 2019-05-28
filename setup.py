@@ -56,6 +56,8 @@ setup(
     author_email='matt.rayson@uwa.edu.au',
     #packages=find_packages(exclude=["*.tests", "*.tests.*", "tests.*", "tests"]),
     install_requires=['numpy','scipy','matplotlib','netcdf4','xarray',
+      'numexpr',
+      'numba',
       #'shapely',
       'pyproj',
       #'gdal',
