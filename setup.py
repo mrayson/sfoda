@@ -58,7 +58,7 @@ setup(
     install_requires=['numpy','scipy','matplotlib','netcdf4','xarray',
       #'shapely',
       'pyproj',
-      'gdal',
+      #'gdal',
       'dask',
       ],
     license='LICENSE',
