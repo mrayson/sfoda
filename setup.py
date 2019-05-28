@@ -19,6 +19,11 @@ from Cython.Build import cythonize
 import os
 import numpy
 
+class BinaryDistribution(Distribution):
+    def is_pure(self):
+        return False
+
+
 os.environ["CC"]='cc'
 
 extensions =[
@@ -35,13 +40,24 @@ extensions =[
 
 setup(
     name = "soda",
-    #packages=[\
-    #    'soda',
-    #    'soda.utils',
-    #    #'soda.utils','soda.dataio',\
-    #    #'soda.dataio.ugrid','soda.dataio.suntans','soda.dataio.roms',\
-    #    #'soda.dataio.conversion','soda.dataio.datadownload',\
-    #    ],
+    packages=[\
+        #    'soda',
+        #    'soda.utils',
+        'soda.utils','soda.dataio',\
+        'soda.dataio.ugrid','soda.dataio.suntans','soda.dataio.roms',\
+        'soda.dataio.conversion','soda.dataio.datadownload',\
+        ],
     #package_dir={'soda':''},
     ext_modules = cythonize(extensions, language_level=3)
+    version='latest',
+    description='Serious Ocean Data Analysis',
+    author='Matt Rayson',
+    author_email='matt.rayson@uwa.edu.au',
+    #packages=find_packages(exclude=["*.tests", "*.tests.*", "tests.*", "tests"]),
+    install_requires=['numpy','scipy','matplotlib','netcdf4','xarray',
+      'shapely','pyproj','gdal','dask','yaml'],
+    license='LICENSE',
+    include_package_data=True,
+    distclass=BinaryDistribution,
+
 )
