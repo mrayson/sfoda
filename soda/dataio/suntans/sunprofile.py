@@ -15,7 +15,7 @@ from soda.dataio.netcdfio import dict_toxray
 from soda.dataio.suntans.sunpy import calc_z
 from soda.utils.othertime import datetimetodatetime64
 
-import xray
+import xarray as xray
 from netCDF4 import num2date
 from datetime import datetime
 import numpy as np

@@ -15,7 +15,7 @@ from matplotlib.lines import Line2D
 from scipy import signal, interpolate
 from datetime import datetime, timedelta
 import operator
-import xray
+import xarray as xray
 import pandas as pd
 
 from . import othertime

@@ -7,7 +7,7 @@ Dec 2016
 """
 
 import numpy as np 
-import xray
+import xarray as xray
 from scipy.interpolate import interp2d, interp1d
 
 from soda.utils.othertime import datetime64todatetime, YearDay

@@ -16,7 +16,7 @@ from scipy import spatial
 from scipy import sparse
 import operator
 
-import xray
+import xarray as xray
 
 from matplotlib import tri
 import matplotlib.pyplot as plt
