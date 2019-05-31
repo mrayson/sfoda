@@ -296,7 +296,7 @@ class timeseries(object):
 
                 #mask = np.isnan(self.y) == False
                 if np.all(self.y.mask):
-                    output = np.zeros(t.shape)
+                    output = np.zeros(tsec.shape)
                     output[:] = np.nan
                 else:
 
