@@ -521,9 +521,9 @@ class dumpinputs(object):
             - scatter plots of all points
         """
         
-        varnames = ['uc','vc','T','S','h','boundary_u','boundary_v','boundary_T','boundary_S']
-        
-	print(self.suntanspath, self.bcfile)
+        varnames = ['uc','vc','T','S','h','boundary_u',\
+                'boundary_v','boundary_T','boundary_S']
+        print(self.suntanspath, self.bcfile)
         bnd = Boundary(self.suntanspath+'/'+self.bcfile,0)
         
         self.tmin = bnd.time[0]

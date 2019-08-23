@@ -40,6 +40,15 @@ metoceandict = {\
         'salt':'salinity',\
         'ssh':'surf_el',\
     },\
+    'GLORYS':{\
+        'ncurl':'N/A',\
+        'type':'ocean',\
+        'u':'uo',\
+        'v':'vo',\
+        'temp':'thetao',\
+        'salt':'so',\
+        'ssh':'zos',\
+    },\
     'BRAN_3p5':{\
         'ncurl':[],\
         'multifile':True,\
