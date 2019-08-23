@@ -38,14 +38,17 @@ class Sunxray(UPlot):
     def __init__(self, ncfile, lazy=False, **kwargs):
         self.__dict__.update(kwargs)
 
-        try:
-            self._ds = xray.open_dataset(ncfile, \
-                    chunks=self.chunks,\
-                    mask_and_scale=True, decode_times=True)
-        except:
-            self._ds = xray.open_mfdataset(ncfile, \
-                    chunks=self.chunks,\
-                    mask_and_scale=True, decode_times=True)
+        #try:
+        #    self._ds = xr.open_dataset(ncfile, \
+        #            chunks=self.chunks,\
+        #            mask_and_scale=True, decode_times=True)
+        #except:
+        self._ds = xr.open_mfdataset(ncfile, \
+                concat_dim = 'time',
+                data_vars='minimal',
+                chunks=self.chunks,\
+                mask_and_scale=True, decode_times=True)
+        
 
         if not lazy:
             self._init_grid(**kwargs)
@@ -53,6 +56,9 @@ class Sunxray(UPlot):
             yp = self._ds.yp.values
             self.xlims = [xp.min(), xp.max()]
             self.ylims = [yp.min(), yp.max()]
+
+            # Calculate the voronoi
+            self.calc_centroids()
 
 
     def _init_grid(self, **kwargs):
@@ -120,6 +126,7 @@ class Sundask(UPlot):
     timedim = 'time'
     client = None
     _fill_value = 999999
+    isparralel = True
 
     def __init__(self, ncfiles, **kwargs):
         self.__dict__.update(kwargs)
@@ -144,14 +151,6 @@ class Sundask(UPlot):
         
         self._myfiles = [openfile(url) \
             for url in self.filenames]
-
-        #self._myfiles=[]
-        #for url in filenames:
-        #    print(url)
-        #    try:
-        #        self._myfiles.append(xr.open_dataset(url, chunks={'Nk':-1,'Nc':-1,'time':-1}))
-        #    except:
-        #        print('File %s failed!!'%url)
 
         # Keep this for compatibility with methods from the superclass
         self._ds = self._myfiles[0]
@@ -210,6 +209,12 @@ class Sundask(UPlot):
         return dimname in dimensions
 
     def find_ghosts(self):
+
+        # Serial file type
+        if ~hasattr(self._ds, 'mnptr'):
+            allghost = np.ones((self._ds['xv'].shape), dtype=np.bool)
+            return allghost
+
         # find ghost cells in each dataset
         mnptr = self.stack_var_2d('mnptr',axis=0).compute()
         cells_unique = np.unique(mnptr)

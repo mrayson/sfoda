@@ -420,6 +420,8 @@ class GetDAP(object):
     # Default variables to extract
     oceanvars = ['ssh','u','v','temp','salt']
 
+    timedim = 'time'
+
     # Atmosphere variable names
     uwind = 'uwind'
     vwind = 'vwind'
@@ -451,7 +453,7 @@ class GetDAP(object):
             try:
                 self._nc = Dataset(self.ncurl)
             except:
-                self._nc = MFDataset(self.ncurl)
+                self._nc = MFDataset(self.ncurl, aggdim=self.timedim)
         else:
             self._nc = Dataset(self.ncurl[0])
             self._ncfiles = self.ncurl

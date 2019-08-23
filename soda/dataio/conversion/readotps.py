@@ -205,7 +205,7 @@ def extract_phsamp(tidemod, lon, lat, basetime, conlist):
     Extract the phase and amplitude
     """
     u_re, u_im, v_re, v_im, h_re, h_im, omega, conlist =\
-        extract_HC(tidemod, X, Y, conlist = conlist)
+        extract_HC(tidemod, lon, lat, conlist = conlist)
 
     t1992 = othertime.SecondsSince(basetime,basetime=datetime(1992,1,1))/86400.0
     
