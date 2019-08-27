@@ -32,12 +32,12 @@ class BinaryDistribution(Distribution):
 os.environ["CC"]='cc'
 
 extensions =[
-    Extension("soda/dataio/ugrid/ugridutils",["soda/dataio/ugrid/ugridutils.pyx"],
+    Extension("soda.dataio.ugrid.ugridutils",["soda/dataio/ugrid/ugridutils.pyx"],
         include_dirs=[numpy.get_include()],
         extra_compile_args=
             ['-shared', '-pthread', '-fPIC', '-fwrapv', '-O2', '-Wall',
             '-fno-strict-aliasing'],),
-    Extension("soda/dataio/ugrid/searchutils",["soda/dataio/ugrid/searchutils.pyx"],
+    Extension("soda.dataio.ugrid.searchutils",["soda/dataio/ugrid/searchutils.pyx"],
         include_dirs=[numpy.get_include()],
         extra_compile_args=['-O3','-ffast-math','-march=native','-fopenmp'],
         extra_link_args=['-fopenmp'],),
