@@ -19,8 +19,8 @@ except ImportError:
     from distutils.core import setup
     from distutils.extension import Extension
 
-#from Cython.Build import cythonize
-from Cython.Distutils import build_ext
+from Cython.Build import cythonize
+#from Cython.Distutils import build_ext
 import os
 import numpy
 
@@ -53,10 +53,10 @@ setup(
         'soda.dataio.conversion','soda.dataio.datadownload',\
         ],
     #package_dir={'soda':''},
-    #ext_modules = cythonize(extensions, language_level=3),
-    cmdclass={"build_ext": build_ext},
-    ext_modules = extensions,
-    version='latest',
+    ext_modules = cythonize(extensions, language_level=3),
+    #cmdclass={"build_ext": build_ext},
+    #ext_modules = extensions,
+    version="0.3.0",
     description='Serious Ocean Data Analysis',
     author='Matt Rayson',
     author_email='matt.rayson@uwa.edu.au',
