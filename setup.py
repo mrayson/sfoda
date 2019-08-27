@@ -4,6 +4,9 @@ Build with:
 
 See this site for building on windows-64:
 	https://github.com/cython/cython/wiki/CythonExtensionsOnWindows
+
+See this example for packaging cython modules:
+        https://github.com/thearn/simple-cython-example/blob/master/setup.py
 """
 
 #from distutils.core import setup
@@ -16,7 +19,8 @@ except ImportError:
     from distutils.core import setup
     from distutils.extension import Extension
 
-from Cython.Build import cythonize
+#from Cython.Build import cythonize
+from Cython.Distutils import build_ext
 import os
 import numpy
 
@@ -49,7 +53,9 @@ setup(
         'soda.dataio.conversion','soda.dataio.datadownload',\
         ],
     #package_dir={'soda':''},
-    ext_modules = cythonize(extensions, language_level=3),
+    #ext_modules = cythonize(extensions, language_level=3),
+    cmdclass={"build_ext": build_ext},
+    ext_modules = extensions,
     version='latest',
     description='Serious Ocean Data Analysis',
     author='Matt Rayson',

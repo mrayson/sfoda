@@ -210,10 +210,10 @@ class Sundask(UPlot):
 
     def find_ghosts(self):
 
-        # Serial file type
-        if ~hasattr(self._ds, 'mnptr'):
-            allghost = np.ones((self._ds['xv'].shape), dtype=np.bool)
-            return allghost
+        ## Serial file type
+        #if ~hasattr(self._ds, 'mnptr'):
+        #    allghost = np.ones((self._ds['xv'].shape), dtype=np.bool)
+        #    return allghost
 
         # find ghost cells in each dataset
         mnptr = self.stack_var_2d('mnptr',axis=0).compute()
