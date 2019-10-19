@@ -61,7 +61,7 @@ class ufilter(object):
     kmax = 50 # Maximum number of points to use in filter matrix
     vectorized=True
     
-    def __init__(self,X, delta_f, filter=lanczos, **kwargs):
+    def __init__(self,X, delta_f, filter=gaussian, **kwargs):
         
         self.X = X
         self.delta_f = delta_f

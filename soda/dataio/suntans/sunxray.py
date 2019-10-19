@@ -22,6 +22,9 @@ from soda.dataio.ugrid.uplot import Plot as UPlot
 #from soda.dataio.ugrid.uplotvtk import PlotVTK as UPlot
 #from mayavi import mlab
 
+# Test manually setting the scheduler
+dask.config.set(scheduler='processes')
+
 class Sunxray(UPlot):
     """
     SUNTANS-xray wrapper

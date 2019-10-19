@@ -56,6 +56,7 @@ class DepthDriver(object):
     smoothmethod='kriging' # USe kriging, idw or gaussian for smoothing
     smoothnear=5 # No. of points to use for smoothing
     smoothrange = 50.
+    smoothmindepth = 0. # Only smooth depths greater than this value
 
     # Set if the input data is a DEM
     isDEM = False
@@ -171,7 +172,7 @@ class DepthDriver(object):
         print('Smoothing the data...')
         if self.smoothmethod=='gaussian':
             print('\tUsing Gaussian filter...')
-            Fsmooth = ufilter(self.xy, self.smoothrange)
+            Fsmooth = ufilter(self.xy, self.smoothrange,)
 
         else:
             Fsmooth =interpXYZ(self.xy,\
@@ -180,7 +181,10 @@ class DepthDriver(object):
                 NNear=self.smoothnear,\
                 vrange=self.smoothrange)
 
-        self.grd.dv = Fsmooth(self.grd.dv)
+        dvsmooth = Fsmooth(self.grd.dv)
+
+        idx = self.grd.dv > self.smoothmindepth
+        self.grd.dv[idx] = dvsmooth[idx]
 
     def plot(self):
         """
