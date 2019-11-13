@@ -130,6 +130,7 @@ class Sundask(UPlot):
     client = None
     _fill_value = 999999
     isparralel = True
+    chunks = {}
 
     def __init__(self, ncfiles, **kwargs):
         self.__dict__.update(kwargs)
@@ -144,8 +145,8 @@ class Sundask(UPlot):
                 #print(url)
                 # Chunking is necessary to use dask
                 #ds = xr.open_dataset(url, chunks={'Nk':-1,'Nc':-1,'time':-1})
-                ds = xr.open_dataset(url, chunks={'Nk':-1,'Nc':-1, self.timedim:-1})
-                #ds = xr.open_dataset(url,)
+                ds = xr.open_dataset(url, chunks=self.chunks)
+                #ds = xr.open_dataset(url, chunks={})
 
             except:
                 print('Failed to open file %s'%url)
@@ -158,7 +159,10 @@ class Sundask(UPlot):
         # Keep this for compatibility with methods from the superclass
         self._ds = self._myfiles[0]
 
-        self.Nt = self._ds[self.timedim].shape[0]
+        try:
+            self.Nt = self._ds[self.timedim].shape[0]
+        except:
+            print('No time dimesion')
 
         # Load the grid variables 
 

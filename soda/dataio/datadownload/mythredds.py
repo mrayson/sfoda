@@ -420,7 +420,7 @@ class GetDAP(object):
     # Default variables to extract
     oceanvars = ['ssh','u','v','temp','salt']
 
-    timedim = 'time'
+    timedim = None
 
     # Atmosphere variable names
     uwind = 'uwind'
