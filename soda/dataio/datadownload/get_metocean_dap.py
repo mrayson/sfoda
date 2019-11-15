@@ -89,6 +89,18 @@ metoceandict = {\
         'cloud':'tcc',\
         'rain':'tp',\
     },\
+    'ECMWF_ROMS':{\
+        'ncurl':[],\
+        'type':'atmosphere',\
+        'multifile':True,\
+        'uwind':'Uwind',\
+        'vwind':'Vwind',\
+        'tair':'Tair',\
+        'pair':'Pair',\
+        'rh':'Qair',\
+        'cloud':'cloud',\
+        'rain':'rain',\
+    },\
     'CFSR_1HR':{\
         'ncurl':[],\
         'type':'atmosphere',\
