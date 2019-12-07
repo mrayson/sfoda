@@ -168,6 +168,56 @@ class Plot(HybridGrid):
         
         return fig, ax, camp, axcb
 
+    def calc_grad(self, phi, k=0):
+        """
+        Computes the horizontal gradient of variable, phi, along layer, k.
+        
+        Uses divergence (Green's) theorem to compute the gradient. This can be noisy 
+        for triangular control volumes.
+        
+        Returns: d(phi)/dx, d(phi)/dy
+        
+        Based on MATLAB code sungradient.m
+        """
+        if self.face is None:
+            self.calc_all_properties()
+
+        def _GradientAtFace(phi,jj,k):
+            
+            grad1 = self.grad[:,0]
+            grad2 = self.grad[:,1]
+            nc1 = grad1[jj]
+            nc2 = grad2[jj]
+                    
+            # check for edges (use logical indexing)
+            ind1 = nc1==-1
+            nc1[ind1]=nc2[ind1]
+            ind2 = nc2==-1
+            nc2[ind2]=nc1[ind2]
+            
+            # check depths (walls)
+            indk = (k>=self.Nk[nc1]) | (k>=self.Nk[nc2])
+            ind3 = (indk) &  (self.Nk[nc2]>self.Nk[nc1])
+            nc1[ind3]=nc2[ind3]
+            ind4 = (indk) & (self.Nk[nc1]>self.Nk[nc2])
+            nc2[ind4]=nc1[ind4]
+            
+            # Calculate gradient across face            
+            return (phi[nc1]-phi[nc2]) / self.dg[jj]
+            
+        ne = self.face #edge-indices
+        mask = ne == self._FillValue
+        ne[mask]=0
+        
+        Gn_phi = _GradientAtFace(phi,ne,k)
+        Gn_phi[mask]=0
+        
+        Gx_phi = Gn_phi * self.n1[ne] * self.DEF * self.df[ne]
+        Gy_phi = Gn_phi * self.n2[ne] * self.DEF * self.df[ne]
+        dX = np.sum(Gx_phi,axis=1)/self.Ac
+        dY = np.sum(Gy_phi,axis=1)/self.Ac
+
+        return dX, dY
  
     ##########
     # Private routines

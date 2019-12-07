@@ -98,64 +98,68 @@ class HybridGrid(object):
         # Compute the rest of the grid quantities
         #######
         if not self.lightmode:
+            self.calc_all_properties()
 
-            # Get the edges
-            if self.edges is None or self.grad is None:
-                if self.VERBOSE:
-                    print("Creating the edges...")
-                self.make_edges_from_cells()
-                #self.make_edges_from_cells_sparse()
-            else:
-                self.edges = self.edges.astype(np.int64)
-                self.grad = self.grad.astype(np.int64)
 
-            self.Ne = self.edges.shape[0]
+    def calc_all_properties(self):
+        """
+        Calculate all of the grid properties again
+        """
+        # Get the edges
+        if self.edges is None or self.grad is None:
+            if self.VERBOSE:
+                print("Creating the edges...")
+            self.make_edges_from_cells()
+            #self.make_edges_from_cells_sparse()
+        else:
+            self.edges = self.edges.astype(np.int64)
+            self.grad = self.grad.astype(np.int64)
 
-            # make_edges_from_cells sets everything to zero
-            if not self.mark is None:
-                self.mark=self.mark.astype(np.int64)
+        self.Ne = self.edges.shape[0]
 
-            # Make sure the BCs are ok
-            self.check_missing_bcs()
+        # make_edges_from_cells sets everything to zero
+        if not self.mark is None:
+            self.mark=self.mark.astype(np.int64)
 
-            # Make sure the nodes are rotated counter-clockwise
-            self.Ac = self.calc_area()
-            self.ensure_ccw()
+        # Make sure the BCs are ok
+        self.check_missing_bcs()
 
-            # Face->edge connectivity
-            self.face = self.cell_edge_map()
-            self.face[self.face==self._FillValue] = -1
+        # Make sure the nodes are rotated counter-clockwise
+        self.Ac = self.calc_area()
+        self.ensure_ccw()
 
-            if self.markcell is None:
-                self.markcell = self.calc_markcell(self.mark)
+        # Face->edge connectivity
+        self.face = self.cell_edge_map()
+        self.face[self.face==self._FillValue] = -1
 
-            if self.neigh is None:
-                self.make_neigh_from_cells()
-            else:
-                self.neigh=self.neigh
-            
-            if self.xv is None:
-                self.calc_centroids()
-            else:
-                self.xv = self.xv
-                self.yv = self.yv
+        #if self.markcell is None:
+        #    self.markcell = self.calc_markcell(self.mark)
 
-            # Calculate the coordintes
-            self.edge_centers()
-
-            # Calculate distance and other metrics
-            self.calc_unitnormal()
-            self.calc_normal()
-
-            self.calc_dg()
-            self.calc_def()
-            self.calc_dfe()
-            self.calc_df()
-            #self.calc_tangent()
-            self.calc_Aj()
-
+        if self.neigh is None:
+            self.make_neigh_from_cells()
+        else:
+            self.neigh=self.neigh
         
-     
+        if self.xv is None:
+            self.calc_centroids()
+        else:
+            self.xv = self.xv
+            self.yv = self.yv
+
+        # Calculate the coordintes
+        self.edge_centers()
+
+        # Calculate distance and other metrics
+        self.calc_unitnormal()
+        self.calc_normal()
+
+        self.calc_dg()
+        self.calc_def()
+        self.calc_dfe()
+        self.calc_df()
+        #self.calc_tangent()
+        #self.calc_Aj()
+
     ###################################
     # Geometry functions
     ###################################

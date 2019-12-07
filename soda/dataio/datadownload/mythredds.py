@@ -454,9 +454,9 @@ class GetDAP(object):
                 self._nc = Dataset(self.ncurl)
             except:
                 try:
-                    self._nc = MFDataset(self.ncurl,)
-                except:
                     self._nc = MFDataset(self.ncurl, aggdim=self.timedim)
+                except:
+                    self._nc = MFDataset(self.ncurl,)
         else:
             self._nc = Dataset(self.ncurl[0])
             self._ncfiles = self.ncurl

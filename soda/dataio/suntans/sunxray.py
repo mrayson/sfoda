@@ -128,7 +128,7 @@ class Sundask(UPlot):
 
     timedim = 'time'
     client = None
-    _fill_value = 999999
+    _FillValue = 999999
     isparralel = True
     chunks = {}
 
@@ -175,13 +175,13 @@ class Sundask(UPlot):
 
         # Load the actual data
         cells = self.stack_var_2d('cells', axis=0)[self.ghost,...].compute()
-        cells[cells == self._fill_value] = -1
+        cells[cells == self._FillValue] = -1
 
         nfaces = self.stack_var_2d('nfaces', axis=0)[self.ghost].compute()
         
         # Finish initializing the class
         UPlot.__init__(self, xp, yp, cells, nfaces=nfaces,\
-            _FillValue=-999999,\
+            _FillValue=self._FillValue,\
                 **kwargs)
 
         # Optional variables (not necessary but nice)
