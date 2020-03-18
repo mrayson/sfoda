@@ -50,6 +50,8 @@ import matplotlib
 
 import sys
 
+import dask
+dask.config.set(scheduler='processes')
 
 from soda.dataio.suntans.sunpy import Spatial, Grid
 from soda.dataio.suntans.sunxray import Sunxray, Sundask
