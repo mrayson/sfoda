@@ -8,7 +8,7 @@ Stanford University
 """
 
 import numpy as np
-import numexpr as ne
+#import numexpr as ne
 import matplotlib.pyplot as plt
 from matplotlib import mlab
 from matplotlib.lines import Line2D
