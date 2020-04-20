@@ -16,6 +16,7 @@ from .maptools import readShpBathy, readraster #,ll2utm
 from .myproj import MyProj
 #from kriging import kriging
 from .fkriging import kriging
+from .barycentric import BarycentricInterp
 from netCDF4 import Dataset
 from . import othertime
 from scipy import interpolate
@@ -33,7 +34,7 @@ class interpXYZ(object):
    
     
     # Interpolation options
-    method = 'nn' # One of 'nn', 'idw', 'kriging', 'linear' 
+    method = 'nn' # One of 'nn', 'idw', 'kriging', 'linear', 'barycentric'
     maxdist=np.inf
     NNear = 3 # Number of points to include in interpolation (only applicable to idw and kriging)
     p = 1.0 # power for inverse distance weighting
@@ -82,6 +83,11 @@ class interpXYZ(object):
         elif self.method=='curvmin':
             #print 'Building using scipy CloughTocher interpolator ..'
             self._curvmin()
+
+        elif self.method=='barycentric':
+            #print 'Building using barycentric interpolator ..'
+            self._barycentric()
+ 
  
         else:
             raise Exception('Error - Unknown interpolation type: %s.'%self.method)
@@ -96,7 +102,7 @@ class interpXYZ(object):
         else:
             self.Zin = Zin  
         
-        if self.method in ['nn','idw','kriging','curvmin']:
+        if self.method in ['nn','idw','kriging','curvmin','barycentric']:
             #print 'Building DEM with Nearest Neighbour interpolation...'
             self.Z = self.Finterp(Zin)
 
@@ -143,6 +149,9 @@ class interpXYZ(object):
     def _curvmin(self):
         self.Finterp = CurvMin(self.XY, self.XYout)
                 
+    def _barycentric(self):
+        self.Finterp = BarycentricInterp(self.XY, self.XYout)
+
     
        
     def save(self,outfile='DEM.nc'):
