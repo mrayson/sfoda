@@ -19,7 +19,8 @@ import operator
 from soda.utils.interpXYZ import interpXYZ
 from soda.utils import othertime
 from soda.utils.timeseries import timeseries
-from soda.utils.maptools import ll2lcc
+from soda.utils.maptools import ll2lcc, ll2utm
+from soda.utils.myproj import MyProj
 from soda.utils.mygeometry import MyLine
 from soda.dataio.datadownload.mythredds import MFncdap
 
@@ -221,13 +222,13 @@ class ROMSGrid(object):
         """
         Convert the ROMS grid to utm coordinates
         """
-        from maptools import ll2utm
-        
-        M,N = lon.shape
-        
-        xy = ll2utm(np.hstack((np.reshape(lon,(M*N,1)),np.reshape(lat,(M*N,1)))),utmzone,north=isnorth)
-        
-        return np.reshape(xy[:,0],(M,N)), np.reshape(xy[:,1],(M,N)) 
+        P = MyProj(None, utmzone=utmzone, isnorth=isnorth)
+        return P.to_xy(lon, lat)
+        #M,N = lon.shape
+        #
+        #xy = ll2utm(np.hstack((np.reshape(lon,(M*N,1)),np.reshape(lat,(M*N,1)))),utmzone,north=isnorth)
+        #
+        #return np.reshape(xy[:,0],(M,N)), np.reshape(xy[:,1],(M,N)) 
         
         
 class ROMS(ROMSGrid):
@@ -1519,8 +1520,12 @@ class roms_interp(ROMSGrid):
     sill = 0.8
     vrange = 250.0
 
-    def __init__(self,romsfile, xi, yi, zi, timei, **kwargs):
+    def __init__(self,romsfile, xi, yi, zi, timei, \
+        gridfile=None, **kwargs):
         
+        if gridfile is None:
+            gridfile = romsfile[0]
+
         self.__dict__.update(kwargs)
         
         self.romsfile = romsfile
@@ -1540,13 +1545,15 @@ class roms_interp(ROMSGrid):
         ind1 = othertime.findNearest(self.t1,ftime.time)
         
         self.time = ftime.time[ind0:ind1+1]
-        self.tind,self.fname = ftime(self.time) # list of time indices and corresponding files
+        self.tind,self.fname, tslice_dict = ftime(self.time) # list of time indices and corresponding files
         
         # Step 2) Prepare the grid variables for the interpolation class
-        ROMSGrid.__init__(self,self.romsfile[0])
+        ROMSGrid.__init__(self, gridfile)
         
         # rho points
+        print(self.utmzone, self.isnorth)
         x,y = self.utmconversion(self.lon_rho,self.lat_rho,self.utmzone,self.isnorth)
+        print(x[0], y[0], self.lon_rho[0], self.lat_rho[0])
         self.xy_rho = np.vstack((x[self.mask_rho==1],y[self.mask_rho==1])).T
         
         # uv point (averaged onto interior rho points)
@@ -1563,8 +1570,8 @@ class roms_interp(ROMSGrid):
         self.Frho = interpXYZ(self.xy_rho,self.xy_out,method=self.interpmethod,NNear=self.NNear,\
             p=self.p,varmodel=self.varmodel,nugget=self.nugget,sill=self.sill,vrange=self.vrange)
         
-        self.Fuv = interpXYZ(self.xy_uv,self.xy_out,method=self.interpmethod,NNear=self.NNear,\
-            p=self.p,varmodel=self.varmodel,nugget=self.nugget,sill=self.sill,vrange=self.vrange)
+        #self.Fuv = interpXYZ(self.xy_uv,self.xy_out,method=self.interpmethod,NNear=self.NNear,\
+        #p=self.p,varmodel=self.varmodel,nugget=self.nugget,sill=self.sill,vrange=self.vrange)
         
         # Read the vertical coordinate
         self.ReadVertCoords()
@@ -1615,10 +1622,12 @@ class roms_interp(ROMSGrid):
                 
                 if setUV:
                     tmp = self.u[k,:,:]
-                    uold[k,:] = self.Fuv(tmp[self.mask_uv==1])
+                    #uold[k,:] = self.Fuv(tmp[self.mask_uv==1])
+                    uold[k,:] = self.Frho(tmp[self.mask_rho==1])
                     
                     tmp = self.v[k,:,:]
-                    vold[k,:] = self.Fuv(tmp[self.mask_uv==1])
+                    #vold[k,:] = self.Fuv(tmp[self.mask_uv==1])
+                    vold[k,:] = self.Frho(tmp[self.mask_rho==1])
     
             # Calculate depths (zeta dependent)
             #zroms = get_depth(self.s_rho,self.Cs_r,self.hc, h, zetaroms[tstep,:], Vtransform=self.Vtransform)
@@ -1714,13 +1723,13 @@ class roms_interp(ROMSGrid):
         self.zeta = nc.variables['zeta'][t0,:,:]
         self.temp = nc.variables['temp'][t0,:,:,:]
         self.salt = nc.variables['salt'][t0,:,:,:]
-        u = nc.variables['u'][t0,:,:,:]
-        v = nc.variables['v'][t0,:,:,:]
+        self.u = nc.variables['u_eastward'][t0,:,:,:]
+        self.v = nc.variables['v_northward'][t0,:,:,:]
     
         nc.close()
         
         # Rotate the vectors
-        self.u,self.v = rotateUV( (u[...,:,0:-1]+u[...,:,1::])*0.5,(v[...,0:-1,:]+v[...,1::,:])*0.5,self.angle[0:-1,0:-1])
+        #self.u,self.v = rotateUV( (u[...,:,0:-1]+u[...,:,1::])*0.5,(v[...,0:-1,:]+v[...,1::,:])*0.5, self.angle[None,0:-1,0:-1])
     
     def ReadVertCoords(self):
         """

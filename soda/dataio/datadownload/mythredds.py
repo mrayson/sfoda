@@ -801,7 +801,6 @@ class GetDAP(object):
         
         self._outnc=nc
 
-
 class MFncdap(object):
     """
     Multi-file class for opendap netcdf files
@@ -830,7 +829,7 @@ class MFncdap(object):
             print(f)
             nc = Dataset(f)
             t = nc.variables[self.timevar]
-            time = num2date(t[:].ravel(),t.units).tolist()
+            time = num2date(t[:].ravel(),t.units)#.tolist()
             nc.close()
             
             #self.timelookup.update({f:time})

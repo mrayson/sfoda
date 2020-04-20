@@ -557,14 +557,15 @@ class Boundary(object):
         self.fig.savefig(outfile,dpi=dpi)
         print('Boundary condition image saved to file:%s'%outfile)
     
-    def roms2boundary(self,romsfile,setUV=False,seth=False,**kwargs):
+    def roms2boundary(self, romsfile, gridfile=None, \
+        setUV=False,seth=False,**kwargs):
         """
         Interpolates ROMS data onto the type-3 boundary cells
         
         """
         # Include type 3 cells 
         if self.N3>0:
-            roms = romsio.roms_interp(romsfile,self.xv,self.yv,-self.z,self.time,**kwargs)
+            roms = romsio.roms_interp(romsfile,self.xv,self.yv,-self.z,self.time, gridfile=gridfile, **kwargs)
 	    
             h, T, S, uc, vc = roms.interp(setUV=setUV,seth=seth)
 
@@ -579,7 +580,7 @@ class Boundary(object):
 
         # Include type 2 cells 
         if self.N2 > 0:
-            roms = romsio.roms_interp(romsfile,self.xe,self.ye,-self.z,self.time,**kwargs)
+            roms = romsio.roms_interp(romsfile,self.xe,self.ye,-self.z,self.time, gridfile=gridfile, **kwargs)
             
             h, T, S, uc, vc = roms.interp(setUV=setUV,seth=False)
 
@@ -848,12 +849,12 @@ class InitialCond(Grid):
 
         self.agesource = np.zeros((self.Nkmax,self.Nc))
 
-    def roms2ic(self,romsfile,setUV=False,seth=False,**kwargs):
+    def roms2ic(self,romsfile, gridfile=None, setUV=False,seth=False,**kwargs):
         """
         Interpolates ROMS data onto the SUNTANS grid
         """
         romsi = romsio.roms_interp(romsfile,self.xv.reshape((self.Nc,1)),\
-            self.yv.reshape((self.Nc,1)),-self.z_r,[self.time],**kwargs)
+            self.yv.reshape((self.Nc,1)),-self.z_r,[self.time], gridfile=gridfile, **kwargs)
 
         self.h, self.T, self.S, self.uc, self.vc = romsi.interp()
         
