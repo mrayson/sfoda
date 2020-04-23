@@ -1520,6 +1520,10 @@ class roms_interp(ROMSGrid):
     sill = 0.8
     vrange = 250.0
 
+    # Vertical and temporal interpolation methods (scipy interp1d)
+    zinterp='linear'
+    tinterp='linear'
+
     def __init__(self,romsfile, xi, yi, zi, timei, \
         gridfile=None, **kwargs):
         
@@ -1551,10 +1555,9 @@ class roms_interp(ROMSGrid):
         ROMSGrid.__init__(self, gridfile)
         
         # rho points
-        print(self.utmzone, self.isnorth)
         x,y = self.utmconversion(self.lon_rho,self.lat_rho,self.utmzone,self.isnorth)
-        print(x[0], y[0], self.lon_rho[0], self.lat_rho[0])
-        self.xy_rho = np.vstack((x[self.mask_rho==1],y[self.mask_rho==1])).T
+        self.xy_rho = np.vstack((x[self.mask_rho==1].data,y[self.mask_rho==1].data)).T
+        print(type(self.xy_rho), type(x), type(self.mask_rho))
         
         # uv point (averaged onto interior rho points)
         self.mask_uv = self.mask_rho[0:-1,0:-1]
@@ -1567,7 +1570,8 @@ class roms_interp(ROMSGrid):
         #self.xy_out = np.hstack((xi[...,np.newaxis],yi[...,np.newaxis]))  
         self.xy_out = np.vstack((xi.ravel(),yi.ravel())).T
 
-        self.Frho = interpXYZ(self.xy_rho,self.xy_out,method=self.interpmethod,NNear=self.NNear,\
+        self.Frho = interpXYZ(self.xy_rho,self.xy_out,\
+            method=self.interpmethod,NNear=self.NNear,\
             p=self.p,varmodel=self.varmodel,nugget=self.nugget,sill=self.sill,vrange=self.vrange)
         
         #self.Fuv = interpXYZ(self.xy_uv,self.xy_out,method=self.interpmethod,NNear=self.NNear,\
@@ -1583,7 +1587,7 @@ class roms_interp(ROMSGrid):
         self.Nz_roms = self.s_rho.shape[0]
         self.Nt_roms = self.time.shape[0]
         
-    def interp(self,zinterp='linear',tinterp='linear',setUV=True,seth=True):
+    def interp(self,setUV=True,seth=True):
         """
         Performs the interpolation in this order:
             1) Interpolate onto the horizontal coordinates
@@ -1591,6 +1595,8 @@ class roms_interp(ROMSGrid):
             3) Interpolate onto the time coordinates
         """
         
+        zinterp = self.zinterp
+        tinterp = self.tinterp
         # Initialise the output arrays @ roms time step
         zetaroms, temproms, saltroms, uroms, vroms = self.initArrays(self.Nt_roms,self.Nx,self.Nz)
         
