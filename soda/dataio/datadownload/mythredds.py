@@ -17,11 +17,11 @@ from soda.utils import othertime
 import pdb
 
 # Parallel modules
-import gevent
-from gevent.pool import Pool
-from gevent import monkey
-
-monkey.patch_all()
+#import gevent
+#from gevent.pool import Pool
+#from gevent import monkey
+#
+#monkey.patch_all()
 
 
 

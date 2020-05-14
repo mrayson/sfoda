@@ -36,7 +36,7 @@ import pdb
 
 # Constants
 GRAV=9.81
-FILLVALUE=999999
+FILLVALUE=-999999
 
 ###############################################################        
 # Dictionary with lookup table between object variable name and netcdf file
