@@ -1643,20 +1643,23 @@ class roms_interp(ROMSGrid):
             # Interpolate vertically
             for ii in range(0,self.Nx):
                 y = tempold[:,ii]
-                Fz = interpolate.interp1d(zroms[:,ii],y,kind=zinterp,bounds_error=False,fill_value=y[0])
+                #fillval = y[0]
+                fillval = 'extrapolate'
+
+                Fz = interpolate.interp1d(zroms[:,ii],y,kind=zinterp,bounds_error=False,fill_value=fillval)
                 temproms[tstep,:,ii] = Fz(self.zi)
                 
                 y = saltold[:,ii]
-                Fz = interpolate.interp1d(zroms[:,ii],y,kind=zinterp,bounds_error=False,fill_value=y[0])
+                Fz = interpolate.interp1d(zroms[:,ii],y,kind=zinterp,bounds_error=False,fill_value=fillval)
                 saltroms[tstep,:,ii] = Fz(self.zi)
                 
                 if setUV:
                     y = uold[:,ii]
-                    Fz = interpolate.interp1d(zroms[:,ii],y,kind=zinterp,bounds_error=False,fill_value=y[0])
+                    Fz = interpolate.interp1d(zroms[:,ii],y,kind=zinterp,bounds_error=False,fill_value=fillval)
                     uroms[tstep,:,ii] = Fz(self.zi)
                     
                     y = vold[:,ii]
-                    Fz = interpolate.interp1d(zroms[:,ii],y,kind=zinterp,bounds_error=False,fill_value=y[0])
+                    Fz = interpolate.interp1d(zroms[:,ii],y,kind=zinterp,bounds_error=False,fill_value=fillval)
                     vroms[tstep,:,ii] = Fz(self.zi)
                     
                 
