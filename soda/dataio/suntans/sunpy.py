@@ -538,7 +538,10 @@ class Grid(object):
         yp = np.zeros((self.Nc,self.maxfaces+1))
         
         cells=self.cells.copy()
-        cells[self.cells.mask]=0
+        #cells[self.cells.mask]=0
+        cellmask = cells==int(self._FillValue)
+        cells[cellmask]=0
+        #print(self._FillValue)
 
         xp[:,:self.maxfaces]=xpin[cells]
         xp[list(range(self.Nc)),self.nfaces]=xpin[cells[:,0]]
