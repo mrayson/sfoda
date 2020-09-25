@@ -24,6 +24,7 @@ from matplotlib.collections import PolyCollection, LineCollection
 import matplotlib.animation as animation
 
 from soda.utils import othertime
+from soda.utils.mynumpy import grad_z
 from soda.dataio.suntans.suntans_ugrid import ugrid
 from soda.utils.timeseries import timeseries
 from soda.utils.ufilter import ufilter
@@ -2407,48 +2408,72 @@ class Spatial(Grid):
             else:
                 return np.sum(data*dz3,axis=0)
 
-    def gradZ(self,data):
+    def gradZ(self, data, zvar='z_r'):
         """
         Vertical gradient calculation on an unevenly spaced grid
         
-        Variable data should have shape: [nz], [nz*nx] or [nt*nz*nx]
+        Variable data should have shape: [nz], [nz,nx] or [nt,nz,nx]
         """
                 
         ndim = np.ndim(data)
-        nz = np.size(self.dz)
-        
+        zin = getattr(self, zvar)
+
         if ndim == 1:
-            phi = np.hstack((data[0],data,data[-1])) # nz+2
-            phi_npm = (phi[1:]+phi[0:-1])*0.5 # nz+1
-            return (phi_npm[0:-1] - phi_npm[1:])/self.dz
-            
+            axis=0
+            z = -zin
         elif ndim == 2:
-            nx = np.size(data,1)
-            dz2=np.reshape(self.dz,(nz,1))
-            dz2 = np.tile(dz2,(1,nx))
-            phi = np.concatenate((data[[0],:],data,data[[-1],:]),axis=0) # nz+2
-            phi_npm = (phi[1:,:]+phi[0:-1,:])*0.5 # nz+1
-            dphi_dz = (phi_npm[0:-1,:] - phi_npm[1:,:])/dz2
-            
-            # Take care of the near bed gradient
-            bedbot = np.ravel_multi_index((self.Nk,list(range(self.Nc))),(self.Nkmax,self.Nc))
-            Nk1=self.Nk-1
-            Nk1[Nk1<0]=0
-            bedtop = np.ravel_multi_index((Nk1,list(range(self.Nc))),(self.Nkmax,self.Nc))
-            bedbot = np.ravel_multi_index((self.Nk,list(range(self.Nc))),(self.Nkmax,self.Nc))
-            dphi_dz.flat[bedbot] = (data.flat[bedtop]-data.flat[bedbot]) / dz2.flat[bedbot]
-            
-            return dphi_dz
-        
+            axis=0
+            z = -zin[:,None]
         elif ndim == 3:
-            nt = np.size(data,0)
-            nx = np.size(data,2)
-            dz3=np.reshape(self.dz,(1,nz,1))
-            dz3 = np.tile(dz3,(nt,1,nx)) 
-            phi = np.concatenate((data[:,[0],:],data[:,:,:],data[:,[-1],:]),axis=1) # nz+2
-            phi_npm = (phi[:,1:,:]+phi[:,0:-1,:])*0.5 # nz+1
-            
-            return (phi_npm[:,0:-1,:] - phi_npm[:,1:,:])/dz3
+            axis=1
+            z = -zin[None, :, None]
+
+        return grad_z(data, z, axis=axis)
+
+        #rho = dsc['rho'][0:2,:,5:10].values
+        #grad_z(rho, -z[None,:,None], axis=1) # 3D rho
+
+        #rho = dsc['rho'][0,:,5].values
+        #grad_z(rho, -z, axis=0) # 1D rho
+
+        #rho = dsc['rho'][0,:,5:10].values
+        #print(rho.shape)
+        #grad_z(rho, -z[:,None], axis=0) # 2D rho
+
+        ###
+        # Old
+        #if ndim == 1:
+        #    phi = np.hstack((data[0],data,data[-1])) # nz+2
+        #    phi_npm = (phi[1:]+phi[0:-1])*0.5 # nz+1
+        #    return (phi_npm[0:-1] - phi_npm[1:])/self.dz
+        #    
+        #elif ndim == 2:
+        #    nx = np.size(data,1)
+        #    dz2=np.reshape(self.dz,(nz,1))
+        #    dz2 = np.tile(dz2,(1,nx))
+        #    phi = np.concatenate((data[[0],:],data,data[[-1],:]),axis=0) # nz+2
+        #    phi_npm = (phi[1:,:]+phi[0:-1,:])*0.5 # nz+1
+        #    dphi_dz = (phi_npm[0:-1,:] - phi_npm[1:,:])/dz2
+        #    
+        #    # Take care of the near bed gradient
+        #    bedbot = np.ravel_multi_index((self.Nk,list(range(self.Nc))),(self.Nkmax,self.Nc))
+        #    Nk1=self.Nk-1
+        #    Nk1[Nk1<0]=0
+        #    bedtop = np.ravel_multi_index((Nk1,list(range(self.Nc))),(self.Nkmax,self.Nc))
+        #    bedbot = np.ravel_multi_index((self.Nk,list(range(self.Nc))),(self.Nkmax,self.Nc))
+        #    dphi_dz.flat[bedbot] = (data.flat[bedtop]-data.flat[bedbot]) / dz2.flat[bedbot]
+        #    
+        #    return dphi_dz
+        #
+        #elif ndim == 3:
+        #    nt = np.size(data,0)
+        #    nx = np.size(data,2)
+        #    dz3=np.reshape(self.dz,(1,nz,1))
+        #    dz3 = np.tile(dz3,(nt,1,nx)) 
+        #    phi = np.concatenate((data[:,[0],:],data[:,:,:],data[:,[-1],:]),axis=1) # nz+2
+        #    phi_npm = (phi[:,1:,:]+phi[:,0:-1,:])*0.5 # nz+1
+        #    
+        #    return (phi_npm[:,0:-1,:] - phi_npm[:,1:,:])/dz3
 
     def areaint(self,phi,mask=None):
         """

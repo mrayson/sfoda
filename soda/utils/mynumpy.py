@@ -121,7 +121,7 @@ def grad_z(y, z, axis=0):
     #assert y.shape[0] == Nz
 
     z = z.swapaxes(0, axis)
-    assert z.shape == (Nz,) or z.shape == y.shape
+    #assert z.shape == (Nz,) or z.shape == y.shape
 
     dy_dz = np.zeros_like(y)
     
