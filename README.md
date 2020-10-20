@@ -10,6 +10,14 @@ A suite of python tools for analysing oceanographic data. Includes:
 
 # Installation
 
+## To install a development version
+
+`pip install -e ./`
+
+## To install latest from github
+
+`pip install git+https://github.com/mrayson/sfoda.git`
+
 # Usage
 
 # What's New

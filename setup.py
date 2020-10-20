@@ -32,42 +32,51 @@ class BinaryDistribution(Distribution):
 os.environ["CC"]='cc'
 
 extensions =[
-    Extension("soda.dataio.ugrid.ugridutils",["soda/dataio/ugrid/ugridutils.pyx"],
+    Extension("sfoda.ugrid.ugridutils",["sfoda/ugrid/ugridutils.pyx"],
         include_dirs=[numpy.get_include()],
         extra_compile_args=
             ['-shared', '-pthread', '-fPIC', '-fwrapv', '-O2', '-Wall',
             '-fno-strict-aliasing'],),
-    Extension("soda.dataio.ugrid.searchutils",["soda/dataio/ugrid/searchutils.pyx"],
+    Extension("sfoda.ugrid.searchutils",["sfoda/ugrid/searchutils.pyx"],
         include_dirs=[numpy.get_include()],
         extra_compile_args=['-O3','-ffast-math','-march=native','-fopenmp'],
         extra_link_args=['-fopenmp'],),
 ]
 
 setup(
-    name = "soda",
-    packages=[\
-        'soda',
-        #    'soda.utils',
-        'soda.utils','soda.dataio',\
-        'soda.dataio.ugrid','soda.dataio.suntans','soda.dataio.roms',\
-        'soda.dataio.conversion','soda.dataio.datadownload',\
+    name = "sfoda",
+    packages=[
+        'sfoda',
+        'sfoda.utils',
+        'sfoda.ugrid',
+        'sfoda.suntans',
+        'sfoda.roms',
+        'sfoda.tides',    
+        'sfoda.dbase',
+        'sfoda.dataio.conversion',
+        'sfoda.dataio.datadownload',
         ],
-    #package_dir={'soda':''},
+    #package_dir={'sfoda':''},
     ext_modules = cythonize(extensions, language_level=3),
     #cmdclass={"build_ext": build_ext},
     #ext_modules = extensions,
-    version="0.3.0",
-    description='Serious Ocean Data Analysis',
+    version="0.X.X",
+    description='Stuff For Ocean Data Analysis',
     author='Matt Rayson',
     author_email='matt.rayson@uwa.edu.au',
     #packages=find_packages(exclude=["*.tests", "*.tests.*", "tests.*", "tests"]),
-    install_requires=['numpy','scipy','matplotlib','netcdf4','xarray',
+    install_requires=[
+      'numpy',
+      'scipy',
+      'matplotlib',
+      'netcdf4',
+      'xarray',
       'pyyaml',
       'numba',
-      #'shapely',
       'pyproj',
-      #'gdal',
       'dask',
+      #'gdal',
+      #'shapely',
       ],
     license='LICENSE',
     include_package_data=True,
