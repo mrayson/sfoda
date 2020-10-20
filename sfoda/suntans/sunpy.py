@@ -25,13 +25,12 @@ import matplotlib.animation as animation
 
 from sfoda.utils import othertime
 from sfoda.utils.mynumpy import grad_z
-from .suntans_ugrid import ugrid
 from sfoda.utils.timeseries import timeseries
 from sfoda.utils.ufilter import ufilter
-from sfoda.utils.maptools import utm2ll
 from sfoda.utils.myproj import MyProj
-from sfoda.dataio.ugrid.hybridgrid import HybridGrid, circumcenter
-from sfoda.dataio.ugrid.gridsearch import GridSearch
+from sfoda.ugrid.hybridgrid import HybridGrid, circumcenter
+from sfoda.ugrid.gridsearch import GridSearch
+from .suntans_ugrid import ugrid
 
 import pdb
 
@@ -513,16 +512,19 @@ class Grid(object):
         Convert the node coordinates to WGS84 map projection
         """
         # Convert the nodes
-        ll = utm2ll(np.column_stack([self.xp, self.yp]),\
-                utmzone, north=isnorth)
-        self.xp = ll[:,0]
-        self.yp = ll[:,1]
+        #ll = utm2ll(np.column_stack([self.xp, self.yp]),\
+        #        utmzone, north=isnorth)
+        #self.xp = ll[:,0]
+        #self.yp = ll[:,1]
 
-        # Convert the cell centers
-        ll = utm2ll(np.column_stack([self.xv, self.yv]),\
-                utmzone, north=isnorth)
-        self.xv = ll[:,0]
-        self.yv = ll[:,1]
+        ## Convert the cell centers
+        #ll = utm2ll(np.column_stack([self.xv, self.yv]),\
+        #        utmzone, north=isnorth)
+        #self.xv = ll[:,0]
+        #self.yv = ll[:,1]
+        P = MyProj(None, utmzone=utmzone, isnorth=isnorth)
+        self.xp, self.yp, lat = P.to_ll(self.xp, self.yp)
+        self.xv, self.yv, lat = P.to_ll(self.xv, self.yv)
 
 
 
