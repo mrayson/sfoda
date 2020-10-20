@@ -7,9 +7,9 @@ import numpy as np
 from datetime import datetime
 import matplotlib.pyplot as plt
 #import matplotlib.animation as animation
-from soda.utils.maptools import readShpPoly
-from soda.utils.particles import ParticleAge
-import soda.utils.othertime
+from sfoda.utils.maptools import readShpPoly
+from sfoda.utils.particles import ParticleAge
+import sfoda.utils.othertime
 
 import pdb
 

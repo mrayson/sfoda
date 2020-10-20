@@ -12,9 +12,9 @@ March 2014
 
 from .sunpy import Spatial
 from .sunslice import MultiSliceEdge
-import soda.utils.mypandas as mpd
-from soda.utils.timeseries import timeseries
-from soda.utils.maptools import maskShpPoly
+import sfoda.utils.mypandas as mpd
+from sfoda.utils.timeseries import timeseries
+from sfoda.utils.maptools import maskShpPoly
 
 import numpy as np
 import matplotlib.pyplot as plt

@@ -10,8 +10,8 @@ import numpy as np
 import xarray as xray
 from scipy.interpolate import interp2d, interp1d
 
-from soda.utils.othertime import datetime64todatetime, YearDay
-from soda.utils.interpXYZ import interpXYZ
+from sfoda.utils.othertime import datetime64todatetime, YearDay
+from sfoda.utils.interpXYZ import interpXYZ
 
 import pdb
 

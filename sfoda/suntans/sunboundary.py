@@ -32,15 +32,15 @@ import matplotlib.pyplot as plt
 from datetime import datetime, timedelta
 import os
 
-from soda.dataio.datadownload.get_metocean_dap import get_metocean_local
-from soda.dataio.roms import romsio
-from soda.utils.maptools import readShpPoly#,ll2utm,utm2ll
-from soda.utils.myproj import MyProj
-from soda.utils.interpXYZ import Interp4D
-from soda.utils.inpolygon import inpolygon
-from soda.dataio.conversion import readotps 
+from sfoda.dataio.datadownload.get_metocean_dap import get_metocean_local
+from sfoda.dataio.roms import romsio
+from sfoda.utils.maptools import readShpPoly#,ll2utm,utm2ll
+from sfoda.utils.myproj import MyProj
+from sfoda.utils.interpXYZ import Interp4D
+from sfoda.utils.inpolygon import inpolygon
+from sfoda.dataio.conversion import readotps 
 
-from soda.utils import othertime
+from sfoda.utils import othertime
 
 import pdb
 

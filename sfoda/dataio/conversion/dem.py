@@ -18,8 +18,8 @@ from gdalconst import *
 
 from scipy.ndimage import gaussian_filter, generic_filter
 
-from soda.utils.interpXYZ import tile_vector, nn
-from soda.utils.myproj import MyProj
+from sfoda.utils.interpXYZ import tile_vector, nn
+from sfoda.utils.myproj import MyProj
 
 import matplotlib.pyplot as plt
 from matplotlib.colors import LightSource

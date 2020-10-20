@@ -12,7 +12,7 @@ import collections
 import numpy as np
 from netCDF4 import Dataset, MFDataset, num2date,date2num,date2index
 from datetime import datetime
-from soda.utils import othertime
+from sfoda.utils import othertime
 
 import pdb
 

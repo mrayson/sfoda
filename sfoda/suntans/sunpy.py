@@ -23,15 +23,15 @@ import matplotlib.pyplot as plt
 from matplotlib.collections import PolyCollection, LineCollection
 import matplotlib.animation as animation
 
-from soda.utils import othertime
-from soda.utils.mynumpy import grad_z
-from soda.dataio.suntans.suntans_ugrid import ugrid
-from soda.utils.timeseries import timeseries
-from soda.utils.ufilter import ufilter
-from soda.utils.maptools import utm2ll
-from soda.utils.myproj import MyProj
-from soda.dataio.ugrid.hybridgrid import HybridGrid, circumcenter
-from soda.dataio.ugrid.gridsearch import GridSearch
+from sfoda.utils import othertime
+from sfoda.utils.mynumpy import grad_z
+from sfoda.dataio.suntans.suntans_ugrid import ugrid
+from sfoda.utils.timeseries import timeseries
+from sfoda.utils.ufilter import ufilter
+from sfoda.utils.maptools import utm2ll
+from sfoda.utils.myproj import MyProj
+from sfoda.dataio.ugrid.hybridgrid import HybridGrid, circumcenter
+from sfoda.dataio.ugrid.gridsearch import GridSearch
 
 import pdb
 

@@ -33,7 +33,7 @@ October 2013
 """
 
 import numpy as np
-from soda.utils.maptools import readShpPoly, readShpPointLine
+from sfoda.utils.maptools import readShpPoly, readShpPointLine
 from .hybridgrid import HybridGrid
 
 import pdb

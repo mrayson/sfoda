@@ -14,12 +14,12 @@ from datetime import datetime
 import matplotlib.pyplot as plt
 
 
-from soda.dataio import netcdfio
-from soda.dataio.suntans.sunpy import Spatial, unsurf
-from soda.utils import uspectra
-from soda.utils.timeseries import timeseries, harmonic_fit, ap2ep
-from soda.dataio.suntans.suntans_ugrid import ugrid
-from soda.utils import othertime
+from sfoda.dataio import netcdfio
+from sfoda.dataio.suntans.sunpy import Spatial, unsurf
+from sfoda.utils import uspectra
+from sfoda.utils.timeseries import timeseries, harmonic_fit, ap2ep
+from sfoda.dataio.suntans.suntans_ugrid import ugrid
+from sfoda.utils import othertime
 
 
 import pdb

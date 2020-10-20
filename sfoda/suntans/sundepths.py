@@ -11,10 +11,10 @@ from . import sunpy
 import matplotlib.pyplot as plt
 
 from .sunpy import Grid
-from soda.dataio.ugrid.gridsearch import GridSearch
-from soda.utils.interpXYZ import Inputs, interpXYZ
-from soda.utils.ufilter import ufilter
-from soda.dataio.conversion.dem import DEM
+from sfoda.dataio.ugrid.gridsearch import GridSearch
+from sfoda.utils.interpXYZ import Inputs, interpXYZ
+from sfoda.utils.ufilter import ufilter
+from sfoda.dataio.conversion.dem import DEM
 
 import time
 

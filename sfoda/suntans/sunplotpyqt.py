@@ -52,10 +52,10 @@ import sys
 
 
 
-from soda.dataio.suntans.sunpy import Spatial, Grid
-from soda.dataio.ugrid.untrim_tools import untrim_gridvars, untrim_griddims, UNTRIMSpatial
-from soda.utils.ptm_tools import PtmBin
-from soda.dataio.suntans.suntrack import PtmNC
+from sfoda.dataio.suntans.sunpy import Spatial, Grid
+from sfoda.dataio.ugrid.untrim_tools import untrim_gridvars, untrim_griddims, UNTRIMSpatial
+from sfoda.utils.ptm_tools import PtmBin
+from sfoda.dataio.suntans.suntrack import PtmNC
 from datetime import datetime
 import numpy as np
 

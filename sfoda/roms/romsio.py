@@ -16,13 +16,13 @@ from scipy import interpolate
 import operator
 
 # Private modules
-from soda.utils.interpXYZ import interpXYZ
-from soda.utils import othertime
-from soda.utils.timeseries import timeseries
-from soda.utils.maptools import ll2lcc, ll2utm
-from soda.utils.myproj import MyProj
-from soda.utils.mygeometry import MyLine
-from soda.dataio.datadownload.mythredds import MFncdap
+from sfoda.utils.interpXYZ import interpXYZ
+from sfoda.utils import othertime
+from sfoda.utils.timeseries import timeseries
+from sfoda.utils.maptools import ll2lcc, ll2utm
+from sfoda.utils.myproj import MyProj
+from sfoda.utils.mygeometry import MyLine
+from sfoda.dataio.datadownload.mythredds import MFncdap
 
 try:
     from octant.slice import isoslice

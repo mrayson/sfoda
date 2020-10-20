@@ -15,9 +15,9 @@ import numpy as np
 import operator as op
 import matplotlib.pyplot as plt
 
-from soda.utils.inpolygon import inpolygon
-from soda.dataio.ugrid.hybridgrid import HybridGrid
-from soda.dataio.ugrid import searchutils
+from sfoda.utils.inpolygon import inpolygon
+from sfoda.dataio.ugrid.hybridgrid import HybridGrid
+from sfoda.dataio.ugrid import searchutils
 
 import pdb
 

@@ -11,7 +11,7 @@ Created on Fri Oct 26 09:17:20 2012
 from netCDF4 import Dataset, num2date
 import matplotlib.pyplot as plt
 import numpy as np
-import soda.utils.othertime as otime
+import sfoda.utils.othertime as otime
 
 import pdb
 

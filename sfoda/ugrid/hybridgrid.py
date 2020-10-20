@@ -15,7 +15,7 @@ import operator as op
 import matplotlib.pyplot as plt
 
 from . import ugridutils
-#from soda.dataio.ugrid import newugridutils as ugridutils
+#from sfoda.dataio.ugrid import newugridutils as ugridutils
 import pdb
 
 ###
@@ -694,7 +694,7 @@ class HybridGrid(object):
         Export the grid variables to a netcdf file
         """
         from netCDF4 import Dataset
-        from soda.dataio.suntans.suntans_ugrid import ugrid
+        from sfoda.dataio.suntans.suntans_ugrid import ugrid
         
         nc = Dataset(outfile, 'w', format='NETCDF4_CLASSIC')
         nc.Description = 'Unstructured grid file'

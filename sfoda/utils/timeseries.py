@@ -23,7 +23,7 @@ from .uspectra import uspectra, getTideFreq
 from .otherplot import stackplot
 from .harmonic_analysis import harmonic_fit, harmonic_signal
 from .mysignal import filt_gaps
-from soda.dataio.netcdfio import queryNC
+from sfoda.dataio.netcdfio import queryNC
 
 import pdb
 

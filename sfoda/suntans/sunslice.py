@@ -14,9 +14,9 @@ from scipy.interpolate import interp1d
 import matplotlib.animation as animation
 from shapely.geometry import LineString, Point
 
-from soda.dataio.ugrid.hybridgrid import Line
-from soda.dataio.ugrid.hybridgrid import Point as GPoint
-from soda.dataio.ugrid.gridsearch import GridSearch
+from sfoda.dataio.ugrid.hybridgrid import Line
+from sfoda.dataio.ugrid.hybridgrid import Point as GPoint
+from sfoda.dataio.ugrid.gridsearch import GridSearch
 from .sunpy import Spatial
 from .sunpy import unsurf
 

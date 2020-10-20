@@ -28,18 +28,18 @@ import matplotlib.pyplot as plt
 import xarray as xray
 import yaml
 import os
-import soda
+import sfoda
 
 import pdb
 
-_path = os.path.abspath(soda.__file__)
+_path = os.path.abspath(sfoda.__file__)
 _dirpath = os.path.dirname(_path)
 
 # Load the netcdf metadata for all of the routines
 with open('%s/dataio/ncmetadata.yaml'%_dirpath, 'r') as f:
     ncmeta = yaml.load(f)
 
-mysqldir = '/home/suntans/.conda/envs/soda/lib/'
+mysqldir = '/home/suntans/.conda/envs/sfoda/lib/'
 
 ###################
 # xray routines

@@ -7,7 +7,7 @@
 from scipy import spatial
 import numpy as np
 from numba import jit
-from soda.utils.linsolve import linsolve
+from sfoda.utils.linsolve import linsolve
 
 import pdb
 

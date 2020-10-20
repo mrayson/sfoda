@@ -6,7 +6,7 @@ Stanford University
 March 2014
 """
 
-from soda.dataio.suntans.sunpy import Grid, Spatial
+from sfoda.dataio.suntans.sunpy import Grid, Spatial
 import numpy as np
 import matplotlib.pyplot as plt
 

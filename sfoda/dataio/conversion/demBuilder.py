@@ -13,9 +13,9 @@ import time
 import matplotlib.pyplot as plt
 import pandas as pd
 
-from soda.utils.maptools import ll2utm, readShpBathy, readDEM
-from soda.utils.kriging import kriging
-from soda.utils.interpXYZ import CurvMin
+from sfoda.utils.maptools import ll2utm, readShpBathy, readDEM
+from sfoda.utils.kriging import kriging
+from sfoda.utils.interpXYZ import CurvMin
 
 
 # testing stuff

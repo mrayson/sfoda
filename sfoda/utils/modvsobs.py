@@ -18,9 +18,9 @@ import xarray as xray
 import operator
 
 
-from soda.utils import othertime
-from soda.utils.otherplot import stackplot
-from soda.utils.timeseries import timeseries, rms
+from sfoda.utils import othertime
+from sfoda.utils.otherplot import stackplot
+from sfoda.utils.timeseries import timeseries, rms
 
 import pdb
 

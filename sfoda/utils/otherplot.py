@@ -12,7 +12,7 @@ from matplotlib.ticker import Formatter
 from datetime import datetime, timedelta
 import numpy as np
 
-from soda.utils import othertime
+from sfoda.utils import othertime
 
 class StreakPlot(object):
     """

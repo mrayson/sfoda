@@ -8,11 +8,11 @@ Created on Wed Apr 17 09:54:48 2013
 """
 
 from .sunpy import Spatial, Grid
-from soda.utils import othertime
-from soda.dataio.ugrid.gridsearch import GridSearch
-from soda.utils.cartgrid import RegGrid
+from sfoda.utils import othertime
+from sfoda.dataio.ugrid.gridsearch import GridSearch
+from sfoda.utils.cartgrid import RegGrid
 #import matplotlib.nxutils as nxutils #inpolygon equivalent lives here
-from soda.utils.inpolygon import inpolygon
+from sfoda.utils.inpolygon import inpolygon
 
 from datetime import datetime,timedelta
 from scipy import spatial 

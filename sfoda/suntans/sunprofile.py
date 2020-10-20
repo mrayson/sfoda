@@ -11,9 +11,9 @@ Usage:
 
 """
 
-from soda.dataio.netcdfio import dict_toxray
-from soda.dataio.suntans.sunpy import calc_z
-from soda.utils.othertime import datetimetodatetime64
+from sfoda.dataio.netcdfio import dict_toxray
+from sfoda.dataio.suntans.sunpy import calc_z
+from sfoda.utils.othertime import datetimetodatetime64
 
 import xarray as xray
 from netCDF4 import num2date

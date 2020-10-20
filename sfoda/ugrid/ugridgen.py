@@ -6,8 +6,8 @@ Usage include:
     - Reorder grid cells using metis
 """
 import numpy as np
-from soda.dataio.ugrid.hybridgrid import HybridGrid
-from soda.utils.inpolygon import inpolygon
+from sfoda.dataio.ugrid.hybridgrid import HybridGrid
+from sfoda.utils.inpolygon import inpolygon
 
 
 def cartesian_ugrid_gen(xlims, ylims, dx, suntanspath=None, maskpoly=None):

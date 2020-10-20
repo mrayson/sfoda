@@ -16,10 +16,10 @@ import glob
 import pdb
 
 # matplotlib
-from soda.dataio.ugrid.uplot import Plot as UPlot
+from sfoda.dataio.ugrid.uplot import Plot as UPlot
 
 ## VTK stuff
-#from soda.dataio.ugrid.uplotvtk import PlotVTK as UPlot
+#from sfoda.dataio.ugrid.uplotvtk import PlotVTK as UPlot
 #from mayavi import mlab
 
 # Test manually setting the scheduler
