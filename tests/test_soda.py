@@ -5,12 +5,13 @@ Test imports scripts
 # Try loading some of the troubling packages...
 
 print("Running sfoda test imports...")
-from sfoda.dataio import netcdfio
-from sfoda.utils import timeseries, maptools
+from sfoda.dbase import netcdfio
+from sfoda.utils import timeseries 
+from sfoda.utils import maptools
 
-from sfoda.dataio.ugrid import hybridgrid
-from sfoda.dataio.suntans import sunxray, sunplotpyqt
-from sfoda.dataio.suntans import sunboundary, sundepths
+from sfoda.ugrid import hybridgrid
+from sfoda.suntans import sunxray, sunplotpyqt
+from sfoda.suntans import sunboundary, sundepths
 
 from sfoda.dataio.conversion import demBuilder
 from sfoda.dataio.conversion import readotps
