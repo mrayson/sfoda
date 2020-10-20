@@ -25,7 +25,7 @@ import matplotlib.animation as animation
 
 from sfoda.utils import othertime
 from sfoda.utils.mynumpy import grad_z
-from sfoda.dataio.suntans.suntans_ugrid import ugrid
+from .suntans_ugrid import ugrid
 from sfoda.utils.timeseries import timeseries
 from sfoda.utils.ufilter import ufilter
 from sfoda.utils.maptools import utm2ll

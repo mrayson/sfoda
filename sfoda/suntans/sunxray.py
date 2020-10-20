@@ -16,7 +16,7 @@ import glob
 import pdb
 
 # matplotlib
-from sfoda.dataio.ugrid.uplot import Plot as UPlot
+from sfoda.ugrid.uplot import Plot as UPlot
 
 ## VTK stuff
 #from sfoda.dataio.ugrid.uplotvtk import PlotVTK as UPlot

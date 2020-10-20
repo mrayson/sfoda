@@ -16,8 +16,8 @@ import operator as op
 import matplotlib.pyplot as plt
 
 from sfoda.utils.inpolygon import inpolygon
-from sfoda.dataio.ugrid.hybridgrid import HybridGrid
-from sfoda.dataio.ugrid import searchutils
+from .hybridgrid import HybridGrid
+from . import searchutils
 
 import pdb
 

@@ -33,7 +33,7 @@ from datetime import datetime, timedelta
 import os
 
 from sfoda.dataio.datadownload.get_metocean_dap import get_metocean_local
-from sfoda.dataio.roms import romsio
+from sfoda.roms import romsio
 from sfoda.utils.maptools import readShpPoly#,ll2utm,utm2ll
 from sfoda.utils.myproj import MyProj
 from sfoda.utils.interpXYZ import Interp4D

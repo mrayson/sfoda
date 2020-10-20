@@ -15,10 +15,10 @@ import matplotlib.pyplot as plt
 
 
 from sfoda.dataio import netcdfio
-from sfoda.dataio.suntans.sunpy import Spatial, unsurf
+from .sunpy import Spatial, unsurf
 from sfoda.utils import uspectra
 from sfoda.utils.timeseries import timeseries, harmonic_fit, ap2ep
-from sfoda.dataio.suntans.suntans_ugrid import ugrid
+from .suntans_ugrid import ugrid
 from sfoda.utils import othertime
 
 

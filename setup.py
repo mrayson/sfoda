@@ -74,7 +74,7 @@ setup(
       'pyyaml',
       'numba',
       'pyproj',
-      'dask',
+      'dask[complete]',
       #'gdal',
       #'shapely',
       ],

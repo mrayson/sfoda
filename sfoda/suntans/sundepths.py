@@ -11,7 +11,7 @@ from . import sunpy
 import matplotlib.pyplot as plt
 
 from .sunpy import Grid
-from sfoda.dataio.ugrid.gridsearch import GridSearch
+from sfoda.ugrid.gridsearch import GridSearch
 from sfoda.utils.interpXYZ import Inputs, interpXYZ
 from sfoda.utils.ufilter import ufilter
 from sfoda.dataio.conversion.dem import DEM
