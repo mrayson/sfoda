@@ -9,7 +9,7 @@ Created on Wed Apr 17 09:54:48 2013
 
 from .sunpy import Spatial, Grid
 from sfoda.utils import othertime
-from sfoda.dataio.ugrid.gridsearch import GridSearch
+from sfoda.ugrid.gridsearch import GridSearch
 from sfoda.utils.cartgrid import RegGrid
 #import matplotlib.nxutils as nxutils #inpolygon equivalent lives here
 from sfoda.utils.inpolygon import inpolygon
@@ -21,9 +21,6 @@ import matplotlib.pyplot as plt
 from netCDF4 import Dataset, num2date
 import operator
 
-import numexpr as ne
-
-from time import clock
 import pdb
 
 class PtmNC(object):
@@ -210,7 +207,7 @@ class SunTrack(Spatial):
         """
         Advect the particles
         """          
-        t0 = clock()
+        t0 = datetime.now()
         if self.verbose:
             print('\tTime step: ',timenow)
          
@@ -235,7 +232,7 @@ class SunTrack(Spatial):
            self.CalcAge()
             
         
-        t1 = clock()
+        t1 = datetime.now()
         if self.verbose:
             print('\t\tElapsed time: %s seconds.'%(t1-t0))
             

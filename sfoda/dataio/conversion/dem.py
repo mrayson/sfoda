@@ -13,8 +13,6 @@ from scipy import spatial, interpolate
 import matplotlib.pyplot as plt
 import time
 import shutil
-import gdal
-from gdalconst import * 
 
 from scipy.ndimage import gaussian_filter, generic_filter
 
@@ -277,32 +275,33 @@ class DEM(object):
 
     def readraster(self):
         """ Loads the data from a DEM raster file"""
-        # register all of the drivers
-        gdal.AllRegister()
-        # open the image
-        ds = gdal.Open(self.infile, GA_ReadOnly)
-        
-        # Read the x and y coordinates
-        cols = ds.RasterXSize
-        rows = ds.RasterYSize
-        bands = ds.RasterCount
-        
-        geotransform = ds.GetGeoTransform()
-        originX = geotransform[0]
-        originY = geotransform[3]
-        pixelWidth = geotransform[1]
-        pixelHeight = geotransform[5]
-        
-        x = originX + np.linspace(0,cols-1,cols)*pixelWidth
-        y = originY + np.linspace(0,rows-1,rows)*pixelHeight
-        
-        # Read the actual data
-        data = ds.ReadAsArray(0,0,cols,rows)
-        
-        # Remove missing points
-        data[data==-32767]=np.nan
-        
-        return x, y, data
+        raise Exception
+        ## register all of the drivers
+        #gdal.AllRegister()
+        ## open the image
+        #ds = gdal.Open(self.infile, GA_ReadOnly)
+        #
+        ## Read the x and y coordinates
+        #cols = ds.RasterXSize
+        #rows = ds.RasterYSize
+        #bands = ds.RasterCount
+        #
+        #geotransform = ds.GetGeoTransform()
+        #originX = geotransform[0]
+        #originY = geotransform[3]
+        #pixelWidth = geotransform[1]
+        #pixelHeight = geotransform[5]
+        #
+        #x = originX + np.linspace(0,cols-1,cols)*pixelWidth
+        #y = originY + np.linspace(0,rows-1,rows)*pixelHeight
+        #
+        ## Read the actual data
+        #data = ds.ReadAsArray(0,0,cols,rows)
+        #
+        ## Remove missing points
+        #data[data==-32767]=np.nan
+        #
+        #return x, y, data
     
         
     def ravel(self):

@@ -14,7 +14,7 @@ from datetime import datetime
 import matplotlib.pyplot as plt
 
 
-from sfoda.dataio import netcdfio
+from sfoda.dbase import netcdfio
 from .sunpy import Spatial, unsurf
 from sfoda.utils import uspectra
 from sfoda.utils.timeseries import timeseries, harmonic_fit, ap2ep

@@ -7,7 +7,7 @@ Test imports scripts
 print("Running sfoda test imports...")
 from sfoda.dbase import netcdfio
 from sfoda.utils import timeseries 
-#from sfoda.utils import maptools
+from sfoda.utils import maptools
 
 from sfoda.ugrid import hybridgrid
 from sfoda.suntans import sunxray, sunplotpyqt
@@ -15,7 +15,7 @@ from sfoda.suntans import sunboundary, sundepths
 from sfoda.suntans import suntides
 
 from sfoda.dataio.conversion import demBuilder
-from sfoda.dataio.conversion import readotps
+from sfoda.tides import readotps
 from sfoda.dataio.datadownload import get_metocean_dap
 
 print("Done")

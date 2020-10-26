@@ -38,7 +38,7 @@ from sfoda.utils.maptools import readShpPoly#,ll2utm,utm2ll
 from sfoda.utils.myproj import MyProj
 from sfoda.utils.interpXYZ import Interp4D
 from sfoda.utils.inpolygon import inpolygon
-from sfoda.dataio.conversion import readotps 
+from sfoda.tides import readotps 
 
 from sfoda.utils import othertime
 
