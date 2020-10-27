@@ -6,7 +6,7 @@ Usage include:
     - Reorder grid cells using metis
 """
 import numpy as np
-from sfoda.dataio.ugrid.hybridgrid import HybridGrid
+from sfoda.ugrid.hybridgrid import HybridGrid
 from sfoda.utils.inpolygon import inpolygon
 
 

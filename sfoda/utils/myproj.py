@@ -27,7 +27,8 @@ class MyProj(object):
             projstr = '+proj=merc +lon_0=0 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +no_defs'
     
         # Projection object (super-classing doesn't work...)
-        self.P = Proj(projstr, init=init)
+        #self.P = Proj(projstr, init=init)
+        self.P = Proj(projstr )
         
         # Create the inverse projection here
         #self.inverseProj = self.P.to_latlong()
