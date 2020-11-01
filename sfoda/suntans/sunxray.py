@@ -41,16 +41,16 @@ class Sunxray(UPlot):
     def __init__(self, ncfile, lazy=False, **kwargs):
         self.__dict__.update(kwargs)
 
-        #try:
-        #    self._ds = xr.open_dataset(ncfile, \
-        #            chunks=self.chunks,\
-        #            mask_and_scale=True, decode_times=True)
-        #except:
-        self._ds = xr.open_mfdataset(ncfile, \
-                concat_dim = 'time',
-                data_vars='minimal',
-                chunks=self.chunks,\
-                mask_and_scale=True, decode_times=True)
+        try:
+            self._ds = xr.open_dataset(ncfile, \
+                    chunks=self.chunks,\
+                    mask_and_scale=True, decode_times=True)
+        except:
+            self._ds = xr.open_mfdataset(ncfile, \
+                    concat_dim = 'time',
+                    data_vars='minimal',
+                    chunks=self.chunks,\
+                    mask_and_scale=True, decode_times=True)
         
 
         if not lazy:
