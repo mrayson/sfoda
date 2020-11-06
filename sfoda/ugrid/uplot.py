@@ -319,14 +319,25 @@ class Plot(HybridGrid):
 
         kind = 'linear' or 'cubic'
         """
-        self.build_tri_voronoi()
-
         if kind == 'linear':
+            self.build_tri_voronoi()
             F = tri.LinearTriInterpolator(self._triv, z)
-        elif kind == 'cubic':
-            F = tri.CubicTriInterpolator(self._triv, z)
+            return F(x, y)
 
-        return F(x, y)
+        elif kind == 'cubic':
+            self.build_tri_voronoi()
+            F = tri.CubicTriInterpolator(self._triv, z)
+            return F(x, y)
+
+        elif kind == 'nearest':
+            if isinstance(x, float):
+                dist, idx = self.find_nearest([x,y])
+                return z[idx]
+            elif isinstance(x, np.ndarray):
+                sz = x.shape
+                xy = np.array([x.ravel(),y.ravel()]).T
+                dist, idx = self.find_nearest(xy)
+                return z[idx].reshape(sz)
 
     def cell2node(self,cell_scalar):
         """
@@ -341,7 +352,19 @@ class Plot(HybridGrid):
                     for ii in range(self.Np)]
         return np.array(node_scalar)
 
-
-
+    def find_nearest(self, xy, NNear=1):
+        """
+        Returns the grid indices of the closest points to the nx2 array xy
+        
+        Uses the scipy KDTree routine
+        """
+        
+        if '_kd' not in self.__dict__:
+            self._kd = spatial.cKDTree(np.vstack((self.xv,self.yv)).T)
+    
+        # Perform query on all of the points in the grid
+        dist,ind=self._kd.query(xy,k=NNear)
+        
+        return dist, ind
 
 
