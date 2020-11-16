@@ -64,6 +64,7 @@ class HybridGrid(object):
     markcell=None
     grad=None
     neigh=None
+    face=None
     xv=None
     yv=None
 
