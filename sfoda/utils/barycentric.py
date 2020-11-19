@@ -10,24 +10,40 @@ class BarycentricInterp(object):
     """
     Triangular barycentric interpolation class
     """
+    
+    tri = None
+	
     def __init__(self, xyin, xyout, **kwargs):
         self.__dict__.update(kwargs)
         
         # Triangulate the input 
-        tri = Delaunay(xyin)
+        if self.tri is None:
+            self.tri = Delaunay(xyin)
+
+        self.weights, self.verts = self._calc_weights(xyout)
         
+   
+    def __call__(self, z, xyout=None):
+        """
+        Perform the interpolation
+        """
+        if xyout is not None:
+            self.weights, self.verts = self._calc_weights(xyout)
+            
+        return (z[self.verts]*self.weights).sum(axis=1)
+
+    def _calc_weights(self, xyout):
         # Find the simplex (i.e. the cell or polygon number) where each point lies
-        s = tri.find_simplex(xyout)
+        s = self.tri.find_simplex(xyout)
         
         # Compute the barycentric coordinates (these are the weights)
-        X = tri.transform[s,:2]
-        Y = xyout - tri.transform[s,2]
+        X = self.tri.transform[s,:2]
+        Y = xyout - self.tri.transform[s,2]
         b = np.einsum('ijk,ik->ij', X, Y)
-        self.weights = np.c_[b, 1 - b.sum(axis=1)]
+        weights = np.c_[b, 1 - b.sum(axis=1)]
         
         # These are the vertices of the output points
-        self.verts = tri.simplices[s]
-    
-    def __call__(self, z):
+        verts = self.tri.simplices[s]
         
-        return (z[self.verts]*self.weights).sum(axis=1)
+        return weights, verts
+ 

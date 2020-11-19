@@ -3,6 +3,7 @@ Unstructured grid plotting module
 """
 from .hybridgrid import HybridGrid, circumcenter
 from .gridsearch import GridSearch
+from sfoda.utils.barycentric import BarycentricInterp
 
 import numpy as np
 from matplotlib.collections import PolyCollection, LineCollection
@@ -317,7 +318,7 @@ class Plot(HybridGrid):
         """
         Interpolate data in 'z' on current grid onto points 'x' and 'y'
 
-        kind = 'linear' or 'cubic'
+        kind = 'linear', 'cubic', 'barycentric' (default), 'nearest'
         """
         if kind == 'linear':
             self.build_tri_voronoi()
@@ -328,6 +329,13 @@ class Plot(HybridGrid):
             self.build_tri_voronoi()
             F = tri.CubicTriInterpolator(self._triv, z)
             return F(x, y)
+        
+        elif kind == 'barycentric':
+            self.build_tri_voronoi()
+            xyin = np.vstack([self.xv,self.yv]).T
+            xyout = np.vstack([x,y]).T
+            F = BarycentricInterp(xyin, xyout)
+            return F(z)
 
         elif kind == 'nearest':
             if isinstance(x, float):
