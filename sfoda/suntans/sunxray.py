@@ -37,7 +37,7 @@ class Sunxray(UPlot):
     # Default chunking
     #chunks={'Nk':50,'Nc':-1}
     chunks=None
-    _FillValue=999999
+    _FillValue=-999999
 
     def __init__(self, ncfile, lazy=False, **kwargs):
         self.__dict__.update(kwargs)
@@ -61,7 +61,6 @@ class Sunxray(UPlot):
             self.xlims = [xp.min(), xp.max()]
             self.ylims = [yp.min(), yp.max()]
             self.Nk = self._ds.Nk.values
-
 
             # Calculate the voronoi
             self.calc_centroids()

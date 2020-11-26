@@ -21,8 +21,6 @@ from .sunpy import Spatial
 from .sunpy import unsurf
 
 
-import pdb
-
 
 class Slice(Spatial):
     """

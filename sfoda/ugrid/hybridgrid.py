@@ -68,7 +68,7 @@ class HybridGrid(object):
     xv=None
     yv=None
 
-    _FillValue = FILLVALUE # Default is 999999
+    _FillValue = FILLVALUE # Default is -999999
 
     def __init__(self,xp,yp,cells,**kwargs):
         if self.VERBOSE:
@@ -83,6 +83,13 @@ class HybridGrid(object):
         # Set the size parameters
         self.Np = self.xp.shape[0]
         self.Nc = self.cells.shape[0]
+
+        # Check the _FillValue is suitable
+        if self.cells.max()>self.Np:
+            print('Changing the _FillValue from {} to {}'.format(\
+                    self._FillValue, self.cells.max()))
+            self._FillValue=self.cells.max()
+            self.cells[self.cells==self._FillValue] = -1
 
 
         # Get the number of faces
