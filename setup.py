@@ -19,6 +19,7 @@ except ImportError:
     from distutils.core import setup
     from distutils.extension import Extension
 
+"""
 try:
     from Cython.Build import cythonize
     use_cython = True
@@ -64,8 +65,9 @@ if compile:
         cmdclass= {} #{"build_ext": extensions}
         ext_modules = extensions
 else:
-    cmdclass = {}
-    ext_modules = None
+"""
+cmdclass = {}
+ext_modules = None
 
 
 setup(
