@@ -35,27 +35,37 @@ class BinaryDistribution(Distribution):
     def is_pure(self):
         return False
 
-
-os.environ["CC"]='cc'
-
-extensions =[
-    Extension("sfoda.ugrid.ugridutils",["sfoda/ugrid/ugridutils.{}".format(ext)],
-        include_dirs=[numpy.get_include()],
-        extra_compile_args=
-            ['-shared', '-pthread', '-fPIC', '-fwrapv', '-O2', '-Wall',
-            '-fno-strict-aliasing'],),
-    Extension("sfoda.ugrid.searchutils",["sfoda/ugrid/searchutils.{}".format(ext)],
-        include_dirs=[numpy.get_include()],
-        extra_compile_args=['-O3','-ffast-math','-march=native','-fopenmp'],
-        extra_link_args=['-fopenmp'],),
-]
-
-if use_cython:
-    ext_modules = cythonize(extensions, language_level=3)
-    cmdclass = {}
+# Check for a C compiler
+import distutils.ccompiler
+if isinstance(distutils.ccompiler.new_compiler(), distutils.ccompiler.CCompiler):
+    compile=True
 else:
-    cmdclass= {} #{"build_ext": extensions}
-    ext_modules = extensions
+    compile=False
+
+if compile:
+    os.environ["CC"]='cc'
+
+    extensions =[
+	Extension("sfoda.ugrid.ugridutils",["sfoda/ugrid/ugridutils.{}".format(ext)],
+	    include_dirs=[numpy.get_include()],
+	    extra_compile_args=
+		['-shared', '-pthread', '-fPIC', '-fwrapv', '-O2', '-Wall',
+		'-fno-strict-aliasing'],),
+	Extension("sfoda.ugrid.searchutils",["sfoda/ugrid/searchutils.{}".format(ext)],
+	    include_dirs=[numpy.get_include()],
+	    extra_compile_args=['-O3','-ffast-math','-march=native','-fopenmp'],
+	    extra_link_args=['-fopenmp'],),
+    ]
+
+    if use_cython:
+	ext_modules = cythonize(extensions, language_level=3)
+	cmdclass = {}
+    else:
+	cmdclass= {} #{"build_ext": extensions}
+	ext_modules = extensions
+else:
+    cmdclass = {}
+    ext_modules = None
 
 
 setup(
@@ -74,7 +84,7 @@ setup(
     #package_dir={'sfoda':''},
     ext_modules = ext_modules,
     cmdclass = cmdclass,
-    version="0.0.2",
+    version="0.0.4",
     description='Stuff For Ocean Data Analysis',
     author='Matt Rayson',
     author_email='matt.rayson@uwa.edu.au',
