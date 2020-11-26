@@ -46,23 +46,23 @@ if compile:
     os.environ["CC"]='cc'
 
     extensions =[
-	Extension("sfoda.ugrid.ugridutils",["sfoda/ugrid/ugridutils.{}".format(ext)],
-	    include_dirs=[numpy.get_include()],
-	    extra_compile_args=
-		['-shared', '-pthread', '-fPIC', '-fwrapv', '-O2', '-Wall',
-		'-fno-strict-aliasing'],),
-	Extension("sfoda.ugrid.searchutils",["sfoda/ugrid/searchutils.{}".format(ext)],
-	    include_dirs=[numpy.get_include()],
-	    extra_compile_args=['-O3','-ffast-math','-march=native','-fopenmp'],
-	    extra_link_args=['-fopenmp'],),
+        Extension("sfoda.ugrid.ugridutils",["sfoda/ugrid/ugridutils.{}".format(ext)],
+            include_dirs=[numpy.get_include()],
+            extra_compile_args=
+                ['-shared', '-pthread', '-fPIC', '-fwrapv', '-O2', '-Wall',
+                '-fno-strict-aliasing'],),
+        Extension("sfoda.ugrid.searchutils",["sfoda/ugrid/searchutils.{}".format(ext)],
+            include_dirs=[numpy.get_include()],
+            extra_compile_args=['-O3','-ffast-math','-march=native','-fopenmp'],
+            extra_link_args=['-fopenmp'],),
     ]
 
     if use_cython:
-	ext_modules = cythonize(extensions, language_level=3)
-	cmdclass = {}
+        ext_modules = cythonize(extensions, language_level=3)
+        cmdclass = {}
     else:
-	cmdclass= {} #{"build_ext": extensions}
-	ext_modules = extensions
+        cmdclass= {} #{"build_ext": extensions}
+        ext_modules = extensions
 else:
     cmdclass = {}
     ext_modules = None
