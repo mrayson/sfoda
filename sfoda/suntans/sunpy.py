@@ -290,6 +290,15 @@ class Grid(object):
         if 'mark' not in self.__dict__:
             self.mark = np.zeros((self.Ne))
 
+        # Check the _FillValue attribute is consistent with the grid
+        # If the maximum cells value exceeds the number of points the fillvalue
+        # is likely to be  999999
+        if self.cells.max()>self.Np:
+            if self.VERBOSE:
+                print('Changing the _FillValue from {} to {}'.format(\
+                    self._FillValue, self.cells.max()))
+            self._FillValue=self.cells.max()
+
         if type(self.cells) != type(np.ma.MaskedArray()):
             self.maskgrid()
         else:
