@@ -19,7 +19,11 @@ except ImportError:
     from distutils.core import setup
     from distutils.extension import Extension
 
-"""
+class BinaryDistribution(Distribution):
+    def is_pure(self):
+        return False
+
+
 try:
     from Cython.Build import cythonize
     use_cython = True
@@ -31,10 +35,6 @@ except:
 #from Cython.Distutils import build_ext
 import os
 import numpy
-
-class BinaryDistribution(Distribution):
-    def is_pure(self):
-        return False
 
 # Check for a C compiler
 import distutils.ccompiler
@@ -65,9 +65,8 @@ if compile:
         cmdclass= {} #{"build_ext": extensions}
         ext_modules = extensions
 else:
-"""
-cmdclass = {}
-ext_modules = None
+    cmdclass = {}
+    ext_modules = None
 
 
 setup(

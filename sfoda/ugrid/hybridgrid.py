@@ -15,7 +15,7 @@ import operator as op
 import matplotlib.pyplot as plt
 
 from . import ugridutils
-#from sfoda.dataio.ugrid import newugridutils as ugridutils
+#from . import newugridutils as ugridutils
 import pdb
 
 ###
