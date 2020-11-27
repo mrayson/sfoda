@@ -7,6 +7,7 @@ from numpy cimport ndarray, int32_t, int64_t, double_t
 cimport numpy as np
 cimport cython
 
+FILLVALUE=-999999
 
 @cython.boundscheck(False)
 cpdef create_pnt2cells(ndarray[int32_t,ndim=2] cells,
@@ -249,7 +250,7 @@ cpdef cell_edge_map(ndarray[int32_t,ndim=2] cells,
         int maxfaces = cells.shape[1]
         int i
     
-    cdef ndarray[int32_t, ndim=2] cem = 999999*np.ones( (nc, maxfaces), np.int32)
+    cdef ndarray[int32_t, ndim=2] cem = FILLVALUE*np.ones( (nc, maxfaces), np.int32)
 
     for i in range(nc):
         cem[i,0:nfaces[i]] = cell2edges(i, cells, nfaces, pnt2edges)
