@@ -859,7 +859,8 @@ class InitialCond(Grid):
             self.yv.reshape((self.Nc,1)),-self.z_r,[self.time],\
             gridfile=gridfile, **kwargs)
 
-        self.h, self.T, self.S, self.uc, self.vc = romsi.interp()
+        self.h, self.T, self.S, self.uc, self.vc = romsi.interp(
+                seth=seth, setUV=setUV)
         
         if not setUV:
             self.uc *= 0 

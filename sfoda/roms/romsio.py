@@ -14,6 +14,7 @@ from datetime import datetime, timedelta
 import matplotlib.pyplot as plt
 from scipy import interpolate
 import operator
+import xarray as xr
 
 # Private modules
 from sfoda.utils.interpXYZ import interpXYZ
@@ -1359,7 +1360,7 @@ class roms_subset(ROMSGrid):
 
         nc.close()
         
-    def ReadData(self,tstep):
+    def ReadData(self,tstep, setUV=True):
         """
         Reads the data from the file for the present time step
         """
@@ -1524,6 +1525,9 @@ class roms_interp(ROMSGrid):
     zinterp='linear'
     tinterp='linear'
 
+    cycle=0
+    ncycles=1
+
     def __init__(self,romsfile, xi, yi, zi, timei, \
         gridfile=None, **kwargs):
         
@@ -1547,23 +1551,45 @@ class roms_interp(ROMSGrid):
         
         ind0 = othertime.findNearest(self.t0,ftime.time)
         ind1 = othertime.findNearest(self.t1,ftime.time)
-        
+
+
+       #
         self.time = ftime.time[ind0:ind1+1]
         self.tind,self.fname, tslice_dict = ftime(self.time) # list of time indices and corresponding files
+
+        ## Load the file as an xarray object
+        #self._ds = xr.open_mfdataset(self.romsfile)
+        #print(self._ds)
+        ### Workout the time offset for a station file
+        #nt = self._ds.dims['ocean_time']//self.ncycles
+        #self.toffset = self.cycle*nt
+        #self.time = self._ds['ocean_time'][self.toffset:].values
+        #ind0 = othertime.findNearest(self.t0,self.time)
+        #ind1 = othertime.findNearest(self.t1,self.time)
+        #self.tind = np.arange(ind0,ind1,dtype=int)
+        #print(self.time[0], self.time[-1], ind0, ind1)
+        #print(self.toffset, nt)
+ 
         
         # Step 2) Prepare the grid variables for the interpolation class
         ROMSGrid.__init__(self, gridfile)
+
+        # Check the mask is there
+        if not hasattr(self, 'mask_rho'):
+            self.mask_rho = np.ones_like(self.h)
+            print(self.lon_rho.shape)
         
         # rho points
         x,y = self.utmconversion(self.lon_rho,self.lat_rho,self.utmzone,self.isnorth)
         self.xy_rho = np.vstack((x[self.mask_rho==1].data,y[self.mask_rho==1].data)).T
         print(type(self.xy_rho), type(x), type(self.mask_rho))
+        print(x[0], self.lon_rho[0])
         
         # uv point (averaged onto interior rho points)
-        self.mask_uv = self.mask_rho[0:-1,0:-1]
-        x = x[0:-1,0:-1]
-        y = y[0:-1,0:-1]
-        self.xy_uv = np.vstack((x[self.mask_uv==1],y[self.mask_uv==1])).T
+        #self.mask_uv = self.mask_rho[0:-1,0:-1]
+        #x = x[0:-1,0:-1]
+        #y = y[0:-1,0:-1]
+        #self.xy_uv = np.vstack((x[self.mask_uv==1],y[self.mask_uv==1])).T
         
         # Step 3) Build the interpolants for rho and uv points
         #self.xy_out = np.hstack((xi,yi))  
@@ -1585,7 +1611,12 @@ class roms_interp(ROMSGrid):
         self.Nt = len(self.timei)
         
         self.Nz_roms = self.s_rho.shape[0]
+
         self.Nt_roms = self.time.shape[0]
+
+        self.toffset = self.cycle*self.Nt_roms
+        print(self.toffset, self.Nt_roms)
+
         
     def interp(self,setUV=True,seth=True):
         """
@@ -1612,7 +1643,18 @@ class roms_interp(ROMSGrid):
         for tstep in range(0,self.Nt_roms):
         
             # Read all variables
-            self.ReadData(tstep)
+            self.ReadData(tstep, setUV=setUV, toffset=self.toffset)
+
+            # Check the shape of the arrays to see if we are using a
+            # station file instead of a history file
+            # Station files have shape (nstation, nz)
+            if self.temp.ndim == 2:
+                #print('Station file detected...')
+                self.temp = self.temp.T
+                self.salt = self.salt.T
+                if setUV:
+                    self.u = self.u.T
+                    self.v = self.v.T
                     
             # Interpolate zeta
             if seth:
@@ -1620,18 +1662,18 @@ class roms_interp(ROMSGrid):
             
             # Interpolate other 3D variables
             for k in range(0,self.Nz_roms):
-                tmp = self.temp[k,:,:]
+                tmp = self.temp[k,...]
                 tempold[k,:] = self.Frho(tmp[self.mask_rho==1])
                 
-                tmp = self.salt[k,:,:]
+                tmp = self.salt[k,...]
                 saltold[k,:] = self.Frho(tmp[self.mask_rho==1])
                 
                 if setUV:
-                    tmp = self.u[k,:,:]
+                    tmp = self.u[k,...]
                     #uold[k,:] = self.Fuv(tmp[self.mask_uv==1])
                     uold[k,:] = self.Frho(tmp[self.mask_rho==1])
                     
-                    tmp = self.v[k,:,:]
+                    tmp = self.v[k,...]
                     #vold[k,:] = self.Fuv(tmp[self.mask_uv==1])
                     vold[k,:] = self.Frho(tmp[self.mask_rho==1])
     
@@ -1714,26 +1756,51 @@ class roms_interp(ROMSGrid):
         return zetaout, tempout, saltout, uout, vout
             
             
-    def ReadData(self,tstep):
+    def ReadData_xr(self,tstep,setUV=True):
+        """
+        Reads the data from the file for the present time step
+        """
+           
+        t0 = self.tind[tstep]
+        
+        print('Interpolating data at time: %s of %s...'%(datetime.strftime(self.time[tstep],'%Y-%m-%d %H:%M:%S'),\
+        datetime.strftime(self.time[-1],'%Y-%m-%d %H:%M:%S')))
+        
+        
+        self.ocean_time = nc.variables['ocean_time'][t0]
+        
+        self.zeta = nc.variables['zeta'][t0,...]
+        self.temp = nc.variables['temp'][t0,...]
+        self.salt = nc.variables['salt'][t0,...]
+        if setUV:
+            self.u = nc.variables['u_eastward'][t0,...]
+            self.v = nc.variables['v_northward'][t0,...]
+    
+ 
+    def ReadData(self,tstep,setUV=True, toffset=0):
         """
         Reads the data from the file for the present time step
         """
            
         fname = self.fname[tstep]
-        t0 = self.tind[tstep]
+        t0 = self.tind[tstep] - self.toffset
         
         print('Interpolating data at time: %s of %s...'%(datetime.strftime(self.time[tstep],'%Y-%m-%d %H:%M:%S'),\
         datetime.strftime(self.time[-1],'%Y-%m-%d %H:%M:%S')))
         
         nc = Dataset(fname)
         
+        #print(nc.variables['temp'].shape)
+        #print(nc.variables['zeta'].shape)
+        #print(self.tind[tstep], t0)
         self.ocean_time = nc.variables['ocean_time'][t0]
         
-        self.zeta = nc.variables['zeta'][t0,:,:]
-        self.temp = nc.variables['temp'][t0,:,:,:]
-        self.salt = nc.variables['salt'][t0,:,:,:]
-        self.u = nc.variables['u_eastward'][t0,:,:,:]
-        self.v = nc.variables['v_northward'][t0,:,:,:]
+        self.zeta = nc.variables['zeta'][t0,...]
+        self.temp = nc.variables['temp'][t0,...]
+        self.salt = nc.variables['salt'][t0,...]
+        if setUV:
+            self.u = nc.variables['u_eastward'][t0,...]
+            self.v = nc.variables['v_northward'][t0,...]
     
         nc.close()
         
