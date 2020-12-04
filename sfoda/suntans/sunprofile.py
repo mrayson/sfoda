@@ -11,8 +11,8 @@ Usage:
 
 """
 
-from sfoda.dataio.netcdfio import dict_toxray
-from sfoda.dataio.suntans.sunpy import calc_z
+from sfoda.dbase.netcdfio import dict_toxray
+from sfoda.suntans.sunpy import calc_z
 from sfoda.utils.othertime import datetimetodatetime64
 
 import xarray as xray
@@ -312,7 +312,8 @@ def save_profile_nc(basedir, outfile, basetime, varnames=None, **kwargs):
         ds = dict_toxray(data, ds=ds,\
             dims=dims,\
             coords = coords,\
-            encoding = encoding)
+            )
+            #encoding = encoding)
 
 
     # Add in the coordinates last
