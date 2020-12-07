@@ -148,7 +148,7 @@ class ROMSGrid(object):
         write_nc_var(self.Cs_w, 'Cs_w', ('s_w',))
 
         write_nc_var(self.hc, 'hc', ())
-        write_nc_var(self.Vstretching, 'Vstretching', ())
+        #write_nc_var(self.Vstretching, 'Vstretching', ())
         write_nc_var(self.Vtransform, 'Vtransform', ())
 
         nc.sync()
@@ -830,8 +830,14 @@ class ROMS(ROMSGrid):
         self.s_rho = nc.variables['s_rho'][:]
         self.s_w = nc.variables['s_w'][:]
         self.hc = nc.variables['hc'][:]
-        self.Vstretching = nc.variables['Vstretching'][:]
-        self.Vtransform = nc.variables['Vtransform'][:]
+        try:
+            #self.Vstretching = nc.variables['Vstretching'][:]
+            self.Vtransform = nc.variables['Vtransform'][:]
+        else:
+            print('Warning could not find Vtransform -- setting Vtransform==2')
+            self.Vtransform = 2
+
+
 
         
     def _loadVarCoords(self):
@@ -1355,8 +1361,15 @@ class roms_subset(ROMSGrid):
         self.s_rho = nc.variables['s_rho'][:]
         #self.s_w = nc.variables['s_w'][:]
         self.hc = nc.variables['hc'][:]
-        self.Vstretching = nc.variables['Vstretching'][:]
-        self.Vtransform = nc.variables['Vtransform'][:]
+        try:
+            #self.Vstretching = nc.variables['Vstretching'][:]
+            self.Vtransform = nc.variables['Vtransform'][:]
+        else:
+            print('Warning could not find Vtransform -- setting Vtransform==2')
+            self.Vtransform = 2
+
+
+
 
         nc.close()
         
@@ -1467,7 +1480,7 @@ class roms_subset(ROMSGrid):
         write_nc_var(self.Cs_r, 'Cs_r', ('s_rho'))
 
         write_nc_var(self.hc, 'hc', ())
-        write_nc_var(self.Vstretching, 'Vstretching', ())
+        #write_nc_var(self.Vstretching, 'Vstretching', ())
         write_nc_var(self.Vtransform, 'Vtransform', ())
         
         # Create the data variables
@@ -1818,15 +1831,17 @@ class roms_interp(ROMSGrid):
         self.s_rho = nc.variables['s_rho'][:]
         #self.s_w = nc.variables['s_w'][:]
         self.hc = nc.variables['hc'][:]
-        self.Vstretching = nc.variables['Vstretching'][:]
-        self.Vtransform = nc.variables['Vtransform'][:]
+        try:
+            #self.Vstretching = nc.variables['Vstretching'][:]
+            self.Vtransform = nc.variables['Vtransform'][:]
+        else:
+            print('Warning could not find Vtransform -- setting Vtransform==2')
+            self.Vtransform = 2
 
         nc.close()
     
     
-           
-    
-def get_depth(S,C,hc,h,zeta=None, Vtransform=1):
+def get_depth(S,C,hc,h,zeta=None, Vtransform=2):
     """
     Calculates the sigma coordinate depth
     """
