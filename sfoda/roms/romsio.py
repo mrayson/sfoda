@@ -833,7 +833,7 @@ class ROMS(ROMSGrid):
         try:
             #self.Vstretching = nc.variables['Vstretching'][:]
             self.Vtransform = nc.variables['Vtransform'][:]
-        else:
+        except:
             print('Warning could not find Vtransform -- setting Vtransform==2')
             self.Vtransform = 2
 
@@ -1364,7 +1364,7 @@ class roms_subset(ROMSGrid):
         try:
             #self.Vstretching = nc.variables['Vstretching'][:]
             self.Vtransform = nc.variables['Vtransform'][:]
-        else:
+        except:
             print('Warning could not find Vtransform -- setting Vtransform==2')
             self.Vtransform = 2
 
@@ -1834,7 +1834,7 @@ class roms_interp(ROMSGrid):
         try:
             #self.Vstretching = nc.variables['Vstretching'][:]
             self.Vtransform = nc.variables['Vtransform'][:]
-        else:
+        except:
             print('Warning could not find Vtransform -- setting Vtransform==2')
             self.Vtransform = 2
 
