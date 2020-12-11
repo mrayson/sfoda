@@ -1589,8 +1589,8 @@ class roms_interp(ROMSGrid):
 
         # Check the mask is there
         if not hasattr(self, 'mask_rho'):
+            print('Warning - Cannot find mask variable... ignoring mask')
             self.mask_rho = np.ones_like(self.h)
-            print(self.lon_rho.shape)
         
         # rho points
         x,y = self.utmconversion(self.lon_rho,self.lat_rho,self.utmzone,self.isnorth)
