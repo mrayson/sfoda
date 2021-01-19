@@ -52,10 +52,10 @@ import sys
 
 
 
-from .sunpy import Spatial, Grid
+from sfoda.suntans.sunpy import Spatial, Grid
 from sfoda.ugrid.untrim_tools import untrim_gridvars, untrim_griddims, UNTRIMSpatial
-from sfoda.utils.ptm_tools import PtmBin
-from .suntrack import PtmNC
+#from sfoda.utils.ptm_tools import PtmBin
+#from sfoda.suntans.suntrack import PtmNC
 from datetime import datetime
 import numpy as np
 
