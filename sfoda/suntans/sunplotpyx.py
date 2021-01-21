@@ -53,8 +53,8 @@ import sys
 import dask
 dask.config.set(scheduler='processes')
 
-from sfoda.dataio.suntans.sunpy import Spatial, Grid
-from sfoda.dataio.suntans.sunxray import Sunxray, Sundask
+from sfoda.suntans.sunpy import Spatial, Grid
+from sfoda.suntans.sunxray import Sunxray, Sundask
 from datetime import datetime
 import numpy as np
 
