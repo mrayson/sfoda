@@ -60,7 +60,10 @@ class Sunxray(UPlot):
             yp = self._ds.yp.values
             self.xlims = [xp.min(), xp.max()]
             self.ylims = [yp.min(), yp.max()]
-            self.Nk = self._ds.Nk.values
+            try:
+                self.Nk = self._ds.Nk.values
+            except:
+                print('No variable named Nk')
 
             # Calculate the voronoi
             self.calc_centroids()
@@ -190,7 +193,10 @@ class Sundask(UPlot):
         self.xv  = self.stack_var_2d('xv', axis=0)[self.ghost].compute() 
         self.yv  = self.stack_var_2d('yv', axis=0)[self.ghost].compute() 
         self.dv  = self.stack_var_2d('dv', axis=0)[self.ghost].compute() 
-        self.Nk  = self.stack_var_2d('Nk', axis=0)[self.ghost].compute() 
+        try:
+            self.Nk  = self.stack_var_2d('Nk', axis=0)[self.ghost].compute() 
+        except:
+            sekf.Nk = np.zeros_like(self.xv)
 
         self.xlims = [xp.min(), xp.max()]
         self.ylims = [yp.min(), yp.max()]
