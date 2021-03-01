@@ -81,7 +81,8 @@ class Slice(Spatial):
         
         #h1 = plt.pcolor(self[xaxis],self.zslice,am,vmin=self.clim[0],vmax=self.clim[1],**kwargs)
         X,Z = np.meshgrid(self[xaxis], self.zslice)
-        h1 = plt.pcolormesh(X, Z, am,vmin=self.clim[0],vmax=self.clim[1],**kwargs)
+        h1 = plt.pcolormesh(X, Z, am,vmin=self.clim[0],vmax=self.clim[1],
+                shading='auto', **kwargs)
         #h1 = plt.imshow(am,vmin=self.clim[0],vmax=self.clim[1],\
         #        extent=[self[xaxis].min(), self[xaxis].max(),\
         #        -self.z_w[-1], -self.z_w[0]], aspect='auto',\
