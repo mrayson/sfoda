@@ -11,10 +11,8 @@
           Writing contours to a shapefile
 		...
 """
-from osgeo import osr
-import ogr
-import gdal
-from gdalconst import * 
+from osgeo import osr, ogr, gdal
+from osgeo.gdalconst import * 
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.collections import PolyCollection
@@ -511,16 +509,15 @@ def Contour2Shp(C,outfile,projection='WGS84',zone=15,north=True):
     # see this example:
     #    http://invisibleroads.com/tutorials/gdal-shapefile-points-save.html
     
-    import osgeo.ogr, osgeo.osr
     
     # Create the projection
     if projection == 'WGS84':
-        srs = osgeo.osr.SpatialReference()
+        srs = osr.SpatialReference()
         srs.ImportFromProj4('+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs')
     elif projection == 'UTM':
         CS='WGS84'
         # Set the projection
-        srs = osgeo.osr.SpatialReference()
+        srs = osr.SpatialReference()
         if north:
             proj = "UTM %d (%s) in northern hemisphere."%(zone,CS)
         else:
@@ -536,9 +533,9 @@ def Contour2Shp(C,outfile,projection='WGS84',zone=15,north=True):
     ######
     ext=outfile[-3:]
     if ext.lower()=='shp':
-        driver = osgeo.ogr.GetDriverByName('ESRI Shapefile')
+        driver = ogr.GetDriverByName('ESRI Shapefile')
     elif ext.lower()=='kml':
-        driver = osgeo.ogr.GetDriverByName('KML')
+        driver = ogr.GetDriverByName('KML')
     else:
         print('Error. Unknown file extension: %s'%ext.lower())
         return
@@ -549,17 +546,17 @@ def Contour2Shp(C,outfile,projection='WGS84',zone=15,north=True):
     shapeData = driver.CreateDataSource(outfile)
     
     # Create the layer
-    layer = shapeData.CreateLayer('Contour', srs, osgeo.ogr.wkbLineString)
+    layer = shapeData.CreateLayer('Contour', srs, ogr.wkbLineString)
     
     # Create a field containing the contour level
-    field_def = osgeo.ogr.FieldDefn('Contour', osgeo.ogr.OFTReal)
+    field_def = ogr.FieldDefn('Contour', ogr.OFTReal)
     layer.CreateField(field_def)
     layerDefinition = layer.GetLayerDefn()
     
     def create_feature(line, lev, ctr):
         # Update the feature with the line data
         featureIndex = ctr
-        feature = osgeo.ogr.Feature(layerDefinition)
+        feature = ogr.Feature(layerDefinition)
         feature.SetGeometry(line)
         feature.SetFID(featureIndex)
         feature.SetGeometryDirectly(line)
@@ -572,7 +569,7 @@ def Contour2Shp(C,outfile,projection='WGS84',zone=15,north=True):
     ctr=0
     for coll,lev in zip(C.collections,C.levels):
         coords = coll.get_paths()
-        line = osgeo.ogr.Geometry(osgeo.ogr.wkbLineString)
+        line = ogr.Geometry(ogr.wkbLineString)
         for xyObj in coords:
             # Add points individually to the line
             ii=-1
@@ -584,7 +581,7 @@ def Contour2Shp(C,outfile,projection='WGS84',zone=15,north=True):
                 # Create save the current feature
                 ctr+=1
                 create_feature(line, lev, ctr)
-                line = osgeo.ogr.Geometry(osgeo.ogr.wkbLineString)
+                line = ogr.Geometry(ogr.wkbLineString)
 
             else:
                 for xy, codes in zip(xyObj.vertices, xyObj.codes):
@@ -599,7 +596,7 @@ def Contour2Shp(C,outfile,projection='WGS84',zone=15,north=True):
                             # Create save the current feature
                             ctr+=1
                             create_feature(line, lev, ctr)
-                            line = osgeo.ogr.Geometry(osgeo.ogr.wkbLineString)
+                            line = ogr.Geometry(ogr.wkbLineString)
     
     # Close the shape file
     shapeData.Destroy()
@@ -617,10 +614,9 @@ def Polygon2GIS(xynodes, shpfile, zone, CS='WGS84', north=True,
     
     The projection is assumed to be UTM. 
     """
-    import osgeo.ogr, osgeo.osr
     
     # Set the projection
-    srs = osgeo.osr.SpatialReference()
+    srs = osr.SpatialReference()
     if north:
         proj = "UTM %d (%s) in northern hemisphere."%(zone,CS)
     else:
@@ -633,9 +629,9 @@ def Polygon2GIS(xynodes, shpfile, zone, CS='WGS84', north=True,
     # Create the shape file
     ext=shpfile[-3:]
     if ext.lower()=='shp':
-        driver = osgeo.ogr.GetDriverByName('ESRI Shapefile')
+        driver = ogr.GetDriverByName('ESRI Shapefile')
     elif ext.lower()=='kml':
-        driver = osgeo.ogr.GetDriverByName('KML')
+        driver = ogr.GetDriverByName('KML')
     else:
         print('Error. Unknown file extension: %s'%ext.lower())
         return
@@ -646,7 +642,7 @@ def Polygon2GIS(xynodes, shpfile, zone, CS='WGS84', north=True,
     shapeData = driver.CreateDataSource(shpfile)
     
     # Create a layer
-    layer = shapeData.CreateLayer('Grid', srs, osgeo.ogr.wkbPolygon)
+    layer = shapeData.CreateLayer('Grid', srs, ogr.wkbPolygon)
     layerDefinition = layer.GetLayerDefn()    
 
     # Create a data field
@@ -655,18 +651,18 @@ def Polygon2GIS(xynodes, shpfile, zone, CS='WGS84', north=True,
     
     # Loop through the list of nodes to get the coordinates of each polygon
     for ii, xy in enumerate(xynodes):
-        ring = osgeo.ogr.Geometry(osgeo.ogr.wkbLinearRing)
+        ring = ogr.Geometry(ogr.wkbLinearRing)
         
         # Add points individually to the polygon
         for nodes in xy:
             ring.AddPoint(nodes[0],nodes[1])
             
-        poly = osgeo.ogr.Geometry(osgeo.ogr.wkbPolygon)
+        poly = ogr.Geometry(ogr.wkbPolygon)
         poly.AddGeometry(ring)
     
         # Update the feature with the polygon data
         featureIndex = ii
-        feature = osgeo.ogr.Feature(layerDefinition)
+        feature = ogr.Feature(layerDefinition)
         feature.SetGeometry(poly)
         feature.SetFID(featureIndex)
 

@@ -8,7 +8,8 @@ Created on Mon Sep 24 16:55:45 2012
 @author: mrayson
 """
 
-from netCDF4 import MFDataset, Dataset, num2date
+from netCDF4 import MFDataset, Dataset 
+from cftime import num2pydate
 import numpy as np
 from datetime import datetime
 import os, time, getopt, sys
@@ -1468,7 +1469,7 @@ class Spatial(Grid):
          #nc = Dataset(self.ncfile, 'r', format='NETCDF4') 
          nc = self.nc
          t = nc.variables[self.gridvars['time']]
-         self.time = num2date(t[:],t.units)
+         self.time = num2pydate(t[:],t.units)
          self.timeraw = t[:]
          
          self.Nt = self.time.shape[0]
@@ -2921,7 +2922,8 @@ class Profile(object):
             t = nc.variables['suntime']
         except:
             t = nc.variables['time']
-        self.time = num2date(t[:],t.units)
+        self.time = num2pydate(t[:],t.units)
+        print(type(self.time))
         
         #print nc.variables.keys()
         nc.close()
