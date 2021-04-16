@@ -1410,11 +1410,11 @@ class Spatial(Grid):
 #            fillval = nc.variables[variable]._FillValue
 #        except:
         
-        self.mask = self.data==self._FillValue
-        if isinstance(self.data, np.ma.MaskedArray):
-            self.data.mask[self.mask] = True
-        else:
-            self.data[self.mask]=0.
+        #self.mask = self.data==self._FillValue
+        #if isinstance(self.data, np.ma.MaskedArray):
+        #    self.data.mask[self.mask] = True
+        #else:
+        #    self.data[self.mask]=0.
         self.data = self.data.squeeze()
         
         return self.data
@@ -2923,7 +2923,6 @@ class Profile(object):
         except:
             t = nc.variables['time']
         self.time = num2pydate(t[:],t.units)
-        print(type(self.time))
         
         #print nc.variables.keys()
         nc.close()
