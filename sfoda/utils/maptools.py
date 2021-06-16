@@ -161,14 +161,14 @@ def readDEM(bathyfile,returnvec=False):
     else:
         return X, Y, data     
     
-def readShpBathy(shpfile,FIELDNAME = 'CONTOUR'):
+def readShpBathy(shpfile,FIELDNAME = 'CONTOUR', DRIVERNAME='ESRI Shapefile'):
     """ Reads a shapefile with line or point geometry and returns x,y,z
     
     See this tutorial:
         http://www.gis.usu.edu/~chrisg/python/2009/lectures/ospy_slides1.pdf
     """
     # Open the shapefile
-    driver = ogr.GetDriverByName('ESRI Shapefile')
+    driver = ogr.GetDriverByName(DRIVERNAME)
     
     shp = driver.Open(shpfile, 0)
     
@@ -214,14 +214,14 @@ def readShpBathy(shpfile,FIELDNAME = 'CONTOUR'):
     del Y
     return XY,np.array(Z)
     
-def readShpPointLine(shpfile,FIELDNAME=None):
+def readShpPointLine(shpfile,FIELDNAME=None, DRIVERNAME='ESRI Shapefile'):
     """ Reads a shapefile with line or point geometry and returns x,y,z
     
     See this tutorial:
         http://www.gis.usu.edu/~chrisg/python/2009/lectures/ospy_slides1.pdf
     """
     # Open the shapefile
-    driver = ogr.GetDriverByName('ESRI Shapefile')
+    driver = ogr.GetDriverByName(DRIVERNAME)
     
     shp = driver.Open(shpfile, 0)
     
@@ -277,14 +277,14 @@ def readShpPointLine(shpfile,FIELDNAME=None):
     
     return XY,field
     
-def readShpPoly(shpfile,FIELDNAME = None):
+def readShpPoly(shpfile,FIELDNAME = None, DRIVERNAME='ESRI Shapefile'):
     """ Reads a shapefile with polygon geometry and returns x,y and FIELDNAME value
     
     See this tutorial:
         http://www.gis.usu.edu/~chrisg/python/2009/lectures/ospy_slides1.pdf
     """
     # Open the shapefile
-    driver = ogr.GetDriverByName('ESRI Shapefile')
+    driver = ogr.GetDriverByName(DRIVERNAME)
     
     shp = driver.Open(shpfile, 0)
     
