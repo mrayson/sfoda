@@ -1629,6 +1629,7 @@ class roms_interp(ROMSGrid):
 
         self.toffset = self.cycle*self.Nt_roms
         print(self.toffset, self.Nt_roms)
+        print('Vertical coordinates variables\n\tVtransform = {}'.format(self.Vtransform))
 
         
     def interp(self,setUV=True,seth=True):
@@ -1670,8 +1671,9 @@ class roms_interp(ROMSGrid):
                     self.v = self.v.T
                     
             # Interpolate zeta
-            if seth:
-                zetaroms[tstep,:] = self.Frho(self.zeta[self.mask_rho==1])
+            #if seth:
+            # Always load zeta as it's needed for the depth calculation
+            zetaroms[tstep,:] = self.Frho(self.zeta[self.mask_rho==1])
             
             # Interpolate other 3D variables
             for k in range(0,self.Nz_roms):
@@ -1698,23 +1700,30 @@ class roms_interp(ROMSGrid):
             # Interpolate vertically
             for ii in range(0,self.Nx):
                 y = tempold[:,ii]
+                fillval = (y[0], y[-1]) # Constant end points
                 #fillval = y[0]
-                fillval = 'extrapolate'
-
+                #fillval = 'extrapolate'
                 Fz = interpolate.interp1d(zroms[:,ii],y,kind=zinterp,bounds_error=False,fill_value=fillval)
+                #Fz = interpolate.PchipInterpolator(zroms[:,ii],y, extrapolate=True)
                 temproms[tstep,:,ii] = Fz(self.zi)
                 
                 y = saltold[:,ii]
+                fillval = (y[0], y[-1]) # Constant end points
                 Fz = interpolate.interp1d(zroms[:,ii],y,kind=zinterp,bounds_error=False,fill_value=fillval)
+                #Fz = interpolate.PchipInterpolator(zroms[:,ii],y, extrapolate=True)
                 saltroms[tstep,:,ii] = Fz(self.zi)
                 
                 if setUV:
                     y = uold[:,ii]
+                    fillval = (y[0], y[-1]) # Constant end points
                     Fz = interpolate.interp1d(zroms[:,ii],y,kind=zinterp,bounds_error=False,fill_value=fillval)
+                    #Fz = interpolate.PchipInterpolator(zroms[:,ii],y, extrapolate=True)
                     uroms[tstep,:,ii] = Fz(self.zi)
                     
                     y = vold[:,ii]
+                    fillval = (y[0], y[-1]) # Constant end points
                     Fz = interpolate.interp1d(zroms[:,ii],y,kind=zinterp,bounds_error=False,fill_value=fillval)
+                    #Fz = interpolate.PchipInterpolator(zroms[:,ii],y, extrapolate=True)
                     vroms[tstep,:,ii] = Fz(self.zi)
                     
                 
@@ -1800,6 +1809,8 @@ class roms_interp(ROMSGrid):
         
         print('Interpolating data at time: %s of %s...'%(datetime.strftime(self.time[tstep],'%Y-%m-%d %H:%M:%S'),\
         datetime.strftime(self.time[-1],'%Y-%m-%d %H:%M:%S')))
+
+        #print('\t',t0,tstep)
         
         nc = Dataset(fname)
         
