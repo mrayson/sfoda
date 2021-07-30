@@ -10,7 +10,8 @@ import os
 import time
 import collections
 import numpy as np
-from netCDF4 import Dataset, MFDataset, num2date,date2num,date2index
+from netCDF4 import Dataset, MFDataset, date2num, date2index
+from cftime import num2pydate
 from datetime import datetime
 from sfoda.utils import othertime
 
@@ -35,7 +36,7 @@ def hasvar(nc,var):
     return var in nc.variables
 def gettime(nc,timename):
     t = nc.variables[timename]
-    return num2date(t[:],t.units)
+    return num2pydate(t[:],t.units)
 
 
 
@@ -829,7 +830,7 @@ class MFncdap(object):
             print(f)
             nc = Dataset(f)
             t = nc.variables[self.timevar]
-            time = num2date(t[:].ravel(),t.units)#.tolist()
+            time = num2pydate(t[:].ravel(),t.units)#.tolist()
             nc.close()
             
             #self.timelookup.update({f:time})
