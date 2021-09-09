@@ -287,7 +287,13 @@ def save_profile_nc(basedir, outfile, basetime, varnames=None, **kwargs):
         varnames = list(vardict.keys())
 
     # Loop through and populate a dataset
+    base_encoding = {
+            'complevel':1,
+            'zlib':True,
+            'dtype':'float32',
+        }
     ds = {}
+    encoding = {}
     for varname in varnames:
         print('Loading variable %s...'%varname)
 
@@ -304,10 +310,6 @@ def save_profile_nc(basedir, outfile, basetime, varnames=None, **kwargs):
             coords = {'time':V.time,\
                 'Nc':list(range(0,V.Np*V.Ni))}
 
-        encoding = {
-                'complevel':5,
-                'zlib':True,
-            }
 
         ds = dict_toxray(data, ds=ds,\
             dims=dims,\
@@ -315,7 +317,15 @@ def save_profile_nc(basedir, outfile, basetime, varnames=None, **kwargs):
             )
             #encoding = encoding)
 
+        if varname == 'uvw':
+            encoding.update({'uc':base_encoding})
+            encoding.update({'vc':base_encoding})
+            encoding.update({'w':base_encoding})
+        else:
+            encoding.update({varname:base_encoding})
 
+
+    print(ds)
     # Add in the coordinates last
     ds = dict_toxray({'xv':V.xv, 'yv':V.yv},ds=ds,\
         dims=('Nc'))
@@ -324,7 +334,7 @@ def save_profile_nc(basedir, outfile, basetime, varnames=None, **kwargs):
         dims=('Nk'))
 
     # Save to netcdf
-    ds.to_netcdf('%s/%s'%(basedir,outfile), format='NETCDF4_CLASSIC')
+    ds.to_netcdf('%s/%s'%(basedir,outfile), format='NETCDF4_CLASSIC', encoding=encoding)
 
     print('\tProfile data saved to %s.'%outfile)
 
