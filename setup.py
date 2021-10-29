@@ -91,7 +91,7 @@ setup(
     author_email='matt.rayson@uwa.edu.au',
     #packages=find_packages(exclude=["*.tests", "*.tests.*", "tests.*", "tests"]),
     install_requires=[
-      'numpy',
+      'numpy>=1.20.0',
       'scipy',
       'matplotlib',
       'netcdf4',
