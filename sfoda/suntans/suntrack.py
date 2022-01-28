@@ -103,7 +103,8 @@ class SunTrack(Spatial):
             self.init3Dgrid()
         else: # surface layer only
             print('%s\nRunning in 2D mode...\n%s'%(24*'#',24*'#'))
-            Spatial.__init__(self,ncfile,klayer=['surface'],**kwargs)
+            #Spatial.__init__(self,ncfile,klayer=['surface'],**kwargs)
+            Spatial.__init__(self,ncfile,klayer=[0],**kwargs)
             self.nActive = self.Nc
 
         #self.klayer=np.arange(0,self.Nkmax)
@@ -436,18 +437,18 @@ class SunTrack(Spatial):
         w2 = (tsec-t0)/dt
         w1 = 1.0-w2
         
-        #self.u = self.uT[:,0]*w1 + self.uT[:,1]*w2 
-        #self.v = self.vT[:,0]*w1 + self.vT[:,1]*w2 
-        #self.w = self.wT[:,0]*w1 + self.wT[:,1]*w2 
-        #self.eta = self.etaT[:,0]*w1 + self.etaT[:,1]*w2 
-        self.u = ne.evaluate("u0*w1 + u1*w2",\
-            local_dict={'u0':self.uT[:,0],'u1':self.uT[:,1],'w1':w1,'w2':w2})
-        self.v = ne.evaluate("u0*w1 + u1*w2",\
-            local_dict={'u0':self.vT[:,0],'u1':self.vT[:,1],'w1':w1,'w2':w2})
-        self.w = ne.evaluate("u0*w1 + u1*w2",\
-            local_dict={'u0':self.wT[:,0],'u1':self.wT[:,1],'w1':w1,'w2':w2})
-        self.eta = ne.evaluate("u0*w1 + u1*w2",\
-            local_dict={'u0':self.etaT[:,0],'u1':self.etaT[:,1],'w1':w1,'w2':w2})
+        self.u = self.uT[:,0]*w1 + self.uT[:,1]*w2 
+        self.v = self.vT[:,0]*w1 + self.vT[:,1]*w2 
+        self.w = self.wT[:,0]*w1 + self.wT[:,1]*w2 
+        self.eta = self.etaT[:,0]*w1 + self.etaT[:,1]*w2 
+        #self.u = ne.evaluate("u0*w1 + u1*w2",\
+        #    local_dict={'u0':self.uT[:,0],'u1':self.uT[:,1],'w1':w1,'w2':w2})
+        #self.v = ne.evaluate("u0*w1 + u1*w2",\
+        #    local_dict={'u0':self.vT[:,0],'u1':self.vT[:,1],'w1':w1,'w2':w2})
+        #self.w = ne.evaluate("u0*w1 + u1*w2",\
+        #    local_dict={'u0':self.wT[:,0],'u1':self.wT[:,1],'w1':w1,'w2':w2})
+        #self.eta = ne.evaluate("u0*w1 + u1*w2",\
+        #    local_dict={'u0':self.etaT[:,0],'u1':self.etaT[:,1],'w1':w1,'w2':w2})
         
         
     def timeInterpUVWxyz(self,tsec,x,y,z):
