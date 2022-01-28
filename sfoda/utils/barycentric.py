@@ -20,17 +20,22 @@ class BarycentricInterp(object):
         if self.tri is None:
             self.tri = Delaunay(xyin)
 
-        self.weights, self.verts = self._calc_weights(xyout)
+        self.weights, self.verts, self.simplex = self._calc_weights(xyout)
         
    
-    def __call__(self, z, xyout=None):
+    def __call__(self, z, xyout=None, mask=False):
         """
         Perform the interpolation
         """
         if xyout is not None:
             self.weights, self.verts = self._calc_weights(xyout)
             
-        return (z[self.verts]*self.weights).sum(axis=1)
+        zout = (z[self.verts]*self.weights).sum(axis=1)
+
+        if mask:
+            zout[self.simplex==-1] = np.nan
+
+        return zout
 
     def _calc_weights(self, xyout):
         # Find the simplex (i.e. the cell or polygon number) where each point lies
@@ -45,5 +50,5 @@ class BarycentricInterp(object):
         # These are the vertices of the output points
         verts = self.tri.simplices[s]
         
-        return weights, verts
+        return weights, verts, s
  
