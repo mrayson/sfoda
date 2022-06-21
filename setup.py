@@ -9,39 +9,40 @@ See this example for packaging cython modules:
         https://github.com/thearn/simple-cython-example/blob/master/setup.py
 """
 
-#from distutils.core import setup
+from distutils.core import setup
 #from distutils.extension import Extension
-try:
-    from setuptools import setup
-    from setuptools import Extension
-    from setuptools.dist import Distribution
-except ImportError:
-    from distutils.core import setup
-    from distutils.extension import Extension
-
-class BinaryDistribution(Distribution):
-    def is_pure(self):
-        return False
-
-
-try:
-    from Cython.Build import cythonize
-    use_cython = True
-    ext = 'pyx'
-except:
-    use_cython = False
-    ext = 'c'
+#try:
+#    from setuptools import setup
+#    from setuptools import Extension
+#    from setuptools.dist import Distribution
+#except ImportError:
+#    from distutils.core import setup
+#    from distutils.extension import Extension
+#
+#class BinaryDistribution(Distribution):
+#    def is_pure(self):
+#        return False
+#
+#
+#try:
+#    from Cython.Build import cythonize
+#    use_cython = True
+#    ext = 'pyx'
+#except:
+#    use_cython = False
+#    ext = 'c'
 
 #from Cython.Distutils import build_ext
 import os
 import numpy
 
 # Check for a C compiler
-import distutils.ccompiler
-if isinstance(distutils.ccompiler.new_compiler(), distutils.ccompiler.CCompiler):
-    compile=True
-else:
-    compile=False
+#import distutils.ccompiler
+#if isinstance(distutils.ccompiler.new_compiler(), distutils.ccompiler.CCompiler):
+#    compile=True
+#else:
+#    compile=False
+compile = False
 
 if compile:
     os.environ["CC"]='cc'
@@ -85,19 +86,19 @@ setup(
     #package_dir={'sfoda':''},
     ext_modules = ext_modules,
     cmdclass = cmdclass,
-    version="0.0.4",
+    version="0.0.x",
     description='Stuff For Ocean Data Analysis',
     author='Matt Rayson',
     author_email='matt.rayson@uwa.edu.au',
     #packages=find_packages(exclude=["*.tests", "*.tests.*", "tests.*", "tests"]),
     install_requires=[
-      'numpy>=1.20.0',
+      'numpy',
       'scipy',
       'matplotlib',
       'netcdf4',
       'xarray',
       'pyyaml',
-      'numba',
+      #'numba',
       'pyproj',
       'dask[complete]',
       #'gdal',
@@ -105,6 +106,6 @@ setup(
       ],
     license='LICENSE',
     include_package_data=True,
-    distclass=BinaryDistribution,
+    #distclass=BinaryDistribution,
 
 )

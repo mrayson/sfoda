@@ -37,7 +37,7 @@ _dirpath = os.path.dirname(_path)
 
 # Load the netcdf metadata for all of the routines
 with open('%s/dbase/ncmetadata.yaml'%_dirpath, 'r') as f:
-    ncmeta = yaml.load(f)
+    ncmeta = yaml.safe_load(f)
 
 mysqldir = '/home/suntans/.conda/envs/sfoda/lib/'
 
