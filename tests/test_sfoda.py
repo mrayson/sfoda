@@ -18,4 +18,6 @@ from sfoda.dataio.conversion import demBuilder
 from sfoda.tides import readotps
 from sfoda.dataio.datadownload import get_metocean_dap
 
+from sfoda.mycurrents import oceanmooring as om
+
 print("Done")

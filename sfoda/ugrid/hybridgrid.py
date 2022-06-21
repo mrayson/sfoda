@@ -1049,7 +1049,7 @@ class HybridGrid(object):
             for i in range(self.Ncells()):
                 #for j in range(self.MAXFACES):
                 for j in range(self.nfaces[i]):
-	            cc = self.cells[i,j]
+                    cc = self.cells[i,j]
                     if not self._pnt2cells.has_key(cc):
                         self._pnt2cells[cc] = set()
                     self._pnt2cells[cc].add(i)
