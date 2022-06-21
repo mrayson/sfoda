@@ -13,7 +13,7 @@ import time
 import matplotlib.pyplot as plt
 import pandas as pd
 
-from sfoda.utils.maptools import ll2utm, readShpBathy, readDEM
+from sfoda.utils.maptools_nogdal import ll2utm, readShpBathy, readDEM
 from sfoda.utils.kriging import kriging
 from sfoda.utils.interpXYZ import CurvMin
 

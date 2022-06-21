@@ -281,7 +281,7 @@ def adjust_channel_depth(grd,shpfile,lcmax=500.):
     The shapefile must have an attribute called "contour"
     """
     from shapely import geometry, speedups
-    from maptools import readShpPointLine
+    from maptools_nogdal import readShpPointLine
 
     if speedups.available:
         speedups.enable()

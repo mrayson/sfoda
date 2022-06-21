@@ -304,22 +304,22 @@ class HybridGrid(object):
 	###
 	# Cython wrapper
 	###
-        ugridutils.ensure_ccw(self.cells, self.nfaces, self.Ac)
+        #ugridutils.ensure_ccw(self.cells, self.nfaces, self.Ac)
 	
-	#####
-	## Pure python version
-	#####
-        ##Ac = self.calc_area()
-        ##cells_ccw = np.zeros_like(self.cells)
-        #for i in range(self.Nc):
-        #    ctmp=self.cells[i,0:self.nfaces[i]]#.copy()
-        #    if self.Ac[i] < 0:
-        #        #print 'Cell %d is clock-wise - reversing.'%i
-        #        self.cells[i,0:self.nfaces[i]] = ctmp[::-1] # reverse order
-        #    else:
-        #        self.cells[i,0:self.nfaces[i]] =  ctmp
-        #
-        ##return cells_ccw
+	####
+	# Pure python version
+	####
+        Ac = self.calc_area()
+        cells_ccw = np.zeros_like(self.cells)
+        for i in range(self.Nc):
+            ctmp=self.cells[i,0:self.nfaces[i]]#.copy()
+            if self.Ac[i] < 0:
+                #print 'Cell %d is clock-wise - reversing.'%i
+                self.cells[i,0:self.nfaces[i]] = ctmp[::-1] # reverse order
+            else:
+                self.cells[i,0:self.nfaces[i]] =  ctmp
+        
+        return cells_ccw
     
     def edge_centers(self):
         
@@ -904,66 +904,66 @@ class HybridGrid(object):
         ###
         # Cython version
         ###
-        self.pnt2cells(0)
-        self.edges, self.mark, self.grad = \
-            ugridutils.make_edges_from_cells(\
-                self.cells,
-                self.nfaces,\
-                self._pnt2cells)
+        #self.pnt2cells(0)
+        #self.edges, self.mark, self.grad = \
+        #    ugridutils.make_edges_from_cells(\
+        #        self.cells,
+        #        self.nfaces,\
+        #        self._pnt2cells)
         ###
         # Pure python
         ###
-        ## iterate over cells, and for each cell, if it's index
-        ## is smaller than a neighbor or if no neighbor exists,
-        ## write an edge record
-        #edges = []
-        #default_marker = 0
+        # iterate over cells, and for each cell, if it's index
+        # is smaller than a neighbor or if no neighbor exists,
+        # write an edge record
+        edges = []
+        default_marker = 0
 
-        ## this will get built on demand later.
-        #self._pnt2edges = None
-        #
-        #for i in range(self.Ncells()):
-        #    # find the neighbors:
-        #    # the first neighbor: need another cell that has
-        #    # both self.cells[i,0] and self.cells[i,1] in its
-        #    # list.
-        #    my_set = set([i])
-        #    #n = [-1,-1,-1]
-        #    n = self.nfaces[i] * [-1]
-        #    #for j in 0,1,2:
-        #    #for j in range(self.MAXFACES):
-        #    for j in range(self.nfaces[i]):
-        #        pnt_a = self.cells[i,j]
-        #        #pnt_b = self.cells[i,(j+1)%3]
-        #        #pnt_b = self.cells[i,(j+1)%self.MAXFACES]
-        #        pnt_b = self.cells[i,(j+1)%self.nfaces[i]]
-        #        
-        #            
-        #        adj1 = self.pnt2cells(pnt_a) # cells that use pnt_a
-        #        adj2 = self.pnt2cells(pnt_b) # cells that use pnt_b
+        # this will get built on demand later.
+        self._pnt2edges = None
+        
+        for i in range(self.Ncells()):
+            # find the neighbors:
+            # the first neighbor: need another cell that has
+            # both self.cells[i,0] and self.cells[i,1] in its
+            # list.
+            my_set = set([i])
+            #n = [-1,-1,-1]
+            n = self.nfaces[i] * [-1]
+            #for j in 0,1,2:
+            #for j in range(self.MAXFACES):
+            for j in range(self.nfaces[i]):
+                pnt_a = self.cells[i,j]
+                #pnt_b = self.cells[i,(j+1)%3]
+                #pnt_b = self.cells[i,(j+1)%self.MAXFACES]
+                pnt_b = self.cells[i,(j+1)%self.nfaces[i]]
+                
+                    
+                adj1 = self.pnt2cells(pnt_a) # cells that use pnt_a
+                adj2 = self.pnt2cells(pnt_b) # cells that use pnt_b
 
-        #        # the intersection is us and our neighbor
-        #        #  so difference out ourselves...
-        #        neighbor = adj1.intersection(adj2).difference(my_set)
-        #        # and maybe we ge a neighbor, maybe not (we're a boundary)
-        #        if len(neighbor) == 1:
-        #            n = neighbor.pop()
-        #        else:
-        #            n = -1
-        #            
-        #        if n==-1 or i<n:
-        #            # we get to add the edge:
-        #            edges.append((pnt_a,
-        #                          pnt_b,
-        #                          default_marker,
-        #                          i,n))
+                # the intersection is us and our neighbor
+                #  so difference out ourselves...
+                neighbor = adj1.intersection(adj2).difference(my_set)
+                # and maybe we ge a neighbor, maybe not (we're a boundary)
+                if len(neighbor) == 1:
+                    n = neighbor.pop()
+                else:
+                    n = -1
+                    
+                if n==-1 or i<n:
+                    # we get to add the edge:
+                    edges.append((pnt_a,
+                                  pnt_b,
+                                  default_marker,
+                                  i,n))
 
-        ##self.edge = np.array(edges,np.int32)
-        #Ne = len(edges)
-        #edges = np.array(edges)
-        #self.edges = np.array([edges[ii,0:2] for ii in range(Ne)])
-        #self.mark = np.array([edges[ii,2] for ii in range(Ne)])
-        #self.grad = np.array([edges[ii,3:5] for ii in range(Ne)])
+        #self.edge = np.array(edges,np.int32)
+        Ne = len(edges)
+        edges = np.array(edges)
+        self.edges = np.array([edges[ii,0:2] for ii in range(Ne)])
+        self.mark = np.array([edges[ii,2] for ii in range(Ne)])
+        self.grad = np.array([edges[ii,3:5] for ii in range(Ne)])
             
             
     def calc_markcell(self, mark):
@@ -1009,50 +1009,50 @@ class HybridGrid(object):
         # Cython wrapper
         ###
         # Make sure the hash table is built
-        self.pnt2cells(0)
-        self.neigh = ugridutils.make_neigh_from_cells(
-            self.cells, self.nfaces, self._pnt2cells)
+        #self.pnt2cells(0)
+        #self.neigh = ugridutils.make_neigh_from_cells(
+        #    self.cells, self.nfaces, self._pnt2cells)
         
         ###
         # Pure python
         ###	
-        #self.neigh = np.zeros((self.Ncells(),self.MAXFACES),np.int)
-        #for i in range(self.Ncells()):
-        #    # find the neighbors:
-        #    # the first neighbor: need another cell that has
-        #    # both self.cells[i,0] and self.cells[i,1] in its
-        #    # list.
-        #    my_set = set([i])
-        #    #n = self.MAXFACES * [-1]
-        #    n = self.nfaces[i] * [-1]
-        #    #for j in range(self.MAXFACES):
-        #    for j in range(self.nfaces[i]):
-        #        adj1 = self.pnt2cells(self.cells[i,j])
-        #        adj2 = self.pnt2cells(self.cells[i,(j+1)%self.nfaces[i]])
-        #        #adj2 = self.pnt2cells(self.cells[i,(j+1)%self.MAXFACES])
-        #        neighbor = adj1.intersection(adj2).difference(my_set)
-        #        if len(neighbor) == 1:
-        #            n[j] = neighbor.pop()
-        #    
-        #    self.neigh[i,0:self.nfaces[i]] = n
+        self.neigh = np.zeros((self.Ncells(),self.MAXFACES),np.int)
+        for i in range(self.Ncells()):
+            # find the neighbors:
+            # the first neighbor: need another cell that has
+            # both self.cells[i,0] and self.cells[i,1] in its
+            # list.
+            my_set = set([i])
+            #n = self.MAXFACES * [-1]
+            n = self.nfaces[i] * [-1]
+            #for j in range(self.MAXFACES):
+            for j in range(self.nfaces[i]):
+                adj1 = self.pnt2cells(self.cells[i,j])
+                adj2 = self.pnt2cells(self.cells[i,(j+1)%self.nfaces[i]])
+                #adj2 = self.pnt2cells(self.cells[i,(j+1)%self.MAXFACES])
+                neighbor = adj1.intersection(adj2).difference(my_set)
+                if len(neighbor) == 1:
+                    n[j] = neighbor.pop()
+            
+            self.neigh[i,0:self.nfaces[i]] = n
         
     def pnt2cells(self,pnt_i):
         if self._pnt2cells is None:
             # Cython wrapper
-            self._pnt2cells = ugridutils.create_pnt2cells(
-                self.cells, self.nfaces)
+            #self._pnt2cells = ugridutils.create_pnt2cells(
+            #    self.cells, self.nfaces)
             ###
             # Pure python
             ###	
-            ## build hash table for point->cell lookup
-            #self._pnt2cells = {}
-            #for i in range(self.Ncells()):
-            #    #for j in range(self.MAXFACES):
-            #    for j in range(self.nfaces[i]):
-	    #        cc = self.cells[i,j]
-            #        if not self._pnt2cells.has_key(cc):
-            #            self._pnt2cells[cc] = set()
-            #        self._pnt2cells[cc].add(i)
+            # build hash table for point->cell lookup
+            self._pnt2cells = {}
+            for i in range(self.Ncells()):
+                #for j in range(self.MAXFACES):
+                for j in range(self.nfaces[i]):
+	            cc = self.cells[i,j]
+                    if not self._pnt2cells.has_key(cc):
+                        self._pnt2cells[cc] = set()
+                    self._pnt2cells[cc].add(i)
 
         # This accounts for unconnected points
         if pnt_i in self._pnt2cells:
@@ -1084,24 +1084,26 @@ class HybridGrid(object):
 
         N.B. this is not kept up to date when modifying the grid.
         """
-        # Cython
-        if self._pnt2edges is None:
-           self._pnt2edges = ugridutils.create_pnt2edges(self.edges, 
-               self.mark, DELETED_EDGE)
-           self._cell_edge_map = ugridutils.cell_edge_map(self.cells,
-                self.nfaces, self._pnt2edges)
+        ####
+        ## Cython
+        ####
+        #if self._pnt2edges is None:
+        #   self._pnt2edges = ugridutils.create_pnt2edges(self.edges, 
+        #       self.mark, DELETED_EDGE)
+        #   self._cell_edge_map = ugridutils.cell_edge_map(self.cells,
+        #        self.nfaces, self._pnt2edges)
 
-        return self._cell_edge_map
+        #return self._cell_edge_map
         ####
         # Pure python
         ####
-        #if self._cell_edge_map is None:
-        #    cem = 999999*np.ones( (self.Ncells(),self.MAXFACES), np.int32)
+        if self._cell_edge_map is None:
+            cem = 999999*np.ones( (self.Ncells(),self.MAXFACES), np.int32)
 
-        #    for i in xrange(self.Ncells()):
-        #        cem[i,0:self.nfaces[i]] = self.cell2edges(i)
-        #    self._cell_edge_map = cem
-        #return self._cell_edge_map
+            for i in xrange(self.Ncells()):
+                cem[i,0:self.nfaces[i]] = self.cell2edges(i)
+            self._cell_edge_map = cem
+        return self._cell_edge_map
 
     def pnt2edges(self,pnt_i):
         if self._pnt2edges is None:

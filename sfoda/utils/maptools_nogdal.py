@@ -7,22 +7,20 @@ try:
 except:
     print('Warning: cannot import GDAL libraries')
 
-"""
-def readShpPoly():
-    raise Exception
+    def readShpPoly():
+        raise Exception
 
-def readShpBathy():
-    raise Exception
+    def readShpBathy():
+        raise Exception
 
-def readraster():
-    raise Exception
+    def readraster():
+        raise Exception
 
-def readDEM():
-    raise Exception
+    def readDEM():
+        raise Exception
 
-def ll2lcc():
-    raise Exception
+    def ll2lcc():
+        raise Exception
 
-def ll2utm():
-    raise Exception
-"""
+    def ll2utm():
+        raise Exception

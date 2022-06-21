@@ -14,7 +14,7 @@ from .sunpy import Spatial
 from .sunslice import MultiSliceEdge
 import sfoda.utils.mypandas as mpd
 from sfoda.utils.timeseries import timeseries
-from sfoda.utils.maptools import maskShpPoly
+from sfoda.utils.maptools_nogdal import maskShpPoly
 
 import numpy as np
 import matplotlib.pyplot as plt

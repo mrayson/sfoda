@@ -47,7 +47,7 @@ import matplotlib.pyplot as plt
 from netCDF4 import Dataset
 import shapefile
 import netcdfio
-from maptools import ll2utm
+from maptools_nogdal import ll2utm
 from getNARR import getNARR
 
 import pdb

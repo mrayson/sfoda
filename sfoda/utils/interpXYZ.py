@@ -12,10 +12,14 @@
 import gzip
 from scipy import spatial
 import numpy as np
-from .maptools import readShpBathy, readraster #,ll2utm 
+from .maptools_nogdal import readShpBathy, readraster #,ll2utm 
 from .myproj import MyProj
-#from kriging import kriging
-from .fkriging import kriging
+try: 
+    from .fkriging import kriging
+except:
+    print('Warning: no numba installation')
+    from .kriging import kriging
+
 from .barycentric import BarycentricInterp
 from netCDF4 import Dataset
 from . import othertime

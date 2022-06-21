@@ -20,7 +20,7 @@ import xarray as xr
 from sfoda.utils.interpXYZ import interpXYZ
 from sfoda.utils import othertime
 from sfoda.utils.timeseries import timeseries
-from sfoda.utils.maptools import ll2lcc, ll2utm
+from sfoda.utils.maptools_nogdal import ll2lcc, ll2utm
 from sfoda.utils.myproj import MyProj
 from sfoda.utils.mygeometry import MyLine
 from sfoda.dataio.datadownload.mythredds import MFncdap
