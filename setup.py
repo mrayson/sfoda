@@ -99,7 +99,7 @@ setup(
       'xarray',
       'pyyaml',
       #'numba',
-      'pyproj',
+      'pyproj<=3.0.1',
       'dask[complete]',
       #'gdal',
       #'shapely',
