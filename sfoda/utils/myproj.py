@@ -18,20 +18,22 @@ class MyProj(object):
 
         # Create a UTM projection string
         if projstr is None:
-            projstr = "+proj=utm +zone=%d, +ellps=WGS84 +datum=WGS84 +units=m +no_defs"%utmzone
-            if not isnorth:
-                projstr += ' +south'
+            try:
+                projstr = "+proj=utm +zone=%d, +ellps=WGS84 +datum=WGS84 +units=m +no_defs"%utmzone
+                if not isnorth:
+                    projstr += ' +south'
+            except:
+                # Fix to handle pyproj version
+                self.P = Proj(proj='utm', zone=utmzone, ellps='WGS84', north=isnorth)
 
         elif projstr.lower() == 'merc':
             # Mercator string
             projstr = '+proj=merc +lon_0=0 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +no_defs'
+            self.P = Proj(projstr )
+
+        else:
+            self.P = Proj(projstr)
     
-        # Projection object (super-classing doesn't work...)
-        #self.P = Proj(projstr, init=init)
-        self.P = Proj(projstr )
-        
-        # Create the inverse projection here
-        #self.inverseProj = self.P.to_latlong()
 
     def __call__(self, lon, lat):
         return self.P(lon,lat)

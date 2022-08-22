@@ -85,7 +85,7 @@ setup(
     #package_dir={'sfoda':''},
     ext_modules = ext_modules,
     cmdclass = cmdclass,
-    version="0.1.0",
+    version="0.1.1",
     description='Stuff For Ocean Data Analysis',
     author='Matt Rayson',
     author_email='matt.rayson@uwa.edu.au',
