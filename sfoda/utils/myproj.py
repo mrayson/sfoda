@@ -22,6 +22,8 @@ class MyProj(object):
                 projstr = "+proj=utm +zone=%d, +ellps=WGS84 +datum=WGS84 +units=m +no_defs"%utmzone
                 if not isnorth:
                     projstr += ' +south'
+                self.P = Proj(projstr)
+
             except:
                 # Fix to handle pyproj version
                 self.P = Proj(proj='utm', zone=utmzone, ellps='WGS84', north=isnorth)
