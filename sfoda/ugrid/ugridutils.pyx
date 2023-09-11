@@ -69,7 +69,7 @@ cpdef make_neigh_from_cells(ndarray[int32_t,ndim=2] cells,
     cdef int i, j
     cdef int nc = cells.shape[0]
     cdef int maxfaces = cells.shape[1]
-    cdef ndarray[int64_t, ndim=2] neigh = np.zeros((nc, maxfaces),np.int)
+    cdef ndarray[int64_t, ndim=2] neigh = np.zeros((nc, maxfaces),int)
     pnt2cells = create_pnt2cells(cells, nfaces)
 
     for i in range(nc):
@@ -165,7 +165,7 @@ def make_edges_from_cells(ndarray[int32_t,ndim=2] cells,
                               default_marker,
                               i,n))
 
-    #self.edge = np.array(edges,np.int32)
+    #self.edge = np.array(edges,int32)
     Ne = len(edges)
     #edges = np.asarray(edges)
     #alledges = np.array([edges[ii,0:2] for ii in range(Ne)])
