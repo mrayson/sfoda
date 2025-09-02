@@ -17,7 +17,7 @@ import matplotlib.pyplot as plt
 
 from sfoda.utils.inpolygon import inpolygon
 from .hybridgrid import HybridGrid
-from . import searchutils
+# from . import searchutils
 
 import pdb
 

@@ -59,7 +59,7 @@ class Plot(HybridGrid):
         return ax, collection
 
     def plotcelldata(self, z, xlims=None, ylims=None, colorbar=True,\
-            vmin=None, vmax=None, **kwargs):
+            vmin=None, vmax=None, cbar_kwargs={}, **kwargs):
         """
         Plot cell centered data
         """
@@ -86,7 +86,7 @@ class Plot(HybridGrid):
 
         axcb=None
         if colorbar:
-            axcb = fig.colorbar(collection)
+            axcb = fig.colorbar(collection, **cbar_kwargs)
 
     
         return fig, ax, collection, axcb
@@ -207,7 +207,7 @@ class Plot(HybridGrid):
             return (phi[nc1]-phi[nc2]) / self.dg[jj]
             
         ne = self.face #edge-indices
-        mask = ne == self._FillValue
+        mask = np.abs(ne) == np.abs(self._FillValue)
         ne[mask]=0
         
         Gn_phi = _GradientAtFace(phi,ne,k)

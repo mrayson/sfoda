@@ -255,7 +255,7 @@ class Interp4D(object):
         # Create a 3D mask
         self.szxy = xin.shape
         if mask is None:
-            self.mask = np.zeros((self.nz,)+self.szxy,np.bool)
+            self.mask = np.zeros((self.nz,)+self.szxy,bool).flatten()
         else:
             self.mask=mask
 
@@ -266,7 +266,7 @@ class Interp4D(object):
                 mask = self.mask[kk,...]
             else:
                 mask = self.mask
-            xyin = np.vstack([xin[~mask].ravel(),yin[~mask].ravel()]).T
+            xyin = np.vstack([xin[~mask].ravel(), yin[~mask].ravel()]).T
             xyout = np.vstack([xout.ravel(),yout.ravel()]).T
             self.nxy = xyout.shape[0]
 

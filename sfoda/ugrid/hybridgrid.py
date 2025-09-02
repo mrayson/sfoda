@@ -14,7 +14,7 @@ from scipy import sparse
 import operator as op
 import matplotlib.pyplot as plt
 
-from . import ugridutils
+# from . import ugridutils
 #from . import newugridutils as ugridutils
 import pdb
 
@@ -835,7 +835,7 @@ class HybridGrid(object):
             
         cells_list = list(map(reordercells,list(range(Np))))
         
-        cells = -1*np.ones((Np,maxfaces),np.int)
+        cells = -1*np.ones((Np,maxfaces),np.int64)
         for ii in range(Np):
             cells[ii,0:nfaces[ii]]=cells_list[ii]
             
@@ -1016,7 +1016,7 @@ class HybridGrid(object):
         ###
         # Pure python
         ###	
-        self.neigh = np.zeros((self.Ncells(),self.MAXFACES),np.int)
+        self.neigh = np.zeros((self.Ncells(),self.MAXFACES),int)
         for i in range(self.Ncells()):
             # find the neighbors:
             # the first neighbor: need another cell that has
@@ -1050,7 +1050,7 @@ class HybridGrid(object):
                 #for j in range(self.MAXFACES):
                 for j in range(self.nfaces[i]):
                     cc = self.cells[i,j]
-                    if not self._pnt2cells.has_key(cc):
+                    if not cc in self._pnt2cells:
                         self._pnt2cells[cc] = set()
                     self._pnt2cells[cc].add(i)
 
@@ -1100,7 +1100,7 @@ class HybridGrid(object):
         if self._cell_edge_map is None:
             cem = 999999*np.ones( (self.Ncells(),self.MAXFACES), np.int32)
 
-            for i in xrange(self.Ncells()):
+            for i in range(self.Ncells()):
                 cem[i,0:self.nfaces[i]] = self.cell2edges(i)
             self._cell_edge_map = cem
         return self._cell_edge_map
